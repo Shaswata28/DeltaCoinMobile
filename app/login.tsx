@@ -1,5 +1,5 @@
 import { useCallback, useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, Platform, KeyboardAvoidingView, ScrollView, ImageBackground } from 'react-native';
+import { View, StyleSheet, Platform, KeyboardAvoidingView, ScrollView, ImageBackground, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { StatusBar } from 'expo-status-bar';
@@ -12,6 +12,8 @@ import { SignUpLink } from '@/components/auth/SignUpLink';
 export default function LoginScreen() {
   const router = useRouter();
   const isMounted = useRef(true);
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   useEffect(() => {
     return () => {
@@ -19,29 +21,28 @@ export default function LoginScreen() {
     };
   }, []);
 
-  // Set status bar to light on iOS for better visibility against the gradient
   useFocusEffect(
     useCallback(() => {
       if (Platform.OS === 'ios') {
-        StatusBar.setStyle('light');
+        StatusBar.setStyle(isDark ? 'light' : 'dark');
       }
       return () => {
         if (Platform.OS === 'ios') {
           StatusBar.setStyle('auto');
         }
       };
-    }, [])
+    }, [isDark])
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDark && styles.containerDark]}>
       <ImageBackground
         source={require('@/assets/images/background.png')}
         style={styles.background}
         resizeMode="cover"
       >
-        <View style={styles.overlay} />
-       <KeyboardAvoidingView
+        <View style={[styles.overlay, isDark && styles.overlayDark]} />
+        <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardAvoid}
         >
@@ -59,7 +60,7 @@ export default function LoginScreen() {
               </Animated.View>
               <Animated.View 
                 entering={FadeInDown.delay(300).duration(800).springify()}
-                style={styles.formContainer}
+                style={[styles.formContainer, isDark && styles.formContainerDark]}
               > 
                 <LoginForm />
               </Animated.View>
@@ -75,6 +76,10 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#FAFAF5',
+  },
+  containerDark: {
+    backgroundColor: '#121212',
   },
   background: {
     flex: 1,
@@ -83,7 +88,10 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: 'rgba(250, 250, 245, 0.85)',
+  },
+  overlayDark: {
+    backgroundColor: 'rgba(18, 18, 18, 0.85)',
   },
   keyboardAvoid: {
     flex: 1,
@@ -105,7 +113,7 @@ const styles = StyleSheet.create({
   formContainer: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
     borderRadius: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -116,5 +124,9 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
     marginBottom: 24,
     backdropFilter: 'blur(10px)',
+  },
+  formContainerDark: {
+    backgroundColor: '#1E1E1E',
+    shadowOpacity: 0.2,
   }
 });

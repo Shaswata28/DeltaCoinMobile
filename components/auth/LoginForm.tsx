@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
 import { Eye, EyeOff } from 'lucide-react-native';
 import Animated, { FadeInLeft } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
@@ -11,6 +11,9 @@ import { validateEmail } from '@/utils/validation';
 
 export function LoginForm() {
   const router = useRouter();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -71,8 +74,8 @@ export function LoginForm() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome Back</Text>
-      <Text style={styles.subtitle}>Sign in to continue</Text>
+      <Text style={[styles.title, isDark && styles.titleDark]}>Welcome Back</Text>
+      <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>Sign in to continue</Text>
       
       {errors.general ? (
         <Animated.View 
@@ -112,8 +115,8 @@ export function LoginForm() {
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               {showPassword ? 
-                <EyeOff size={20} color="#6B7280" /> : 
-                <Eye size={20} color="#6B7280" />
+                <EyeOff size={20} color={isDark ? '#A6A6A6' : '#6B6B6B'} /> : 
+                <Eye size={20} color={isDark ? '#A6A6A6' : '#6B6B6B'} />
               }
             </TouchableOpacity>
           }
@@ -131,7 +134,9 @@ export function LoginForm() {
             onPress={handleForgotPassword}
             disabled={isLoading}
           >
-            <Text style={styles.forgotPassword}>Forgot Password?</Text>
+            <Text style={[styles.forgotPassword, isDark && styles.forgotPasswordDark]}>
+              Forgot Password?
+            </Text>
           </TouchableOpacity>
         </View>
         
@@ -153,14 +158,20 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontFamily: 'Inter-Bold',
-    color: '#2C3E50',
+    color: '#2C2C2C',
     marginBottom: 8,
+  },
+  titleDark: {
+    color: '#FFFFFF',
   },
   subtitle: {
     fontSize: 14,
     fontFamily: 'Inter-Regular',
-    color: '#6B7280',
+    color: '#6B6B6B',
     marginBottom: 24,
+  },
+  subtitleDark: {
+    color: '#A6A6A6',
   },
   form: {
     gap: 16,
@@ -172,9 +183,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   forgotPassword: {
-    color: '#3466F6',
+    color: '#4D9FFF',
     fontFamily: 'Inter-Medium',
     fontSize: 14,
+  },
+  forgotPasswordDark: {
+    color: '#82B1FF',
   },
   loginButton: {
     marginTop: 8,
@@ -188,10 +202,10 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 16,
     borderLeftWidth: 4,
-    borderLeftColor: '#EF4444',
+    borderLeftColor: '#FF4D4F',
   },
   errorText: {
-    color: '#B91C1C',
+    color: '#FF4D4F',
     fontFamily: 'Inter-Medium',
     fontSize: 14,
   }

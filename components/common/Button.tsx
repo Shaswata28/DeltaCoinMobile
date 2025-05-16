@@ -1,4 +1,4 @@
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, View, ViewStyle } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, View, ViewStyle, useColorScheme } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 type ButtonProps = {
@@ -21,6 +21,8 @@ export function Button({
   style,
 }: ButtonProps) {
   const scale = useSharedValue(1);
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -40,15 +42,15 @@ export function Button({
     const buttonStyles = [styles.button, styles[`${size}Button`]];
     
     if (variant === 'primary') {
-      buttonStyles.push(styles.primaryButton);
+      buttonStyles.push(isDark ? styles.primaryButtonDark : styles.primaryButton);
     } else if (variant === 'secondary') {
-      buttonStyles.push(styles.secondaryButton);
+      buttonStyles.push(isDark ? styles.secondaryButtonDark : styles.secondaryButton);
     } else if (variant === 'outline') {
-      buttonStyles.push(styles.outlineButton);
+      buttonStyles.push(isDark ? styles.outlineButtonDark : styles.outlineButton);
     }
     
     if (disabled || loading) {
-      buttonStyles.push(styles.disabledButton);
+      buttonStyles.push(isDark ? styles.disabledButtonDark : styles.disabledButton);
     }
     
     return buttonStyles;
@@ -62,11 +64,11 @@ export function Button({
     } else if (variant === 'secondary') {
       textStyles.push(styles.secondaryText);
     } else if (variant === 'outline') {
-      textStyles.push(styles.outlineText);
+      textStyles.push(isDark ? styles.outlineTextDark : styles.outlineText);
     }
     
     if (disabled || loading) {
-      textStyles.push(styles.disabledText);
+      textStyles.push(isDark ? styles.disabledTextDark : styles.disabledText);
     }
     
     return textStyles;
@@ -83,7 +85,7 @@ export function Button({
       >
         {loading ? (
           <ActivityIndicator 
-            color={variant === 'outline' ? '#3466F6' : '#FFF'} 
+            color={variant === 'outline' ? (isDark ? '#82B1FF' : '#4D9FFF') : '#FFF'} 
             size="small" 
           />
         ) : (
@@ -113,19 +115,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   primaryButton: {
-    backgroundColor: '#3466F6',
+    backgroundColor: '#4D9FFF',
+  },
+  primaryButtonDark: {
+    backgroundColor: '#82B1FF',
   },
   secondaryButton: {
-    backgroundColor: '#8A33FD',
+    backgroundColor: '#FFD700',
+  },
+  secondaryButtonDark: {
+    backgroundColor: '#FFD700',
   },
   outlineButton: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#3466F6',
+    borderColor: '#4D9FFF',
+  },
+  outlineButtonDark: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#82B1FF',
   },
   disabledButton: {
-    backgroundColor: '#E5E7EB',
-    borderColor: '#E5E7EB',
+    backgroundColor: '#E0E0E0',
+    borderColor: '#E0E0E0',
+  },
+  disabledButtonDark: {
+    backgroundColor: '#2E2E2E',
+    borderColor: '#2E2E2E',
   },
   text: {
     fontFamily: 'Inter-SemiBold',
@@ -144,12 +161,18 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
   secondaryText: {
-    color: '#FFF',
+    color: '#2C2C2C',
   },
   outlineText: {
-    color: '#3466F6',
+    color: '#4D9FFF',
+  },
+  outlineTextDark: {
+    color: '#82B1FF',
   },
   disabledText: {
-    color: '#9CA3AF',
+    color: '#6B6B6B',
+  },
+  disabledTextDark: {
+    color: '#A6A6A6',
   }
 });

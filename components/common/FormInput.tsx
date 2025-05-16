@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Platform, ViewStyle, TextStyle } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Platform, ViewStyle, TextStyle, useColorScheme } from 'react-native';
 import Animated, { useAnimatedStyle, withTiming, interpolateColor } from 'react-native-reanimated';
 
 type FormInputProps = {
@@ -34,15 +34,17 @@ export function FormInput({
   autoComplete,
 }: FormInputProps) {
   const [isFocused, setIsFocused] = useState(false);
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   
   const animatedBorderStyle = useAnimatedStyle(() => {
     return {
       borderColor: withTiming(
         error
-          ? '#EF4444' 
+          ? isDark ? '#FF6B6B' : '#FF4D4F'
           : isFocused 
-            ? '#3466F6' 
-            : '#E5E7EB',
+            ? isDark ? '#82B1FF' : '#4D9FFF'
+            : isDark ? '#2E2E2E' : '#E0E0E0',
         { duration: 150 }
       ),
     };
@@ -50,28 +52,40 @@ export function FormInput({
   
   return (
     <View style={[styles.container, style]}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, isDark && styles.labelDark]}>{label}</Text>
       
-      <Animated.View style={[styles.inputContainer, animatedBorderStyle]}>
+      <Animated.View style={[
+        styles.inputContainer,
+        isDark && styles.inputContainerDark,
+        animatedBorderStyle
+      ]}>
         <TextInput
-          style={[styles.input, inputStyle]}
+          style={[
+            styles.input,
+            isDark && styles.inputDark,
+            inputStyle
+          ]}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
+          placeholderTextColor={isDark ? '#A6A6A6' : '#6B6B6B'}
           secureTextEntry={secureTextEntry}
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
           editable={!disabled}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          placeholderTextColor="#9CA3AF"
           autoComplete={autoComplete}
         />
         
         {rightElement}
       </Animated.View>
       
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {error ? (
+        <Text style={[styles.errorText, isDark && styles.errorTextDark]}>
+          {error}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -83,38 +97,51 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontFamily: 'Inter-Medium',
-    color: '#374151',
+    color: '#2C2C2C',
     marginBottom: 6,
+  },
+  labelDark: {
+    color: '#FFFFFF',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#E0E0E0',
     borderRadius: 8,
     backgroundColor: '#F9FAFB',
     paddingHorizontal: 12,
     height: 48,
   },
+  inputContainerDark: {
+    backgroundColor: '#1E1E1E',
+    borderColor: '#2E2E2E',
+  },
   input: {
     flex: 1,
     height: '100%',
-    color: '#1F2937',
+    color: '#2C2C2C',
     fontFamily: 'Inter-Regular',
     fontSize: 15,
     ...Platform.select({
       web: { 
         outlineStyle: 'none',
-        paddingTop: 14, // Fix for web vertical alignment
+        paddingTop: 14,
         paddingBottom: 14,
       }
     })
   },
+  inputDark: {
+    color: '#FFFFFF',
+  },
   errorText: {
-    color: '#EF4444',
+    color: '#FF4D4F',
     fontFamily: 'Inter-Regular',
     fontSize: 12,
     marginTop: 4,
     marginLeft: 4,
+  },
+  errorTextDark: {
+    color: '#FF6B6B',
   }
 });
