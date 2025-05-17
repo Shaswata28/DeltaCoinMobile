@@ -3,13 +3,13 @@
  */
 
 // Password strength requirements
-const PASSWORD_MIN_LENGTH = 12;
+const PASSWORD_MIN_LENGTH = 8;
 const PASSWORD_REQUIREMENTS = {
   minLength: PASSWORD_MIN_LENGTH,
   minUppercase: 1,
   minLowercase: 1,
   minNumbers: 1,
-  minSymbols: 1,
+  minSymbols: 0, // Made optional
 };
 
 export function validateEmail(email: string): boolean {
@@ -42,8 +42,11 @@ export const validatePassword = (password: string): {
     symbol: (password.match(/[^A-Za-z0-9]/g) || []).length >= PASSWORD_REQUIREMENTS.minSymbols,
   };
 
+  // Calculate strength based on met criteria
   const strength = Object.values(criteria).filter(Boolean).length;
-  const isValid = Object.values(criteria).every(Boolean);
+  
+  // Password is valid if it meets minimum length and required character types
+  const isValid = criteria.length && criteria.uppercase && criteria.lowercase && criteria.number;
 
   return {
     isValid,
