@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, useColorScheme, Platform } from 'react-native';
 import { Eye, EyeOff } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { FormInput } from '@/components/common/FormInput';

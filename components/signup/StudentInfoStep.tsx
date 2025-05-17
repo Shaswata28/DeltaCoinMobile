@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, useColorScheme, Platform } from 'react-native';
 import { FormInput } from '@/components/common/FormInput';
 import { Button } from '@/components/common/Button';
 import { validateName, validateStudentId, validatePhone } from '@/utils/validation';
