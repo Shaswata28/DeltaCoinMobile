@@ -153,5 +153,5 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: 20,
-  },
+  }
 });
