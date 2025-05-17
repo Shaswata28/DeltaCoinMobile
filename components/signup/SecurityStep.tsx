@@ -158,8 +158,8 @@ export default function SecurityStep({ onNext, onBack, initialData }: SecuritySt
         <TextNavigation 
           onBack={onBack}
           onNext={handleNext}
-          backText="← Back to Student Info"
-          nextText="Continue to PIN Setup →"
+          backText="← Student Info"
+          nextText="PIN Setup →"
         />
       </View>
     </View>
