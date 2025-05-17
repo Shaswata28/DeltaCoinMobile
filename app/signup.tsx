@@ -4,27 +4,33 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 
-import StudentInfoStep from '@/components/signup/StudentInfoStep';
-import SecurityStep from '@/components/signup/SecurityStep';
-import PinStep from '@/components/signup/PinStep';
+import StudentInfoStep, { StudentInfo } from '@/components/signup/StudentInfoStep';
+import SecurityStep, { SecurityInfo } from '@/components/signup/SecurityStep';
+import PinStep, { PinInfo } from '@/components/signup/PinStep';
+
+interface FormData {
+  studentInfo: Partial<StudentInfo>;
+  securityInfo: Partial<SecurityInfo>;
+  pinInfo: Partial<PinInfo>;
+}
 
 export default function SignupScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     studentInfo: {},
     securityInfo: {},
     pinInfo: {},
   });
 
-  const handleStudentInfoNext = (data) => {
+  const handleStudentInfoNext = (data: StudentInfo) => {
     setFormData(prev => ({ ...prev, studentInfo: data }));
     setCurrentStep(1);
   };
 
-  const handleSecurityNext = (data) => {
+  const handleSecurityNext = (data: SecurityInfo) => {
     setFormData(prev => ({ ...prev, securityInfo: data }));
     setCurrentStep(2);
   };
@@ -33,7 +39,7 @@ export default function SignupScreen() {
     setCurrentStep(0);
   };
 
-  const handlePinSubmit = async (data) => {
+  const handlePinSubmit = async (data: PinInfo) => {
     setFormData(prev => ({ ...prev, pinInfo: data }));
     // Here you would typically submit the complete form data
     console.log('Complete form data:', { ...formData, pinInfo: data });
@@ -50,7 +56,7 @@ export default function SignupScreen() {
         return (
           <StudentInfoStep
             onNext={handleStudentInfoNext}
-            initialData={formData.studentInfo}
+            initialData={formData.studentInfo as StudentInfo}
           />
         );
       case 1:
@@ -58,7 +64,7 @@ export default function SignupScreen() {
           <SecurityStep
             onNext={handleSecurityNext}
             onBack={handleSecurityBack}
-            initialData={formData.securityInfo}
+            initialData={formData.securityInfo as SecurityInfo}
           />
         );
       case 2:
@@ -66,7 +72,7 @@ export default function SignupScreen() {
           <PinStep
             onSubmit={handlePinSubmit}
             onBack={handlePinBack}
-            initialData={formData.pinInfo}
+            initialData={formData.pinInfo as PinInfo}
           />
         );
       default:
