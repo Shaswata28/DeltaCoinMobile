@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Platform, ViewStyle, TextStyle, useColorScheme, TextInputProps } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Platform, ViewStyle, TextStyle, useColorScheme, TouchableOpacity } from 'react-native';
 import Animated, { useAnimatedStyle, withTiming, interpolateColor } from 'react-native-reanimated';
+import { Eye, EyeOff } from 'lucide-react-native';
 
 type FormInputProps = {
   label: string;
@@ -12,11 +13,11 @@ type FormInputProps = {
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   error?: string;
   disabled?: boolean;
-  rightElement?: React.ReactNode;
   style?: ViewStyle;
   inputStyle?: TextStyle;
   autoComplete?: 'off' | 'email' | 'password' | 'name' | 'username';
   maxLength?: number;
+  showPasswordToggle?: boolean;
 }
 
 export function FormInput({
@@ -29,13 +30,14 @@ export function FormInput({
   autoCapitalize = 'sentences',
   error,
   disabled = false,
-  rightElement,
   style,
   inputStyle,
   autoComplete,
   maxLength,
+  showPasswordToggle = false,
 }: FormInputProps) {
   const [isFocused, setIsFocused] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   
@@ -51,6 +53,10 @@ export function FormInput({
       ),
     };
   });
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
   
   return (
     <View style={[styles.container, style]}>
@@ -65,13 +71,14 @@ export function FormInput({
           style={[
             styles.input,
             isDark && styles.inputDark,
-            inputStyle
+            inputStyle,
+            showPasswordToggle && styles.inputWithIcon
           ]}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
           placeholderTextColor={isDark ? '#A6A6A6' : '#6B6B6B'}
-          secureTextEntry={secureTextEntry}
+          secureTextEntry={secureTextEntry && !showPassword}
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
           editable={!disabled}
@@ -81,7 +88,19 @@ export function FormInput({
           maxLength={maxLength}
         />
         
-        {rightElement}
+        {showPasswordToggle && (
+          <TouchableOpacity
+            onPress={togglePasswordVisibility}
+            style={styles.eyeButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            {showPassword ? (
+              <EyeOff size={20} color={isDark ? '#A6A6A6' : '#6B6B6B'} />
+            ) : (
+              <Eye size={20} color={isDark ? '#A6A6A6' : '#6B6B6B'} />
+            )}
+          </TouchableOpacity>
+        )}
       </Animated.View>
       
       {error ? (
@@ -134,6 +153,9 @@ const styles = StyleSheet.create({
       }
     })
   },
+  inputWithIcon: {
+    paddingRight: 40,
+  },
   inputDark: {
     color: '#FFFFFF',
   },
@@ -146,5 +168,12 @@ const styles = StyleSheet.create({
   },
   errorTextDark: {
     color: '#FF6B6B',
+  },
+  eyeButton: {
+    position: 'absolute',
+    right: 12,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   }
 });

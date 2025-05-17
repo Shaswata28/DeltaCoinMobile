@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, useColorScheme, Platform } from 'react-native';
-import { Eye, EyeOff } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { FormInput } from '@/components/common/FormInput';
 import { TextNavigation } from '@/components/common/TextNavigation';
@@ -28,8 +27,6 @@ export default function SecurityStep({ onNext, onBack, initialData }: SecuritySt
     confirmPassword: initialData?.confirmPassword || '',
   });
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<Partial<SecurityInfo>>({});
   const [passwordStrength, setPasswordStrength] = useState(0);
 
@@ -49,7 +46,7 @@ export default function SecurityStep({ onNext, onBack, initialData }: SecuritySt
 
     const passwordValidation = validatePassword(formData.password);
     if (!passwordValidation.isValid) {
-      newErrors.password = 'Password does not meet security requirements';
+      newErrors.password = 'Password must be at least 8 characters with uppercase, lowercase, and numbers';
     }
 
     if (!validatePasswordMatch(formData.password, formData.confirmPassword)) {
@@ -110,15 +107,9 @@ export default function SecurityStep({ onNext, onBack, initialData }: SecuritySt
               if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
             }}
             placeholder="Create a strong password"
-            secureTextEntry={!showPassword}
+            secureTextEntry
             error={errors.password}
-            rightElement={
-              <Eye
-                size={20}
-                color={isDark ? '#A6A6A6' : '#6B6B6B'}
-                onPress={() => setShowPassword(!showPassword)}
-              />
-            }
+            showPasswordToggle
           />
 
           <View style={styles.strengthIndicator}>
@@ -144,15 +135,9 @@ export default function SecurityStep({ onNext, onBack, initialData }: SecuritySt
             if (errors.confirmPassword) setErrors(prev => ({ ...prev, confirmPassword: '' }));
           }}
           placeholder="Confirm your password"
-          secureTextEntry={!showConfirmPassword}
+          secureTextEntry
           error={errors.confirmPassword}
-          rightElement={
-            <EyeOff
-              size={20}
-              color={isDark ? '#A6A6A6' : '#6B6B6B'}
-              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-            />
-          }
+          showPasswordToggle
         />
 
         <TextNavigation 

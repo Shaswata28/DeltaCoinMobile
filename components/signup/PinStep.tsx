@@ -79,6 +79,7 @@ export default function PinStep({ onSubmit, onBack, initialData }: PinStepProps)
           maxLength={5}
           secureTextEntry
           error={errors.pin}
+          showPasswordToggle
         />
 
         <FormInput
@@ -93,6 +94,7 @@ export default function PinStep({ onSubmit, onBack, initialData }: PinStepProps)
           maxLength={5}
           secureTextEntry
           error={errors.confirmPin}
+          showPasswordToggle
         />
 
         <TextNavigation 
