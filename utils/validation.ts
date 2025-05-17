@@ -59,8 +59,8 @@ export const validateName = (name: string): boolean => {
 };
 
 export const validateStudentId = (id: string): boolean => {
-  // Specific format for student IDs: YYYYNNNNN (Year + 5 digit number)
-  const studentIdRegex = /^20\d{2}\d{5}$/;
+  // Format: YYYYNNNNN (Year + 5 digit number)
+  const studentIdRegex = /^\d{9}$/;
   return studentIdRegex.test(id);
 };
 
