@@ -7,7 +7,9 @@ export default function SettingsScreen() {
   return (
     <View style={[styles.container, isDark && styles.containerDark]}>
       <Text style={[styles.title, isDark && styles.titleDark]}>Settings</Text>
-      <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>Coming soon...</Text>
+      <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>
+        Customize your app preferences
+      </Text>
     </View>
   );
 }
@@ -17,7 +19,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
     backgroundColor: '#FFFFFF',
   },
   containerDark: {
@@ -26,8 +27,8 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontFamily: 'Inter-Bold',
-    marginBottom: 8,
     color: '#2C2C2C',
+    marginBottom: 8,
   },
   titleDark: {
     color: '#FFFFFF',
@@ -39,5 +40,5 @@ const styles = StyleSheet.create({
   },
   subtitleDark: {
     color: '#A6A6A6',
-  }
+  },
 });
