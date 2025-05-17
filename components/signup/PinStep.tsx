@@ -98,8 +98,8 @@ export default function PinStep({ onSubmit, onBack, initialData }: PinStepProps)
         <TextNavigation 
           onBack={onBack}
           onNext={handleSubmit}
-          backText="← Back to Security"
-          nextText="Complete Setup →"
+          backText="← Security"
+          nextText="Complete →"
         />
       </View>
     </View>
