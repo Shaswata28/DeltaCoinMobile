@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, useColorScheme, Platform } from 'react-native';
 import { FormInput } from '@/components/common/FormInput';
-import { Button } from '@/components/common/Button';
+import { TextNavigation } from '@/components/common/TextNavigation';
 import { validateName, validateStudentId, validatePhone } from '@/utils/validation';
 
 export interface StudentInfo {
@@ -37,7 +37,7 @@ export default function StudentInfoStep({ onNext, initialData }: StudentInfoStep
     }
 
     if (!validateStudentId(formData.studentId)) {
-      newErrors.studentId = 'Please enter a valid student ID (YYYYNNNNN format)';
+      newErrors.studentId = 'Please enter a valid 9-digit student ID';
     }
 
     if (!validatePhone(formData.contactNumber)) {
@@ -112,11 +112,7 @@ export default function StudentInfoStep({ onNext, initialData }: StudentInfoStep
           error={errors.contactNumber}
         />
 
-        <Button
-          title="Continue to Security Setup"
-          onPress={handleNext}
-          style={styles.button}
-        />
+        <TextNavigation onNext={handleNext} nextText="Continue to Security Setup →" />
       </View>
     </View>
   );
@@ -157,8 +153,5 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: 20,
-  },
-  button: {
-    marginTop: 32,
   },
 });
