@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, useColorScheme, Platform } from 'react-native';
 import { ShieldAlert } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { FormInput } from '@/components/common/FormInput';
-import { Button } from '@/components/common/Button';
+import { TextNavigation } from '@/components/common/TextNavigation';
 import { validatePin, validatePinMatch } from '@/utils/validation';
 
 export interface PinInfo {
@@ -95,19 +95,12 @@ export default function PinStep({ onSubmit, onBack, initialData }: PinStepProps)
           error={errors.confirmPin}
         />
 
-        <View style={styles.buttonContainer}>
-          <Button
-            title="Back"
-            onPress={onBack}
-            variant="outline"
-            style={styles.button}
-          />
-          <Button
-            title="Complete Setup"
-            onPress={handleSubmit}
-            style={styles.button}
-          />
-        </View>
+        <TextNavigation 
+          onBack={onBack}
+          onNext={handleSubmit}
+          backText="← Back to Security"
+          nextText="Complete Setup →"
+        />
       </View>
     </View>
   );
@@ -169,13 +162,5 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: 20,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 32,
-  },
-  button: {
-    flex: 1,
-  },
+  }
 });

@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, useColorScheme } from 'react-native';
 
 interface TextNavigationProps {
   onBack?: () => void;
@@ -15,6 +15,9 @@ export function TextNavigation({
   nextText = 'Next →',
   disabled = false,
 }: TextNavigationProps) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
   return (
     <View style={styles.container}>
       {onBack && (
@@ -23,7 +26,13 @@ export function TextNavigation({
           style={styles.link}
           disabled={disabled}
         >
-          <Text style={[styles.text, disabled && styles.disabled]}>{backText}</Text>
+          <Text style={[
+            styles.text,
+            isDark && styles.textDark,
+            disabled && styles.disabled
+          ]}>
+            {backText}
+          </Text>
         </TouchableOpacity>
       )}
       {onNext && (
@@ -32,7 +41,13 @@ export function TextNavigation({
           style={[styles.link, styles.nextLink]}
           disabled={disabled}
         >
-          <Text style={[styles.text, disabled && styles.disabled]}>{nextText}</Text>
+          <Text style={[
+            styles.text,
+            isDark && styles.textDark,
+            disabled && styles.disabled
+          ]}>
+            {nextText}
+          </Text>
         </TouchableOpacity>
       )}
     </View>
@@ -45,6 +60,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 16,
+    marginTop: 16,
   },
   link: {
     padding: 8,
@@ -53,9 +69,12 @@ const styles = StyleSheet.create({
     marginLeft: 'auto',
   },
   text: {
-    fontFamily: 'Inter-Medium',
-    fontSize: 16,
-    color: '#4D9FFF',
+    fontFamily: 'Inter-SemiBold',
+    fontSize: 18,
+    color: '#2C2C2C',
+  },
+  textDark: {
+    color: '#FFFFFF',
   },
   disabled: {
     opacity: 0.5,

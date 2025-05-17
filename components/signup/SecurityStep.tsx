@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, useColorScheme, Platform } from 'react-native';
 import { Eye, EyeOff } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { FormInput } from '@/components/common/FormInput';
-import { Button } from '@/components/common/Button';
+import { TextNavigation } from '@/components/common/TextNavigation';
 import { validateUsername, validatePassword, validatePasswordMatch, getPasswordStrengthText } from '@/utils/validation';
 
 export interface SecurityInfo {
@@ -155,19 +155,12 @@ export default function SecurityStep({ onNext, onBack, initialData }: SecuritySt
           }
         />
 
-        <View style={styles.buttonContainer}>
-          <Button
-            title="Back"
-            onPress={onBack}
-            variant="outline"
-            style={styles.button}
-          />
-          <Button
-            title="Continue to PIN Setup"
-            onPress={handleNext}
-            style={styles.button}
-          />
-        </View>
+        <TextNavigation 
+          onBack={onBack}
+          onNext={handleNext}
+          backText="← Back to Student Info"
+          nextText="Continue to PIN Setup →"
+        />
       </View>
     </View>
   );
@@ -226,13 +219,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Inter-Medium',
     marginTop: 4,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 32,
-  },
-  button: {
-    flex: 1,
-  },
+  }
 });
