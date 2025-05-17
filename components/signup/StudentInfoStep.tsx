@@ -112,7 +112,7 @@ export default function StudentInfoStep({ onNext, initialData }: StudentInfoStep
           error={errors.contactNumber}
         />
 
-        <TextNavigation onNext={handleNext} nextText="Continue to Security Setup →" />
+        <TextNavigation onNext={handleNext} nextText="Security Setup →" />
       </View>
     </View>
   );
