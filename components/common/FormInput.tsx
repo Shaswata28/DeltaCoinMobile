@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Platform, ViewStyle, TextStyle, useColorScheme } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Platform, ViewStyle, TextStyle, useColorScheme, TextInputProps } from 'react-native';
 import Animated, { useAnimatedStyle, withTiming, interpolateColor } from 'react-native-reanimated';
 
 type FormInputProps = {
@@ -16,6 +16,7 @@ type FormInputProps = {
   style?: ViewStyle;
   inputStyle?: TextStyle;
   autoComplete?: 'off' | 'email' | 'password' | 'name' | 'username';
+  maxLength?: number;
 }
 
 export function FormInput({
@@ -32,6 +33,7 @@ export function FormInput({
   style,
   inputStyle,
   autoComplete,
+  maxLength,
 }: FormInputProps) {
   const [isFocused, setIsFocused] = useState(false);
   const colorScheme = useColorScheme();
@@ -76,6 +78,7 @@ export function FormInput({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           autoComplete={autoComplete}
+          maxLength={maxLength}
         />
         
         {rightElement}
