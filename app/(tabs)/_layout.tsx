@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Home, ChartBar as BarChart3, CircleHelp as HelpCircle, Settings, History, User } from 'lucide-react-native';
+import { Home, LineChart, CircleHelp as HelpCircle, Settings, History, User } from 'lucide-react-native';
 import { Platform, useColorScheme } from 'react-native';
 
 export default function TabLayout() {
@@ -48,7 +48,7 @@ export default function TabLayout() {
         name="analytics"
         options={{
           tabBarIcon: ({ color }) => (
-            <BarChart3 size={24} color={color} strokeWidth={2} />
+            <LineChart size={24} color={color} strokeWidth={2} />
           ),
         }}
       />
