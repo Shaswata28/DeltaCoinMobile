@@ -1,26 +1,33 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import Stepper from '../components/Stepper';
-import StudentInfoStep, { StudentInfo } from '../components/signup/StudentInfoStep';
-import SecurityStep, { SecurityInfo } from '../components/signup/SecurityStep';
-import PinStep, { PinInfo } from '../components/signup/PinStep';
+import { useState } from 'react';
+import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, useColorScheme } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useRouter } from 'expo-router';
+
+import Stepper from '@/components/Stepper';
+import StudentInfoStep from '@/components/signup/StudentInfoStep';
+import SecurityStep from '@/components/signup/SecurityStep';
+import PinStep from '@/components/signup/PinStep';
 
 const steps = ['Student Info', 'Security', 'PIN'];
 
-const SignupScreen = () => {
+export default function SignupScreen() {
+  const router = useRouter();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({
-    studentInfo: {} as StudentInfo,
-    securityInfo: {} as SecurityInfo,
-    pinInfo: {} as PinInfo,
+    studentInfo: {},
+    securityInfo: {},
+    pinInfo: {},
   });
 
-  const handleStudentInfoNext = (data: StudentInfo) => {
+  const handleStudentInfoNext = (data) => {
     setFormData(prev => ({ ...prev, studentInfo: data }));
     setCurrentStep(1);
   };
 
-  const handleSecurityNext = (data: SecurityInfo) => {
+  const handleSecurityNext = (data) => {
     setFormData(prev => ({ ...prev, securityInfo: data }));
     setCurrentStep(2);
   };
@@ -29,10 +36,11 @@ const SignupScreen = () => {
     setCurrentStep(0);
   };
 
-  const handlePinSubmit = (data: PinInfo) => {
+  const handlePinSubmit = async (data) => {
     setFormData(prev => ({ ...prev, pinInfo: data }));
-    // Here you would typically submit the complete form data to your backend
+    // Here you would typically submit the complete form data
     console.log('Complete form data:', { ...formData, pinInfo: data });
+    router.replace('/(tabs)');
   };
 
   const handlePinBack = () => {
@@ -70,34 +78,45 @@ const SignupScreen = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-    >
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={[styles.container, isDark && styles.containerDark]}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoid}
       >
         <Stepper currentStep={currentStep} steps={steps} />
-        {renderStep()}
-      </ScrollView>
-    </KeyboardAvoidingView>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <Animated.View 
+            entering={FadeInDown.duration(300)}
+            style={styles.stepContainer}
+          >
+            {renderStep()}
+          </Animated.View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
   },
-  scrollView: {
+  containerDark: {
+    backgroundColor: '#121212',
+  },
+  keyboardAvoid: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
   },
+  stepContainer: {
+    flex: 1,
+    padding: 20,
+  },
 });
-
-export default SignupScreen; 

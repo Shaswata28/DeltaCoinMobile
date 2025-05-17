@@ -1,11 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, Keyboard } from 'react-native';
-import { validateName, validateStudentId, validateEmail, validatePhone } from '../../utils/validation';
-
-interface StudentInfoStepProps {
-  onNext: (data: StudentInfo) => void;
-  initialData?: StudentInfo;
-}
+import { useState } from 'react';
+import { View, Text, StyleSheet, useColorScheme } from 'react-native';
+import { FormInput } from '@/components/common/FormInput';
+import { Button } from '@/components/common/Button';
+import { validateName, validateStudentId, validatePhone } from '@/utils/validation';
 
 export interface StudentInfo {
   fullName: string;
@@ -14,7 +11,15 @@ export interface StudentInfo {
   contactNumber: string;
 }
 
-const StudentInfoStep: React.FC<StudentInfoStepProps> = ({ onNext, initialData }) => {
+interface StudentInfoStepProps {
+  onNext: (data: StudentInfo) => void;
+  initialData?: StudentInfo;
+}
+
+export default function StudentInfoStep({ onNext, initialData }: StudentInfoStepProps) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  
   const [formData, setFormData] = useState<StudentInfo>({
     fullName: initialData?.fullName || '',
     studentId: initialData?.studentId || '',
@@ -24,32 +29,19 @@ const StudentInfoStep: React.FC<StudentInfoStepProps> = ({ onNext, initialData }
 
   const [errors, setErrors] = useState<Partial<StudentInfo>>({});
 
-  useEffect(() => {
-    if (formData.studentId) {
-      setFormData(prev => ({
-        ...prev,
-        email: `${formData.studentId}@eastdelta.edu.bd`,
-      }));
-    }
-  }, [formData.studentId]);
-
   const validateForm = (): boolean => {
     const newErrors: Partial<StudentInfo> = {};
 
     if (!validateName(formData.fullName)) {
-      newErrors.fullName = 'Please enter your full name';
+      newErrors.fullName = 'Please enter your full name (letters and spaces only)';
     }
 
     if (!validateStudentId(formData.studentId)) {
-      newErrors.studentId = 'Please enter a valid 9-digit student ID';
-    }
-
-    if (!validateEmail(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.studentId = 'Please enter a valid student ID (YYYYNNNNN format)';
     }
 
     if (!validatePhone(formData.contactNumber)) {
-      newErrors.contactNumber = 'Please enter a valid phone number';
+      newErrors.contactNumber = 'Please enter a valid Bangladesh phone number';
     }
 
     setErrors(newErrors);
@@ -58,104 +50,101 @@ const StudentInfoStep: React.FC<StudentInfoStepProps> = ({ onNext, initialData }
 
   const handleNext = () => {
     if (validateForm()) {
-      Keyboard.dismiss();
-      onNext(formData);
+      onNext({
+        ...formData,
+        email: `${formData.studentId}@eastdelta.edu.bd`,
+      });
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Full Name</Text>
-      <TextInput
-        style={[styles.input, errors.fullName && styles.inputError]}
-        value={formData.fullName}
-        onChangeText={(text) => setFormData(prev => ({ ...prev, fullName: text }))}
-        placeholder="Enter your full name"
-      />
-      {errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
+      <Text style={[styles.title, isDark && styles.titleDark]}>Student Information</Text>
+      <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>
+        Please provide your basic information to get started
+      </Text>
 
-      <Text style={styles.label}>Student ID</Text>
-      <TextInput
-        style={[styles.input, errors.studentId && styles.inputError]}
-        value={formData.studentId}
-        onChangeText={(text) => setFormData(prev => ({ ...prev, studentId: text }))}
-        placeholder="Enter your student ID"
-        keyboardType="numeric"
-        maxLength={9}
-      />
-      {errors.studentId && <Text style={styles.errorText}>Please enter a valid 9-digit student ID</Text>}
+      <View style={styles.form}>
+        <FormInput
+          label="Full Name"
+          value={formData.fullName}
+          onChangeText={(text) => {
+            setFormData(prev => ({ ...prev, fullName: text }));
+            if (errors.fullName) setErrors(prev => ({ ...prev, fullName: '' }));
+          }}
+          placeholder="Enter your full name"
+          error={errors.fullName}
+          autoComplete="name"
+        />
 
-      <Text style={styles.label}>Email</Text>
-      <TextInput
-        style={[styles.input, errors.email && styles.inputError]}
-        value={formData.email}
-        onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
-        placeholder="Enter your email"
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+        <FormInput
+          label="Student ID"
+          value={formData.studentId}
+          onChangeText={(text) => {
+            setFormData(prev => ({ ...prev, studentId: text }));
+            if (errors.studentId) setErrors(prev => ({ ...prev, studentId: '' }));
+          }}
+          placeholder="Enter your 9-digit student ID"
+          keyboardType="numeric"
+          maxLength={9}
+          error={errors.studentId}
+        />
 
-      <Text style={styles.label}>Contact Number</Text>
-      <TextInput
-        style={[styles.input, errors.contactNumber && styles.inputError]}
-        value={formData.contactNumber}
-        onChangeText={(text) => setFormData(prev => ({ ...prev, contactNumber: text }))}
-        placeholder="Enter your contact number"
-        keyboardType="phone-pad"
-      />
-      {errors.contactNumber && <Text style={styles.errorText}>{errors.contactNumber}</Text>}
+        <FormInput
+          label="University Email"
+          value={formData.studentId ? `${formData.studentId}@eastdelta.edu.bd` : ''}
+          placeholder="Will be generated from Student ID"
+          disabled={true}
+        />
 
-      <View style={styles.buttonContainer}>
-        <Text style={styles.nextButton} onPress={handleNext}>
-          Next
-        </Text>
+        <FormInput
+          label="Contact Number"
+          value={formData.contactNumber}
+          onChangeText={(text) => {
+            setFormData(prev => ({ ...prev, contactNumber: text }));
+            if (errors.contactNumber) setErrors(prev => ({ ...prev, contactNumber: '' }));
+          }}
+          placeholder="Enter your phone number"
+          keyboardType="phone-pad"
+          error={errors.contactNumber}
+        />
+
+        <Button
+          title="Next"
+          onPress={handleNext}
+          style={styles.button}
+        />
       </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    flex: 1,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
+  title: {
+    fontSize: 24,
+    fontFamily: 'Inter-Bold',
+    color: '#2C2C2C',
     marginBottom: 8,
-    color: '#333',
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
+  titleDark: {
+    color: '#FFFFFF',
+  },
+  subtitle: {
     fontSize: 16,
-    marginBottom: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#6B6B6B',
+    marginBottom: 24,
   },
-  inputError: {
-    borderColor: '#ff6b6b',
+  subtitleDark: {
+    color: '#A6A6A6',
   },
-  errorText: {
-    color: '#ff6b6b',
-    fontSize: 12,
-    marginTop: -12,
-    marginBottom: 16,
+  form: {
+    gap: 16,
   },
-  buttonContainer: {
-    marginTop: 20,
-    alignItems: 'flex-end',
-  },
-  nextButton: {
-    backgroundColor: '#FFD700',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
-    overflow: 'hidden',
+  button: {
+    marginTop: 24,
   },
 });
-
-export default StudentInfoStep; 

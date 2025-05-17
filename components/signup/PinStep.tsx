@@ -1,6 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, Keyboard } from 'react-native';
-import { validatePin, validatePinMatch } from '../../utils/validation';
+import { useState } from 'react';
+import { View, Text, StyleSheet, useColorScheme } from 'react-native';
+import { ShieldAlert } from 'lucide-react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { FormInput } from '@/components/common/FormInput';
+import { Button } from '@/components/common/Button';
+import { validatePin, validatePinMatch } from '@/utils/validation';
+
+export interface PinInfo {
+  pin: string;
+  confirmPin: string;
+}
 
 interface PinStepProps {
   onSubmit: (data: PinInfo) => void;
@@ -8,29 +17,16 @@ interface PinStepProps {
   initialData?: PinInfo;
 }
 
-export interface PinInfo {
-  pin: string;
-  confirmPin: string;
-}
-
-const PinStep: React.FC<PinStepProps> = ({ onSubmit, onBack, initialData }) => {
+export default function PinStep({ onSubmit, onBack, initialData }: PinStepProps) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  
   const [formData, setFormData] = useState<PinInfo>({
     pin: initialData?.pin || '',
     confirmPin: initialData?.confirmPin || '',
   });
 
   const [errors, setErrors] = useState<Partial<PinInfo>>({});
-  const [pinMatchStatus, setPinMatchStatus] = useState<'matching' | 'not-matching' | 'empty'>('empty');
-
-  useEffect(() => {
-    if (!formData.confirmPin) {
-      setPinMatchStatus('empty');
-    } else if (formData.pin === formData.confirmPin) {
-      setPinMatchStatus('matching');
-    } else {
-      setPinMatchStatus('not-matching');
-    }
-  }, [formData.pin, formData.confirmPin]);
 
   const validateForm = (): boolean => {
     const newErrors: Partial<PinInfo> = {};
@@ -49,126 +45,123 @@ const PinStep: React.FC<PinStepProps> = ({ onSubmit, onBack, initialData }) => {
 
   const handleSubmit = () => {
     if (validateForm()) {
-      Keyboard.dismiss();
       onSubmit(formData);
-    }
-  };
-
-  const getPinMatchColor = () => {
-    switch (pinMatchStatus) {
-      case 'matching':
-        return '#6bff6b';
-      case 'not-matching':
-        return '#ff6b6b';
-      default:
-        return '#666';
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Create 5-digit PIN</Text>
-      <TextInput
-        style={[styles.input, errors.pin && styles.inputError]}
-        value={formData.pin}
-        onChangeText={(text) => setFormData(prev => ({ ...prev, pin: text }))}
-        placeholder="Enter 5-digit PIN"
-        keyboardType="numeric"
-        maxLength={5}
-        secureTextEntry
-      />
-      {errors.pin && <Text style={styles.errorText}>{errors.pin}</Text>}
+      <Text style={[styles.title, isDark && styles.titleDark]}>Payment PIN Setup</Text>
+      <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>
+        Create a secure 5-digit PIN for transactions
+      </Text>
 
-      <Text style={styles.label}>Confirm PIN</Text>
-      <TextInput
-        style={[
-          styles.input,
-          errors.confirmPin && styles.inputError,
-          formData.confirmPin && {
-            borderColor: getPinMatchColor(),
-          },
-        ]}
-        value={formData.confirmPin}
-        onChangeText={(text) => setFormData(prev => ({ ...prev, confirmPin: text }))}
-        placeholder="Confirm 5-digit PIN"
-        keyboardType="numeric"
-        maxLength={5}
-        secureTextEntry
-      />
-      {formData.confirmPin && (
-        <Text style={[styles.matchText, { color: getPinMatchColor() }]}>
-          {pinMatchStatus === 'matching' ? '✓ PINs match' : '✗ PINs do not match'}
+      <View style={[styles.warningBox, isDark && styles.warningBoxDark]}>
+        <ShieldAlert size={24} color={isDark ? '#FFD700' : '#D97706'} />
+        <Text style={[styles.warningText, isDark && styles.warningTextDark]}>
+          This PIN will be required for all future transactions. Keep it secure and never share it with anyone.
         </Text>
-      )}
-      {errors.confirmPin && <Text style={styles.errorText}>{errors.confirmPin}</Text>}
+      </View>
 
-      <View style={styles.buttonContainer}>
-        <Text style={styles.backButton} onPress={onBack}>
-          Back
-        </Text>
-        <Text style={styles.submitButton} onPress={handleSubmit}>
-          Complete Signup
-        </Text>
+      <View style={styles.form}>
+        <FormInput
+          label="Payment PIN"
+          value={formData.pin}
+          onChangeText={(text) => {
+            setFormData(prev => ({ ...prev, pin: text }));
+            if (errors.pin) setErrors(prev => ({ ...prev, pin: '' }));
+          }}
+          placeholder="Enter 5-digit PIN"
+          keyboardType="numeric"
+          maxLength={5}
+          secureTextEntry
+          error={errors.pin}
+        />
+
+        <FormInput
+          label="Confirm PIN"
+          value={formData.confirmPin}
+          onChangeText={(text) => {
+            setFormData(prev => ({ ...prev, confirmPin: text }));
+            if (errors.confirmPin) setErrors(prev => ({ ...prev, confirmPin: '' }));
+          }}
+          placeholder="Confirm 5-digit PIN"
+          keyboardType="numeric"
+          maxLength={5}
+          secureTextEntry
+          error={errors.confirmPin}
+        />
+
+        <View style={styles.buttonContainer}>
+          <Button
+            title="Back"
+            onPress={onBack}
+            variant="outline"
+            style={styles.button}
+          />
+          <Button
+            title="Complete Setup"
+            onPress={handleSubmit}
+            style={styles.button}
+          />
+        </View>
       </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    flex: 1,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
+  title: {
+    fontSize: 24,
+    fontFamily: 'Inter-Bold',
+    color: '#2C2C2C',
     marginBottom: 8,
-    color: '#333',
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
+  titleDark: {
+    color: '#FFFFFF',
+  },
+  subtitle: {
     fontSize: 16,
-    marginBottom: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#6B6B6B',
+    marginBottom: 24,
   },
-  inputError: {
-    borderColor: '#ff6b6b',
+  subtitleDark: {
+    color: '#A6A6A6',
   },
-  errorText: {
-    color: '#ff6b6b',
-    fontSize: 12,
-    marginTop: -12,
-    marginBottom: 16,
+  warningBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    gap: 12,
   },
-  matchText: {
-    fontSize: 12,
-    marginTop: -12,
-    marginBottom: 16,
+  warningBoxDark: {
+    backgroundColor: '#292524',
+  },
+  warningText: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#92400E',
+  },
+  warningTextDark: {
+    color: '#FCD34D',
+  },
+  form: {
+    gap: 16,
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
+    gap: 12,
+    marginTop: 24,
   },
-  backButton: {
-    backgroundColor: '#f0f0f0',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  submitButton: {
-    backgroundColor: '#FFD700',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
+  button: {
+    flex: 1,
   },
 });
-
-export default PinStep; 
