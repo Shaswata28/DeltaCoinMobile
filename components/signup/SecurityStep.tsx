@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, Keyboard, useColorScheme } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Keyboard, useColorScheme, TouchableOpacity } from 'react-native';
 import { validateUsername, validatePassword, validatePasswordMatch, getPasswordStrengthText } from '@/utils/validation';
 import { Button } from '@/components/common/Button';
 import { Eye, EyeOff, CircleAlert as AlertCircle, CircleCheck as CheckCircle2 } from 'lucide-react-native';
@@ -142,17 +142,16 @@ const SecurityStep: React.FC<SecurityStepProps> = ({ onNext, onBack, initialData
             autoCapitalize="none"
             autoComplete="new-password"
           />
-          <Button
+          <TouchableOpacity
             onPress={() => setShowPassword(!showPassword)}
             style={styles.eyeButton}
-            variant="outline"
           >
             {showPassword ? (
               <EyeOff size={20} color={isDark ? '#A6A6A6' : '#6B6B6B'} />
             ) : (
               <Eye size={20} color={isDark ? '#A6A6A6' : '#6B6B6B'} />
             )}
-          </Button>
+          </TouchableOpacity>
         </View>
         
         <View style={styles.strengthIndicator}>
@@ -209,17 +208,16 @@ const SecurityStep: React.FC<SecurityStepProps> = ({ onNext, onBack, initialData
             autoCapitalize="none"
             autoComplete="new-password"
           />
-          <Button
+          <TouchableOpacity
             onPress={() => setShowConfirmPassword(!showConfirmPassword)}
             style={styles.eyeButton}
-            variant="outline"
           >
             {showConfirmPassword ? (
               <EyeOff size={20} color={isDark ? '#A6A6A6' : '#6B6B6B'} />
             ) : (
               <Eye size={20} color={isDark ? '#A6A6A6' : '#6B6B6B'} />
             )}
-          </Button>
+          </TouchableOpacity>
         </View>
         {errors.confirmPassword && (
           <Animated.Text 
