@@ -1,87 +1,43 @@
 import { Tabs } from 'expo-router';
-import { Chrome as Home, ArrowLeftRight, ChartBar as BarChart2, CircleHelp as HelpCircle, Settings, User } from 'lucide-react-native';
-import { useColorScheme, Platform, Dimensions } from 'react-native';
+import { Home, Settings } from 'lucide-react-native';
+import { Platform } from 'react-native';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const { width } = Dimensions.get('window');
-  const isSmallScreen = width < 375;
-
   return (
     <Tabs screenOptions={{
-      tabBarActiveTintColor: isDark ? '#82B1FF' : '#4D9FFF',
-      tabBarInactiveTintColor: isDark ? '#A6A6A6' : '#6B6B6B',
       tabBarShowLabel: false,
+      tabBarActiveTintColor: '#FFD700',
+      tabBarInactiveTintColor: '#808080',
       tabBarStyle: {
-        borderTopColor: isDark ? '#2E2E2E' : '#E0E0E0',
-        backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
-        height: Platform.select({ ios: 80, android: 60, default: 56 }),
-        paddingBottom: Platform.select({ ios: 28, android: 8, default: 8 }),
-        paddingTop: Platform.select({ ios: 8, android: 8, default: 8 }),
-      },
-      tabBarIconStyle: {
-        marginTop: Platform.select({ ios: 0, android: 0, default: 0 }),
+        backgroundColor: '#FFFFFF',
+        height: Platform.OS === 'ios' ? '8%' : 64,
+        paddingBottom: 10,
+        borderTopWidth: 0,
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
       },
       headerShown: false,
+      tabBarIconStyle: {
+        marginTop: Platform.OS === 'ios' ? 10 : 0,
+      },
+      tabBarAdaptive: true,
     }}>
       <Tabs.Screen
         name="index"
         options={{
           tabBarIcon: ({ color }) => (
-            <Home 
-              size={isSmallScreen ? 20 : 24} 
-              color={color} 
-              strokeWidth={2.5}
-            />
+            <Home size={24} color={color} strokeWidth={2} />
           ),
         }}
       />
       <Tabs.Screen
-        name="transactions"
+        name="settings"
         options={{
           tabBarIcon: ({ color }) => (
-            <ArrowLeftRight 
-              size={isSmallScreen ? 20 : 24} 
-              color={color} 
-              strokeWidth={2.5}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="analytics"
-        options={{
-          tabBarIcon: ({ color }) => (
-            <BarChart2 
-              size={isSmallScreen ? 20 : 24} 
-              color={color} 
-              strokeWidth={2.5}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="help"
-        options={{
-          tabBarIcon: ({ color }) => (
-            <HelpCircle 
-              size={isSmallScreen ? 20 : 24} 
-              color={color} 
-              strokeWidth={2.5}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          tabBarIcon: ({ color }) => (
-            <User 
-              size={isSmallScreen ? 20 : 24} 
-              color={color} 
-              strokeWidth={2.5}
-            />
+            <Settings size={24} color={color} strokeWidth={2} />
           ),
         }}
       />
