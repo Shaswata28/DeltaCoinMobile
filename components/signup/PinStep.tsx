@@ -51,10 +51,13 @@ export default function PinStep({ onSubmit, onBack, initialData }: PinStepProps)
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.title, isDark && styles.titleDark]}>Payment PIN Setup</Text>
-      <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>
-        Create a secure 5-digit PIN for transactions
-      </Text>
+      <View style={styles.header}>
+        <Text style={[styles.step, isDark && styles.stepDark]}>Step 3 of 3</Text>
+        <Text style={[styles.title, isDark && styles.titleDark]}>Payment PIN Setup</Text>
+        <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>
+          Create a secure 5-digit PIN for transactions
+        </Text>
+      </View>
 
       <View style={[styles.warningBox, isDark && styles.warningBoxDark]}>
         <ShieldAlert size={24} color={isDark ? '#FFD700' : '#D97706'} />
@@ -114,8 +117,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  header: {
+    marginBottom: 32,
+  },
+  step: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#FFD700',
+    marginBottom: 8,
+  },
+  stepDark: {
+    color: '#FFD700',
+  },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontFamily: 'Inter-Bold',
     color: '#2C2C2C',
     marginBottom: 8,
@@ -127,7 +142,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter-Regular',
     color: '#6B6B6B',
-    marginBottom: 24,
   },
   subtitleDark: {
     color: '#A6A6A6',
@@ -138,7 +152,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEF3C7',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 24,
+    marginBottom: 32,
     gap: 12,
   },
   warningBoxDark: {
@@ -154,12 +168,12 @@ const styles = StyleSheet.create({
     color: '#FCD34D',
   },
   form: {
-    gap: 16,
+    gap: 20,
   },
   buttonContainer: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 24,
+    marginTop: 32,
   },
   button: {
     flex: 1,

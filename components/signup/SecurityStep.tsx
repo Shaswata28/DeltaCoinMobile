@@ -80,10 +80,13 @@ export default function SecurityStep({ onNext, onBack, initialData }: SecuritySt
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.title, isDark && styles.titleDark]}>Security Setup</Text>
-      <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>
-        Create your login credentials
-      </Text>
+      <View style={styles.header}>
+        <Text style={[styles.step, isDark && styles.stepDark]}>Step 2 of 3</Text>
+        <Text style={[styles.title, isDark && styles.titleDark]}>Security Setup</Text>
+        <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>
+          Create your login credentials
+        </Text>
+      </View>
 
       <View style={styles.form}>
         <FormInput
@@ -160,7 +163,7 @@ export default function SecurityStep({ onNext, onBack, initialData }: SecuritySt
             style={styles.button}
           />
           <Button
-            title="Next"
+            title="Continue to PIN Setup"
             onPress={handleNext}
             style={styles.button}
           />
@@ -174,8 +177,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  header: {
+    marginBottom: 32,
+  },
+  step: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#FFD700',
+    marginBottom: 8,
+  },
+  stepDark: {
+    color: '#FFD700',
+  },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontFamily: 'Inter-Bold',
     color: '#2C2C2C',
     marginBottom: 8,
@@ -187,13 +202,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter-Regular',
     color: '#6B6B6B',
-    marginBottom: 24,
   },
   subtitleDark: {
     color: '#A6A6A6',
   },
   form: {
-    gap: 16,
+    gap: 20,
   },
   strengthIndicator: {
     marginTop: 8,
@@ -216,7 +230,7 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 24,
+    marginTop: 32,
   },
   button: {
     flex: 1,

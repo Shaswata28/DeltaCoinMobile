@@ -59,10 +59,13 @@ export default function StudentInfoStep({ onNext, initialData }: StudentInfoStep
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.title, isDark && styles.titleDark]}>Student Information</Text>
-      <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>
-        Please provide your basic information to get started
-      </Text>
+      <View style={styles.header}>
+        <Text style={[styles.step, isDark && styles.stepDark]}>Step 1 of 3</Text>
+        <Text style={[styles.title, isDark && styles.titleDark]}>Student Information</Text>
+        <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>
+          Please provide your basic information to get started
+        </Text>
+      </View>
 
       <View style={styles.form}>
         <FormInput
@@ -110,7 +113,7 @@ export default function StudentInfoStep({ onNext, initialData }: StudentInfoStep
         />
 
         <Button
-          title="Next"
+          title="Continue to Security Setup"
           onPress={handleNext}
           style={styles.button}
         />
@@ -123,8 +126,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  header: {
+    marginBottom: 32,
+  },
+  step: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#FFD700',
+    marginBottom: 8,
+  },
+  stepDark: {
+    color: '#FFD700',
+  },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontFamily: 'Inter-Bold',
     color: '#2C2C2C',
     marginBottom: 8,
@@ -136,15 +151,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter-Regular',
     color: '#6B6B6B',
-    marginBottom: 24,
   },
   subtitleDark: {
     color: '#A6A6A6',
   },
   form: {
-    gap: 16,
+    gap: 20,
   },
   button: {
-    marginTop: 24,
+    marginTop: 32,
   },
 });

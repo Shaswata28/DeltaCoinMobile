@@ -4,12 +4,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 
-import Stepper from '@/components/Stepper';
 import StudentInfoStep from '@/components/signup/StudentInfoStep';
 import SecurityStep from '@/components/signup/SecurityStep';
 import PinStep from '@/components/signup/PinStep';
-
-const steps = ['Student Info', 'Security', 'PIN'];
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -83,7 +80,6 @@ export default function SignupScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}
       >
-        <Stepper currentStep={currentStep} steps={steps} />
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
