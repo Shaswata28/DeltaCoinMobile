@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, Keyboard, useColorScheme } from 'react-native';
 import { validateUsername, validatePassword, validatePasswordMatch, getPasswordStrengthText } from '@/utils/validation';
 import { Button } from '@/components/common/Button';
-import { Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react-native';
+import { Eye, EyeOff, CircleAlert as AlertCircle, CircleCheck as CheckCircle2 } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 interface SecurityStepProps {
