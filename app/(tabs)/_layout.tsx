@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Chrome as Home, ChartBar as BarChart3, CircleHelp as HelpCircle, Settings, History } from 'lucide-react-native';
+import { Home, ChartBar as BarChart3, CircleHelp as HelpCircle, Settings, History, User } from 'lucide-react-native';
 import { Platform, useColorScheme } from 'react-native';
 
 export default function TabLayout() {
@@ -57,6 +57,14 @@ export default function TabLayout() {
         options={{
           tabBarIcon: ({ color }) => (
             <HelpCircle size={24} color={color} strokeWidth={2} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          tabBarIcon: ({ color }) => (
+            <User size={24} color={color} strokeWidth={2} />
           ),
         }}
       />
