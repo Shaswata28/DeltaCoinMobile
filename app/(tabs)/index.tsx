@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, useColorScheme, useWindowDimensions } from 'react-native';
 import { ArrowUpRight, ArrowDownRight, QrCode, Send, Wallet, Receipt, Clock, ChevronRight, Users } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 
@@ -22,6 +22,7 @@ interface BudgetCategory {
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const { width: windowWidth } = useWindowDimensions();
   const [greeting, setGreeting] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
@@ -92,6 +93,11 @@ export default function HomeScreen() {
 
   const spendingProgress = (monthlySpent / monthlyLimit) * 100;
 
+  // Calculate dynamic sizes based on screen width
+  const actionButtonSize = Math.min(Math.max(windowWidth * 0.18, 60), 80);
+  const iconSize = Math.min(Math.max(windowWidth * 0.06, 24), 32);
+  const fontSize = Math.min(Math.max(windowWidth * 0.03, 12), 14);
+
   return (
     <ScrollView 
       style={[styles.container, isDark && styles.containerDark]}
@@ -144,21 +150,84 @@ export default function HomeScreen() {
         entering={FadeInDown.delay(400).duration(600).springify()}
         style={styles.quickActions}
       >
-        <TouchableOpacity style={[styles.actionButton, isDark && styles.actionButtonDark]}>
-          <Send size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />
-          <Text style={[styles.actionText, isDark && styles.textDark]}>Send</Text>
+        <TouchableOpacity 
+          style={[
+            styles.actionButton, 
+            isDark && styles.actionButtonDark,
+            { width: actionButtonSize, height: actionButtonSize }
+          ]}
+        >
+          <Send size={iconSize} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+          <Text 
+            style={[
+              styles.actionText, 
+              isDark && styles.textDark,
+              { fontSize }
+            ]} 
+            numberOfLines={1}
+          >
+            Send
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, isDark && styles.actionButtonDark]}>
-          <Receipt size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />
-          <Text style={[styles.actionText, isDark && styles.textDark]}>Request</Text>
+        
+        <TouchableOpacity 
+          style={[
+            styles.actionButton, 
+            isDark && styles.actionButtonDark,
+            { width: actionButtonSize, height: actionButtonSize }
+          ]}
+        >
+          <Receipt size={iconSize} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+          <Text 
+            style={[
+              styles.actionText, 
+              isDark && styles.textDark,
+              { fontSize }
+            ]} 
+            numberOfLines={1}
+          >
+            Request
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, isDark && styles.actionButtonDark]}>
-          <QrCode size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />
-          <Text style={[styles.actionText, isDark && styles.textDark]}>Scan</Text>
+        
+        <TouchableOpacity 
+          style={[
+            styles.actionButton, 
+            isDark && styles.actionButtonDark,
+            { width: actionButtonSize, height: actionButtonSize }
+          ]}
+        >
+          <QrCode size={iconSize} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+          <Text 
+            style={[
+              styles.actionText, 
+              isDark && styles.textDark,
+              { fontSize }
+            ]} 
+            numberOfLines={1}
+          >
+            Scan
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, isDark && styles.actionButtonDark]}>
-          <Wallet size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />
-          <Text style={[styles.actionText, isDark && styles.textDark]}>Top Up</Text>
+        
+        <TouchableOpacity 
+          style={[
+            styles.actionButton, 
+            isDark && styles.actionButtonDark,
+            { width: actionButtonSize, height: actionButtonSize }
+          ]}
+        >
+          <Wallet size={iconSize} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+          <Text 
+            style={[
+              styles.actionText, 
+              isDark && styles.textDark,
+              { fontSize }
+            ]} 
+            numberOfLines={1}
+          >
+            Top Up
+          </Text>
         </TouchableOpacity>
       </Animated.View>
 
@@ -324,13 +393,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter-Medium',
     color: '#6B7280',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   balanceAmount: {
-    fontSize: 36,
+    fontSize: 32,
     fontFamily: 'Inter-Bold',
     color: '#1F2937',
-    marginBottom: 8,
   },
   balanceChange: {
     flexDirection: 'row',
@@ -353,9 +421,9 @@ const styles = StyleSheet.create({
   actionButton: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: 16,
+    padding: 12,
     alignItems: 'center',
-    width: '22%',
+    justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -366,10 +434,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E1E1E',
   },
   actionText: {
-    fontSize: 12,
     fontFamily: 'Inter-Medium',
     color: '#1F2937',
     marginTop: 8,
+    textAlign: 'center',
   },
   section: {
     marginBottom: 24,
