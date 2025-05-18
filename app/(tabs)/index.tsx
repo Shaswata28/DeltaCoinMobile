@@ -119,12 +119,17 @@ export default function HomeScreen() {
         entering={FadeInDown.delay(200).duration(600).springify()}
         style={[styles.balanceCard, isDark && styles.balanceCardDark]}
       >
-        <Text style={[styles.balanceLabel, isDark && styles.textLightDark]}>
-          Total Balance
-        </Text>
-        <Text style={[styles.balanceAmount, isDark && styles.textDark]}>
-          {formatCurrency(balance)}
-        </Text>
+        <View style={styles.balanceHeader}>
+          <Wallet size={48} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+          <View style={styles.balanceTextContainer}>
+            <Text style={[styles.balanceLabel, isDark && styles.textLightDark]}>
+              Total Balance
+            </Text>
+            <Text style={[styles.balanceAmount, isDark && styles.textDark]}>
+              {formatCurrency(balance)}
+            </Text>
+          </View>
+        </View>
         <View style={styles.balanceChange}>
           <ArrowUpRight 
             size={20} 
@@ -305,6 +310,15 @@ const styles = StyleSheet.create({
   },
   balanceCardDark: {
     backgroundColor: '#1E1E1E',
+  },
+  balanceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  balanceTextContainer: {
+    marginLeft: 16,
+    flex: 1,
   },
   balanceLabel: {
     fontSize: 14,
