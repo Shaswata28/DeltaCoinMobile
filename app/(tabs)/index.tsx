@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, useColorScheme } from 'react-native';
-import { ArrowUpRight, ArrowDownRight, QrCode, Send, Wallet, Receipt, Clock, ChevronRight, Users, CreditCard, Smartphone } from 'lucide-react-native';
+import { ArrowUpRight, ArrowDownRight, QrCode, Send, Wallet, Receipt, Clock, ChevronRight, Users } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 
 interface Transaction {
@@ -50,29 +50,6 @@ export default function HomeScreen() {
       icon: <Users size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />
     },
   ]);
-
-  const quickActions = [
-    {
-      icon: <Send size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
-      label: 'Transfer',
-      onPress: () => console.log('Transfer pressed')
-    },
-    {
-      icon: <CreditCard size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
-      label: 'Pay Bills',
-      onPress: () => console.log('Pay Bills pressed')
-    },
-    {
-      icon: <QrCode size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
-      label: 'Scan QR',
-      onPress: () => console.log('Scan QR pressed')
-    },
-    {
-      icon: <Smartphone size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
-      label: 'Mobile Top-up',
-      onPress: () => console.log('Top-up pressed')
-    }
-  ];
 
   useEffect(() => {
     const updateGreeting = () => {
@@ -167,18 +144,22 @@ export default function HomeScreen() {
         entering={FadeInDown.delay(400).duration(600).springify()}
         style={styles.quickActions}
       >
-        {quickActions.map((action, index) => (
-          <TouchableOpacity 
-            key={action.label}
-            style={[styles.actionButton, isDark && styles.actionButtonDark]}
-            onPress={action.onPress}
-          >
-            {action.icon}
-            <Text style={[styles.actionText, isDark && styles.textDark]}>
-              {action.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        <TouchableOpacity style={[styles.actionButton, isDark && styles.actionButtonDark]}>
+          <Send size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+          <Text style={[styles.actionText, isDark && styles.textDark]}>Send</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.actionButton, isDark && styles.actionButtonDark]}>
+          <Receipt size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+          <Text style={[styles.actionText, isDark && styles.textDark]}>Request</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.actionButton, isDark && styles.actionButtonDark]}>
+          <QrCode size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+          <Text style={[styles.actionText, isDark && styles.textDark]}>Scan</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.actionButton, isDark && styles.actionButtonDark]}>
+          <Wallet size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+          <Text style={[styles.actionText, isDark && styles.textDark]}>Top Up</Text>
+        </TouchableOpacity>
       </Animated.View>
 
       <View style={styles.section}>
@@ -343,17 +324,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter-Medium',
     color: '#6B7280',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   balanceAmount: {
-    fontSize: 32,
+    fontSize: 36,
     fontFamily: 'Inter-Bold',
     color: '#1F2937',
+    marginBottom: 8,
   },
   balanceChange: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
   },
   balanceIcon: {
     marginRight: 4,
@@ -374,7 +355,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
-    width: '23%',
+    width: '22%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -389,7 +370,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
     color: '#1F2937',
     marginTop: 8,
-    textAlign: 'center',
   },
   section: {
     marginBottom: 24,
