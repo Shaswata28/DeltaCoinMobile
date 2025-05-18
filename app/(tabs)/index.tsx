@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, useColorScheme } from 'react-native';
 import { ArrowUpRight, ArrowDownRight, QrCode, Send, Wallet, Receipt, Clock, ChevronRight, Users } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 
@@ -11,11 +11,20 @@ interface Transaction {
   timestamp: Date;
 }
 
+interface BudgetCategory {
+  id: string;
+  name: string;
+  spent: number;
+  limit: number;
+  icon: React.ReactNode;
+}
+
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [greeting, setGreeting] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [refreshing, setRefreshing] = useState(false);
   const [balance] = useState(5000.75);
   const [monthlySpent] = useState(750.25);
   const [monthlyLimit] = useState(2000);
@@ -23,6 +32,23 @@ export default function HomeScreen() {
     { id: '1', type: 'receive', amount: 250.00, recipient: 'Sarah Johnson', timestamp: new Date(2024, 2, 15, 14, 30) },
     { id: '2', type: 'send', amount: 75.50, recipient: 'Coffee Shop', timestamp: new Date(2024, 2, 15, 10, 15) },
     { id: '3', type: 'send', amount: 120.00, recipient: 'Book Store', timestamp: new Date(2024, 2, 14, 16, 45) },
+  ]);
+
+  const [budgetCategories] = useState<BudgetCategory[]>([
+    { 
+      id: '1', 
+      name: 'Food & Dining', 
+      spent: 450, 
+      limit: 600,
+      icon: <Receipt size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+    },
+    { 
+      id: '2', 
+      name: 'Transportation', 
+      spent: 200, 
+      limit: 300,
+      icon: <Users size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+    },
   ]);
 
   useEffect(() => {
@@ -57,12 +83,22 @@ export default function HomeScreen() {
     });
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    setRefreshing(false);
+  };
+
   const spendingProgress = (monthlySpent / monthlyLimit) * 100;
 
   return (
     <ScrollView 
       style={[styles.container, isDark && styles.containerDark]}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
     >
       <View style={styles.header}>
         <Animated.View entering={FadeInDown.duration(600).springify()}>
