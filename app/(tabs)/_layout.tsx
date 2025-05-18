@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Home, ChartLine as LineChart, CircleHelp as HelpCircle, Settings, History, User } from 'lucide-react-native';
+import { Home, ChartLine as LineChart, CircleHelp as HelpCircle, Settings, ArrowLeftRight, User } from 'lucide-react-native';
 import { Platform, useColorScheme } from 'react-native';
 
 export default function TabLayout() {
@@ -40,7 +40,7 @@ export default function TabLayout() {
         name="transactions"
         options={{
           tabBarIcon: ({ color }) => (
-            <History size={24} color={color} strokeWidth={2} />
+            <ArrowLeftRight size={24} color={color} strokeWidth={2} />
           ),
         }}
       />
