@@ -125,16 +125,17 @@ export default function HomeScreen() {
         entering={FadeInDown.delay(200).duration(600).springify()}
         style={[styles.balanceCard, isDark && styles.balanceCardDark]}
       >
-        <View style={styles.balanceHeader}>
-          <Wallet size={48} color={isDark ? '#82B1FF' : '#4D9FFF'} />
-          <View style={styles.balanceTextContainer}>
-            <Text style={[styles.balanceLabel, isDark && styles.textLightDark]}>
-              Total Balance
-            </Text>
-            <Text style={[styles.balanceAmount, isDark && styles.textDark]}>
-              {formatCurrency(balance)}
-            </Text>
-          </View>
+        <View style={[styles.cardLeftSection, isDark && styles.cardLeftSectionDark]}>
+          <Wallet size={32} color={isDark ? '#FFD700' : '#FFFFFF'} />
+        </View>
+        <View style={[styles.cardRightSection, isDark && styles.cardRightSectionDark]}>
+          <Text style={[styles.balanceLabel, isDark && styles.textLightDark]}>
+            Available Balance
+          </Text>
+          <Text style={[styles.balanceAmount, isDark && styles.textDark]}>
+            {formatCurrency(balance)}
+          </Text>
+          <View style={styles.cardDecoration} />
         </View>
       </Animated.View>
 
@@ -358,11 +359,12 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   balanceCard: {
-    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
     borderRadius: 16,
-    padding: 20,
     marginHorizontal: 20,
     marginBottom: 20,
+    overflow: 'hidden',
+    height: 100,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -372,14 +374,24 @@ const styles = StyleSheet.create({
   balanceCardDark: {
     backgroundColor: '#1E1E1E',
   },
-  balanceHeader: {
-    flexDirection: 'row',
+  cardLeftSection: {
+    width: 80,
+    backgroundColor: '#4D9FFF',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
   },
-  balanceTextContainer: {
-    marginLeft: 16,
+  cardLeftSectionDark: {
+    backgroundColor: '#2C2C2C',
+  },
+  cardRightSection: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  cardRightSectionDark: {
+    backgroundColor: '#1E1E1E',
   },
   balanceLabel: {
     fontSize: 14,
@@ -388,9 +400,18 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   balanceAmount: {
-    fontSize: 32,
+    fontSize: 28,
     fontFamily: 'Inter-Bold',
     color: '#1F2937',
+  },
+  cardDecoration: {
+    position: 'absolute',
+    top: 0,
+    left: -20,
+    width: 40,
+    height: '100%',
+    backgroundColor: '#4D9FFF',
+    transform: [{ skewX: '-10deg' }],
   },
   quickActions: {
     flexDirection: 'row',
