@@ -126,7 +126,7 @@ export default function HomeScreen() {
         style={[styles.balanceCard, isDark && styles.balanceCardDark]}
       >
         <View style={[styles.cardLeftSection, isDark && styles.cardLeftSectionDark]}>
-          <Wallet size={32} color={isDark ? '#FFD700' : '#FFFFFF'} />
+          <Wallet size={32} color="#FFD700" />
         </View>
         <View style={[styles.cardRightSection, isDark && styles.cardRightSectionDark]}>
           <Text style={[styles.balanceLabel, isDark && styles.textLightDark]}>
@@ -135,7 +135,6 @@ export default function HomeScreen() {
           <Text style={[styles.balanceAmount, isDark && styles.textDark]}>
             {formatCurrency(balance)}
           </Text>
-          <View style={styles.cardDecoration} />
         </View>
       </Animated.View>
 
@@ -360,7 +359,7 @@ const styles = StyleSheet.create({
   },
   balanceCard: {
     flexDirection: 'row',
-    borderRadius: 16,
+    borderRadius: 20,
     marginHorizontal: 20,
     marginBottom: 20,
     overflow: 'hidden',
@@ -375,20 +374,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E1E1E',
   },
   cardLeftSection: {
-    width: 80,
-    backgroundColor: '#4D9FFF',
+    width: 100,
+    backgroundColor: '#2C3E50',
     justifyContent: 'center',
     alignItems: 'center',
+    borderTopLeftRadius: 20,
+    borderBottomLeftRadius: 20,
   },
   cardLeftSectionDark: {
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#2C3E50',
   },
   cardRightSection: {
     flex: 1,
     backgroundColor: '#FFFFFF',
     padding: 20,
+    paddingLeft: 30,
     justifyContent: 'center',
-    position: 'relative',
   },
   cardRightSectionDark: {
     backgroundColor: '#1E1E1E',
@@ -403,15 +404,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontFamily: 'Inter-Bold',
     color: '#1F2937',
-  },
-  cardDecoration: {
-    position: 'absolute',
-    top: 0,
-    left: -20,
-    width: 40,
-    height: '100%',
-    backgroundColor: '#4D9FFF',
-    transform: [{ skewX: '-10deg' }],
   },
   quickActions: {
     flexDirection: 'row',
