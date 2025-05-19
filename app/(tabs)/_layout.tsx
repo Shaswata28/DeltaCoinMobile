@@ -12,7 +12,7 @@ export default function TabLayout() {
       tabBarActiveTintColor: '#FFD700',
       tabBarInactiveTintColor: isDark ? '#A6A6A6' : '#808080',
       tabBarStyle: {
-        backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
+        backgroundColor: isDark ? '#1E1E1E' : '#4D9FFF',
         height: Platform.OS === 'ios' ? '8%' : 64,
         paddingBottom: 10,
         borderTopWidth: 0,

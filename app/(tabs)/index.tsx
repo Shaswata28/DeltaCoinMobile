@@ -1,4 +1,75 @@
-ionButton, 
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, useWindowDimensions } from 'react-native';
+import { Wallet, ArrowUpRight, ArrowDownRight, QrCode, Users } from 'lucide-react-native';
+import Animated, { FadeInRight, FadeInDown } from 'react-native-reanimated';
+import { formatCurrency, formatTime } from '@/utils/format';
+
+const monthlySpent = 2450;
+const monthlyLimit = 3000;
+const spendingProgress = (monthlySpent / monthlyLimit) * 100;
+
+const recentTransactions = [
+  { id: '1', type: 'send', recipient: 'John Doe', amount: 50, timestamp: new Date() },
+  { id: '2', type: 'receive', recipient: 'Sarah Smith', amount: 120, timestamp: new Date() },
+  { id: '3', type: 'send', recipient: 'Coffee Shop', amount: 4.50, timestamp: new Date() },
+];
+
+export default function HomeScreen() {
+  const { width } = useWindowDimensions();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  // Calculate responsive sizes
+  const actionButtonSize = Math.min(Math.max(width * 0.18, 60), 80);
+  const iconSize = actionButtonSize * 0.4;
+  const fontSize = Math.min(Math.max(width * 0.03, 12), 14);
+
+  return (
+    <ScrollView 
+      style={[styles.container, isDark && styles.containerDark]}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.header}>
+        <Text style={[styles.greeting, isDark && styles.textDark]}>Good Morning</Text>
+        <Text style={[styles.date, isDark && styles.textLightDark]}>
+          {new Date().toLocaleDateString('en-US', { 
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })}
+        </Text>
+      </View>
+
+      <Animated.View 
+        entering={FadeInDown.duration(600).springify()}
+        style={[styles.balanceCard, isDark && styles.balanceCardDark]}
+      >
+        <View style={styles.balanceHeader}>
+          <View style={[styles.walletIconContainer, isDark && styles.walletIconContainerDark]}>
+            <Wallet size={48} color="#FFD700" strokeWidth={2} />
+          </View>
+          <View style={styles.balanceTextContainer}>
+            <Text style={[styles.balanceLabel, isDark && styles.textLightDark]}>
+              Available Balance
+            </Text>
+            <Text style={[styles.balanceAmount, isDark && styles.textDark]}>
+              {formatCurrency(12345.67)}
+            </Text>
+            <View style={styles.balanceChange}>
+              <ArrowUpRight size={16} color="#10B981" style={styles.balanceIcon} />
+              <Text style={styles.balanceChangeText}>+2.5%</Text>
+            </View>
+          </View>
+        </View>
+      </Animated.View>
+
+      <Animated.View 
+        entering={FadeInDown.delay(200).duration(600).springify()}
+        style={styles.quickActions}
+      >
+        <TouchableOpacity 
+          style={[
+            styles.actionButton, 
             isDark && styles.actionButtonDark,
             { width: actionButtonSize, height: actionButtonSize }
           ]}
@@ -172,7 +243,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   balanceCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#4D9FFF',
     borderRadius: 16,
     padding: 20,
     marginHorizontal: 20,
@@ -184,12 +255,24 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   balanceCardDark: {
-    backgroundColor: '#1E1E1E',
+    backgroundColor: '#82B1FF',
   },
   balanceHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
+  },
+  walletIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  walletIconContainerDark: {
+    backgroundColor: '#1E1E1E',
   },
   balanceTextContainer: {
     marginLeft: 16,
@@ -198,13 +281,13 @@ const styles = StyleSheet.create({
   balanceLabel: {
     fontSize: 14,
     fontFamily: 'Inter-Medium',
-    color: '#6B7280',
+    color: '#FFFFFF',
     marginBottom: 4,
   },
   balanceAmount: {
     fontSize: 32,
     fontFamily: 'Inter-Bold',
-    color: '#1F2937',
+    color: '#FFFFFF',
   },
   balanceChange: {
     flexDirection: 'row',
