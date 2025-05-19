@@ -1,4 +1,190 @@
-ionButton, 
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, useColorScheme, useWindowDimensions } from 'react-native';
+import { ArrowUpRight, ArrowDownRight, QrCode, Send, Wallet, Receipt, Clock, ChevronRight, Users } from 'lucide-react-native';
+import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
+
+interface Transaction {
+  id: string;
+  type: 'send' | 'receive';
+  amount: number;
+  recipient: string;
+  timestamp: Date;
+}
+
+interface BudgetCategory {
+  id: string;
+  name: string;
+  spent: number;
+  limit: number;
+  icon: React.ReactNode;
+}
+
+export default function HomeScreen() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const { width: windowWidth } = useWindowDimensions();
+  const [greeting, setGreeting] = useState('');
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [refreshing, setRefreshing] = useState(false);
+  const [balance] = useState(5000.75);
+  const [monthlySpent] = useState(750.25);
+  const [monthlyLimit] = useState(2000);
+  const [recentTransactions] = useState<Transaction[]>([
+    { id: '1', type: 'receive', amount: 250.00, recipient: 'Sarah Johnson', timestamp: new Date(2024, 2, 15, 14, 30) },
+    { id: '2', type: 'send', amount: 75.50, recipient: 'Coffee Shop', timestamp: new Date(2024, 2, 15, 10, 15) },
+    { id: '3', type: 'send', amount: 120.00, recipient: 'Book Store', timestamp: new Date(2024, 2, 14, 16, 45) },
+  ]);
+
+  const [budgetCategories] = useState<BudgetCategory[]>([
+    { 
+      id: '1', 
+      name: 'Food & Dining', 
+      spent: 450, 
+      limit: 600,
+      icon: <Receipt size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+    },
+    { 
+      id: '2', 
+      name: 'Transportation', 
+      spent: 200, 
+      limit: 300,
+      icon: <Users size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+    },
+  ]);
+
+  useEffect(() => {
+    const updateGreeting = () => {
+      const hour = new Date().getHours();
+      if (hour < 12) setGreeting('Good Morning');
+      else if (hour < 17) setGreeting('Good Afternoon');
+      else setGreeting('Good Evening');
+    };
+
+    updateGreeting();
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+      updateGreeting();
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount);
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    setRefreshing(false);
+  };
+
+  const spendingProgress = (monthlySpent / monthlyLimit) * 100;
+
+  // Calculate dynamic sizes based on screen width
+  const actionButtonSize = Math.min(Math.max(windowWidth * 0.18, 60), 80);
+  const iconSize = Math.min(Math.max(windowWidth * 0.06, 24), 32);
+  const fontSize = Math.min(Math.max(windowWidth * 0.03, 12), 14);
+
+  return (
+    <ScrollView 
+      style={[styles.container, isDark && styles.containerDark]}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
+      <View style={styles.header}>
+        <Animated.View entering={FadeInDown.duration(600).springify()}>
+          <Text style={[styles.greeting, isDark && styles.textDark]}>
+            {greeting}, Alex
+          </Text>
+          <Text style={[styles.date, isDark && styles.textLightDark]}>
+            {currentTime.toLocaleDateString('en-US', { 
+              weekday: 'long',
+              month: 'long',
+              day: 'numeric'
+            })}
+          </Text>
+        </Animated.View>
+      </View>
+
+      <Animated.View 
+        entering={FadeInDown.delay(200).duration(600).springify()}
+        style={[styles.balanceCard, isDark && styles.balanceCardDark]}
+      >
+        <View style={styles.balanceHeader}>
+          <Wallet size={48} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+          <View style={styles.balanceTextContainer}>
+            <Text style={[styles.balanceLabel, isDark && styles.textLightDark]}>
+              Total Balance
+            </Text>
+            <Text style={[styles.balanceAmount, isDark && styles.textDark]}>
+              {formatCurrency(balance)}
+            </Text>
+          </View>
+        </View>
+      </Animated.View>
+
+      <Animated.View 
+        entering={FadeInDown.delay(400).duration(600).springify()}
+        style={styles.quickActions}
+      >
+        <TouchableOpacity 
+          style={[
+            styles.actionButton, 
+            isDark && styles.actionButtonDark,
+            { width: actionButtonSize, height: actionButtonSize }
+          ]}
+        >
+          <Send size={iconSize} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+          <Text 
+            style={[
+              styles.actionText, 
+              isDark && styles.textDark,
+              { fontSize }
+            ]} 
+            numberOfLines={1}
+          >
+            Send
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[
+            styles.actionButton, 
+            isDark && styles.actionButtonDark,
+            { width: actionButtonSize, height: actionButtonSize }
+          ]}
+        >
+          <Receipt size={iconSize} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+          <Text 
+            style={[
+              styles.actionText, 
+              isDark && styles.textDark,
+              { fontSize }
+            ]} 
+            numberOfLines={1}
+          >
+            Request
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[
+            styles.actionButton, 
             isDark && styles.actionButtonDark,
             { width: actionButtonSize, height: actionButtonSize }
           ]}
@@ -205,18 +391,6 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontFamily: 'Inter-Bold',
     color: '#1F2937',
-  },
-  balanceChange: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  balanceIcon: {
-    marginRight: 4,
-  },
-  balanceChangeText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#10B981',
   },
   quickActions: {
     flexDirection: 'row',
