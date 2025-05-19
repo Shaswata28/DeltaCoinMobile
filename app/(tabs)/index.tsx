@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, useWindowDimensions } from 'react-native';
 import { Wallet, ArrowUpRight, ArrowDownRight, QrCode, Users } from 'lucide-react-native';
 import Animated, { FadeInRight, FadeInDown } from 'react-native-reanimated';
-import { formatCurrency, formatTime } from '@/utils/format';
+import { formatCurrency, formatTime } from '../../utils/format';
 
 const monthlySpent = 2450;
 const monthlyLimit = 3000;
