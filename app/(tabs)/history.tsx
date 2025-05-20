@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme } from 'react-native';
 import { ArrowUpRight, ArrowDownRight, Filter, Calendar } from 'lucide-react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeIn, SlideInRight } from 'react-native-reanimated';
 
 interface Transaction {
   id: string;
@@ -103,7 +103,10 @@ export default function HistoryScreen() {
 
   return (
     <View style={[styles.container, isDark && styles.containerDark]}>
-      <View style={styles.header}>
+      <Animated.View 
+        entering={FadeIn.duration(300)}
+        style={styles.header}
+      >
         <Text style={[styles.title, isDark && styles.titleDark]}>Transaction History</Text>
         
         <View style={styles.headerControls}>
@@ -140,14 +143,14 @@ export default function HistoryScreen() {
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </Animated.View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.transactionList}>
           {filteredTransactions.map((transaction, index) => (
             <Animated.View
               key={transaction.id}
-              entering={FadeInDown.delay(index * 100).duration(400)}
+              entering={SlideInRight.duration(300).delay(index * 50)}
               style={[styles.transactionCard, isDark && styles.transactionCardDark]}
             >
               <View style={styles.transactionHeader}>
