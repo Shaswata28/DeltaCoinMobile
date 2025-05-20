@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, useColorScheme, useWindowDimensions } from 'react-native';
-import { ArrowUpRight, ArrowDownRight, QrCode, Send, Wallet, Receipt, Clock } from 'lucide-react-native';
+import { ArrowUpRight, ArrowDownRight, QrCode, Send, Wallet, Receipt, Clock, ChevronRight, CircleHelp as HelpCircle } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
+import { useRouter } from 'expo-router';
 
 interface Transaction {
   id: string;
@@ -11,15 +12,8 @@ interface Transaction {
   timestamp: Date;
 }
 
-interface BudgetCategory {
-  id: string;
-  name: string;
-  spent: number;
-  limit: number;
-  icon: React.ReactNode;
-}
-
 export default function HomeScreen() {
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { width: windowWidth } = useWindowDimensions();
@@ -76,11 +70,6 @@ export default function HomeScreen() {
 
   const spendingProgress = (monthlySpent / monthlyLimit) * 100;
 
-  // Calculate dynamic sizes based on screen width
-  const actionButtonSize = Math.min(Math.max(windowWidth * 0.18, 60), 80);
-  const iconSize = Math.min(Math.max(windowWidth * 0.06, 24), 32);
-  const fontSize = Math.min(Math.max(windowWidth * 0.03, 12), 14);
-
   return (
     <ScrollView 
       style={[styles.container, isDark && styles.containerDark]}
@@ -119,17 +108,33 @@ export default function HomeScreen() {
             {formatCurrency(balance)}
           </Text>
           <View style={styles.quickActions}>
-            <TouchableOpacity style={[styles.quickAction, isDark && styles.quickActionDark]}>
-              <Send size={20} color="#FFD700" />
-              <Text style={[styles.quickActionText, isDark && styles.quickActionTextDark]}>Send</Text>
+            <TouchableOpacity 
+              style={[styles.quickAction, isDark && styles.quickActionDark]}
+              onPress={() => router.push('/transactions')}
+            >
+              <Send size={24} color="#FFD700" />
+              <Text style={[styles.quickActionText, isDark && styles.quickActionTextDark]}>Pay</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.quickAction, isDark && styles.quickActionDark]}>
-              <Receipt size={20} color="#4D9FFF" />
-              <Text style={[styles.quickActionText, isDark && styles.quickActionTextDark]}>Request</Text>
+            <TouchableOpacity 
+              style={[styles.quickAction, isDark && styles.quickActionDark]}
+              onPress={() => router.push('/transactions')}
+            >
+              <Receipt size={24} color="#4D9FFF" />
+              <Text style={[styles.quickActionText, isDark && styles.quickActionTextDark]}>Top-up</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.quickAction, isDark && styles.quickActionDark]}>
-              <QrCode size={20} color="#10B981" />
-              <Text style={[styles.quickActionText, isDark && styles.quickActionTextDark]}>Scan</Text>
+            <TouchableOpacity 
+              style={[styles.quickAction, isDark && styles.quickActionDark]}
+              onPress={() => router.push('/history')}
+            >
+              <Clock size={24} color="#10B981" />
+              <Text style={[styles.quickActionText, isDark && styles.quickActionTextDark]}>History</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.quickAction, isDark && styles.quickActionDark]}
+              onPress={() => router.push('/help')}
+            >
+              <HelpCircle size={24} color="#A78BFA" />
+              <Text style={[styles.quickActionText, isDark && styles.quickActionTextDark]}>Help</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -296,7 +301,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     alignItems: 'center',
-    width: '30%',
+    width: '22%',
   },
   quickActionDark: {
     backgroundColor: '#2E2E2E',
