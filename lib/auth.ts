@@ -14,7 +14,7 @@ export async function signIn(params: {
     // First get the email associated with the username
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('email')
+      .select('id')
       .eq('username', params.username)
       .single();
 
@@ -22,9 +22,9 @@ export async function signIn(params: {
       throw new Error('Invalid username or password');
     }
 
-    // Then sign in with email
+    // Then sign in with the user's ID
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: userData.email,
+      email: `${userData.id}@users.deltacoin.app`, // Using ID as email
       password: params.password,
     });
 
@@ -61,12 +61,9 @@ export async function signUp(params: {
       throw new Error('Username is already taken');
     }
 
-    // Generate email from student ID
-    const email = `${params.studentId}@eastdelta.edu.bd`;
-
-    // Create auth user
+    // Create auth user with generated email
     const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
+      email: `${crypto.randomUUID()}@users.deltacoin.app`,
       password: params.password,
       options: {
         data: {

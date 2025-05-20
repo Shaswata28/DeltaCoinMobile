@@ -18,12 +18,14 @@ function RootLayoutNav() {
   useEffect(() => {
     if (loading) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
+    const inLoginPage = segments[0] === 'login';
+    const inSignupPage = segments[0] === 'signup';
+    const inForgotPasswordPage = segments[0] === 'forgot-password';
 
-    if (session && inAuthGroup) {
+    if (session && (inLoginPage || inSignupPage || inForgotPasswordPage)) {
       // Redirect authenticated users to the home page
       router.replace('/(tabs)');
-    } else if (!session && !inAuthGroup) {
+    } else if (!session && !inLoginPage && !inSignupPage && !inForgotPasswordPage) {
       // Redirect unauthenticated users to the login page
       router.replace('/login');
     }
