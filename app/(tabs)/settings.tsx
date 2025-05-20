@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Settings as SettingsIcon, ChevronRight, Moon, Bell, Shield, CreditCard, CircleHelp as HelpCircle, Info, Languages, LogOut } from 'lucide-react-native';
+import { Settings as SettingsIcon, Moon, Bell, Languages, Wallet, CircleHelp as HelpCircle, Info, Smartphone, LogOut } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 interface SettingItem {
@@ -9,81 +9,90 @@ interface SettingItem {
   title: string;
   description: string;
   icon: JSX.Element;
-  route?: string;
   action?: () => void;
   toggle?: boolean;
+  value?: boolean;
+  onToggle?: (value: boolean) => void;
 }
 
 export default function SettingsScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const [darkMode, setDarkMode] = useState(isDark);
+  
+  const [settings, setSettings] = useState({
+    darkMode: isDark,
+    notifications: true,
+    biometrics: false,
+    autoTopup: false,
+  });
+
+  const handleSettingToggle = (key: keyof typeof settings) => (value: boolean) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
+  };
 
   const settingItems: SettingItem[] = [
     {
-      id: '1',
-      title: 'Dark Mode',
-      description: 'Toggle dark theme',
+      id: 'appearance',
+      title: 'Appearance',
+      description: 'Dark mode',
       icon: <Moon size={24} color="#FFD700" />,
       toggle: true,
+      value: settings.darkMode,
+      onToggle: handleSettingToggle('darkMode'),
     },
     {
-      id: '2',
-      title: 'Notifications',
-      description: 'Manage notification preferences',
+      id: 'notifications',
+      title: 'Push Notifications',
+      description: 'Transaction alerts and updates',
       icon: <Bell size={24} color="#4D9FFF" />,
-      route: '/account-settings/notifications',
+      toggle: true,
+      value: settings.notifications,
+      onToggle: handleSettingToggle('notifications'),
     },
     {
-      id: '3',
-      title: 'Security',
-      description: 'Password and authentication',
-      icon: <Shield size={24} color="#10B981" />,
-      route: '/account-settings/security',
+      id: 'biometrics',
+      title: 'Quick Authentication',
+      description: 'Use biometrics for faster access',
+      icon: <Smartphone size={24} color="#10B981" />,
+      toggle: true,
+      value: settings.biometrics,
+      onToggle: handleSettingToggle('biometrics'),
     },
     {
-      id: '4',
-      title: 'Payment Methods',
-      description: 'Manage your payment options',
-      icon: <CreditCard size={24} color="#A78BFA" />,
-      route: '/account-settings/payment-methods',
+      id: 'autoTopup',
+      title: 'Auto Top-up',
+      description: 'Automatically add funds when balance is low',
+      icon: <Wallet size={24} color="#A78BFA" />,
+      toggle: true,
+      value: settings.autoTopup,
+      onToggle: handleSettingToggle('autoTopup'),
     },
     {
-      id: '5',
+      id: 'language',
       title: 'Language',
-      description: 'Change app language',
+      description: 'English (US)',
       icon: <Languages size={24} color="#F59E0B" />,
       action: () => console.log('Language settings'),
     },
     {
-      id: '6',
-      title: 'Help & Support',
-      description: 'Get help and contact support',
+      id: 'help',
+      title: 'Help Center',
+      description: 'FAQs and support',
       icon: <HelpCircle size={24} color="#EC4899" />,
-      route: '/help',
+      action: () => router.push('/help'),
     },
     {
-      id: '7',
-      title: 'About',
-      description: 'App information and legal',
+      id: 'about',
+      title: 'About DeltaCoin',
+      description: 'Version 1.0.0',
       icon: <Info size={24} color="#6366F1" />,
       action: () => console.log('About section'),
     },
   ];
 
   const handleLogout = () => {
-    // Implement logout logic
-    console.log('Logging out...');
     router.replace('/login');
-  };
-
-  const handleSettingPress = (item: SettingItem) => {
-    if (item.route) {
-      router.push(item.route as any);
-    } else if (item.action) {
-      item.action();
-    }
   };
 
   return (
@@ -104,7 +113,7 @@ export default function SettingsScreen() {
           >
             <TouchableOpacity
               style={[styles.settingItem, isDark && styles.settingItemDark]}
-              onPress={() => handleSettingPress(item)}
+              onPress={item.action}
               disabled={item.toggle}
             >
               {item.icon}
@@ -116,15 +125,19 @@ export default function SettingsScreen() {
                   {item.description}
                 </Text>
               </View>
-              {item.toggle ? (
+              {item.toggle && item.onToggle ? (
                 <Switch
-                  value={darkMode}
-                  onValueChange={(value) => setDarkMode(value)}
-                  trackColor={{ false: '#767577', true: '#FFD700' }}
+                  value={item.value}
+                  onValueChange={item.onToggle}
+                  trackColor={{ false: '#767577', true: item.id === 'appearance' ? '#FFD700' : '#4D9FFF' }}
                   thumbColor={isDark ? '#FFFFFF' : '#FFFFFF'}
                 />
-              ) : (
-                <ChevronRight size={20} color={isDark ? '#A6A6A6' : '#6B6B6B'} />
+              ) : item.action && (
+                <View style={[styles.badge, isDark && styles.badgeDark]}>
+                  <Text style={[styles.badgeText, isDark && styles.badgeTextDark]}>
+                    {item.id === 'language' ? 'EN' : '>'}
+                  </Text>
+                </View>
               )}
             </TouchableOpacity>
           </Animated.View>
@@ -141,10 +154,6 @@ export default function SettingsScreen() {
             <Text style={styles.logoutText}>Log Out</Text>
           </TouchableOpacity>
         </Animated.View>
-
-        <Text style={[styles.version, isDark && styles.versionDark]}>
-          Version 1.0.0
-        </Text>
       </View>
     </ScrollView>
   );
@@ -213,6 +222,23 @@ const styles = StyleSheet.create({
   settingDescriptionDark: {
     color: '#A6A6A6',
   },
+  badge: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  badgeDark: {
+    backgroundColor: '#2E2E2E',
+  },
+  badgeText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#6B6B6B',
+  },
+  badgeTextDark: {
+    color: '#A6A6A6',
+  },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -230,15 +256,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
     color: '#FF4D4F',
-  },
-  version: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: '#6B6B6B',
-    textAlign: 'center',
-    marginTop: 16,
-  },
-  versionDark: {
-    color: '#A6A6A6',
   },
 });
