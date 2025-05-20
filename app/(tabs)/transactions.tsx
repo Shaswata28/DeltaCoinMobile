@@ -195,7 +195,7 @@ export default function TransactionsScreen() {
         style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleDestinationSelect('other')}
       >
-        <MoreHorizontal size={32} color={isDark ? '#A78BFA' : '#7C3AED'} />
+        <MoreHorizontal size={32} color={isDark ? '#6B7280' : '#4B5563'} />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Other</Text>
       </TouchableOpacity>
     </Animated.View>
