@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, u
 import { ArrowUpRight, ArrowDownRight, Send, Wallet, PlusCircle, Clock, CircleHelp as HelpCircle } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Transaction {
   id: string;
@@ -12,21 +14,32 @@ interface Transaction {
   timestamp: Date;
 }
 
+interface WalletData {
+  balance: number;
+  monthlySpent: number;
+  monthlyLimit: number;
+}
+
 export default function HomeScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  
   const [greeting, setGreeting] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
-  const [balance] = useState(5000.75);
-  const [monthlySpent] = useState(750.25);
-  const [monthlyLimit] = useState(2000);
-  const [recentTransactions] = useState<Transaction[]>([
-    { id: '1', type: 'receive', amount: 250.00, recipient: 'Sarah Johnson', timestamp: new Date(2024, 2, 15, 14, 30) },
-    { id: '2', type: 'send', amount: 75.50, recipient: 'Coffee Shop', timestamp: new Date(2024, 2, 15, 10, 15) },
-    { id: '3', type: 'send', amount: 120.00, recipient: 'Book Store', timestamp: new Date(2024, 2, 14, 16, 45) },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  const [walletData, setWalletData] = useState<WalletData>({
+    balance: 0,
+    monthlySpent: 0,
+    monthlyLimit: 2000, // Default limit
+  });
+  
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
+  const [userName, setUserName] = useState('');
 
   useEffect(() => {
     const updateGreeting = () => {
@@ -45,6 +58,130 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (!user) return;
+    
+    fetchUserData();
+    setupRealtimeSubscription();
+    
+    return () => {
+      supabase.removeAllChannels();
+    };
+  }, [user]);
+
+  const setupRealtimeSubscription = () => {
+    const walletChannel = supabase
+      .channel('wallet_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'wallets',
+          filter: `user_id=eq.${user?.id}`,
+        },
+        (payload) => {
+          setWalletData(prev => ({
+            ...prev,
+            balance: payload.new.balance,
+          }));
+        }
+      )
+      .subscribe();
+
+    const transactionChannel = supabase
+      .channel('transaction_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'transactions',
+          filter: `wallet_id=eq.${user?.id}`,
+        },
+        () => {
+          fetchUserData(); // Refresh all data when transactions change
+        }
+      )
+      .subscribe();
+  };
+
+  const fetchUserData = async () => {
+    try {
+      if (!user) return;
+
+      // Fetch user profile
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+      
+      if (userError) throw userError;
+      setUserName(userData.full_name);
+
+      // Fetch wallet data
+      const { data: walletData, error: walletError } = await supabase
+        .from('wallets')
+        .select('id, balance')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (walletError) throw walletError;
+
+      // Calculate monthly spending
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const { data: monthlyTransactions, error: transactionError } = await supabase
+        .from('transactions')
+        .select('amount')
+        .eq('type', 'send')
+        .gte('created_at', startOfMonth.toISOString())
+        .eq('wallet_id', walletData.id);
+
+      if (transactionError) throw transactionError;
+
+      const monthlySpent = monthlyTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+
+      setWalletData({
+        balance: walletData.balance,
+        monthlySpent,
+        monthlyLimit: 2000, // Could be fetched from user preferences
+      });
+
+      // Fetch recent transactions
+      const { data: recentTxs, error: recentTxError } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('wallet_id', walletData.id)
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (recentTxError) throw recentTxError;
+
+      setRecentTransactions(recentTxs.map(tx => ({
+        id: tx.id,
+        type: tx.type,
+        amount: tx.amount,
+        recipient: tx.recipient,
+        timestamp: new Date(tx.created_at),
+      })));
+
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchUserData();
+    setRefreshing(false);
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -60,14 +197,26 @@ export default function HomeScreen() {
     });
   };
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setRefreshing(false);
-  };
+  const spendingProgress = (walletData.monthlySpent / walletData.monthlyLimit) * 100;
 
-  const spendingProgress = (monthlySpent / monthlyLimit) * 100;
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer, isDark && styles.containerDark]}>
+        <Text style={[styles.loadingText, isDark && styles.textDark]}>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, styles.errorContainer, isDark && styles.containerDark]}>
+        <Text style={[styles.errorText, isDark && styles.textDark]}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchUserData}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <ScrollView 
@@ -80,7 +229,7 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <Animated.View entering={FadeInDown.duration(600).springify()}>
           <Text style={[styles.greeting, isDark && styles.textDark]}>
-            {greeting}, Alex
+            {greeting}, {userName}
           </Text>
           <Text style={[styles.date, isDark && styles.textLightDark]}>
             {currentTime.toLocaleDateString('en-US', { 
@@ -104,7 +253,7 @@ export default function HomeScreen() {
             Available Balance
           </Text>
           <Text style={[styles.balanceAmount, isDark && styles.textDark]}>
-            {formatCurrency(balance)}
+            {formatCurrency(walletData.balance)}
           </Text>
         </View>
       </Animated.View>
@@ -158,10 +307,10 @@ export default function HomeScreen() {
         <View style={[styles.budgetCard, isDark && styles.cardDark]}>
           <View style={styles.budgetInfo}>
             <Text style={[styles.budgetText, isDark && styles.textLightDark]}>
-              Spent: {formatCurrency(monthlySpent)}
+              Spent: {formatCurrency(walletData.monthlySpent)}
             </Text>
             <Text style={[styles.budgetText, isDark && styles.textLightDark]}>
-              Limit: {formatCurrency(monthlyLimit)}
+              Limit: {formatCurrency(walletData.monthlyLimit)}
             </Text>
           </View>
           <View style={styles.progressContainer}>
@@ -186,7 +335,7 @@ export default function HomeScreen() {
           <Text style={[styles.sectionTitle, isDark && styles.textDark]}>
             Recent Activity
           </Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/history')}>
             <Text style={styles.seeAll}>See All</Text>
           </TouchableOpacity>
         </View>
@@ -234,6 +383,38 @@ const styles = StyleSheet.create({
   },
   containerDark: {
     backgroundColor: '#121212',
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
+    color: '#2C2C2C',
+  },
+  errorContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
+    color: '#FF4D4F',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#4D9FFF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
   },
   header: {
     padding: 20,
