@@ -60,51 +60,8 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (!user) return;
-    
     fetchUserData();
-    setupRealtimeSubscription();
-    
-    return () => {
-      supabase.removeAllChannels();
-    };
   }, [user]);
-
-  const setupRealtimeSubscription = () => {
-    const walletChannel = supabase
-      .channel('wallet_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'wallets',
-          filter: `user_id=eq.${user?.id}`,
-        },
-        (payload) => {
-          setWalletData(prev => ({
-            ...prev,
-            balance: payload.new.balance,
-          }));
-        }
-      )
-      .subscribe();
-
-    const transactionChannel = supabase
-      .channel('transaction_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'transactions',
-          filter: `wallet_id=eq.${user?.id}`,
-        },
-        () => {
-          fetchUserData(); // Refresh all data when transactions change
-        }
-      )
-      .subscribe();
-  };
 
   const fetchUserData = async () => {
     try {
