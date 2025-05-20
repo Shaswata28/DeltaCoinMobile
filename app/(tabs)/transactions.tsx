@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, useColorScheme } from 'react-native';
-import { CreditCard, Building2, Smartphone, Coffee, BookOpen, Flask, Users, ChevronDown } from 'lucide-react-native';
+import { CreditCard, Building2, Smartphone, Coffee, BookOpen, FlaskRound as Flask, Users, ChevronDown } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 type PaymentMethod = 'bank' | 'card' | 'mobile';
