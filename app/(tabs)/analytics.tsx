@@ -30,7 +30,7 @@ export default function AnalyticsScreen() {
       name: 'Canteen',
       amount: 250.50,
       percentage: 35,
-      icon: <Coffee size={24} color="#FFFFFF" />,
+      icon: <Coffee size={24} color="#FFD700" />,
       color: '#FFD700'
     },
     {
@@ -38,7 +38,7 @@ export default function AnalyticsScreen() {
       name: 'Library',
       amount: 100.00,
       percentage: 15,
-      icon: <Book size={24} color="#FFFFFF" />,
+      icon: <Book size={24} color="#4D9FFF" />,
       color: '#4D9FFF'
     },
     {
@@ -46,7 +46,7 @@ export default function AnalyticsScreen() {
       name: 'Laboratory',
       amount: 180.00,
       percentage: 25,
-      icon: <Beaker size={24} color="#FFFFFF" />,
+      icon: <Beaker size={24} color="#FF6B6B" />,
       color: '#FF6B6B'
     },
     {
@@ -54,7 +54,7 @@ export default function AnalyticsScreen() {
       name: 'Clubs',
       amount: 120.50,
       percentage: 15,
-      icon: <Users size={24} color="#FFFFFF" />,
+      icon: <Users size={24} color="#10B981" />,
       color: '#10B981'
     },
     {
@@ -62,7 +62,7 @@ export default function AnalyticsScreen() {
       name: 'Others',
       amount: 75.00,
       percentage: 10,
-      icon: <MoreHorizontal size={24} color="#FFFFFF" />,
+      icon: <MoreHorizontal size={24} color="#A78BFA" />,
       color: '#A78BFA'
     }
   ]);
@@ -74,7 +74,7 @@ export default function AnalyticsScreen() {
       amount: 250.50,
       limit: 300,
       percentage: 83,
-      icon: <Coffee size={24} color="#FFFFFF" />,
+      icon: <Coffee size={24} color="#FFD700" />,
       color: '#FFD700'
     },
     {
@@ -83,7 +83,7 @@ export default function AnalyticsScreen() {
       amount: 100.00,
       limit: 150,
       percentage: 67,
-      icon: <Book size={24} color="#FFFFFF" />,
+      icon: <Book size={24} color="#4D9FFF" />,
       color: '#4D9FFF'
     },
     {
@@ -92,7 +92,7 @@ export default function AnalyticsScreen() {
       amount: 180.00,
       limit: 200,
       percentage: 90,
-      icon: <Beaker size={24} color="#FFFFFF" />,
+      icon: <Beaker size={24} color="#FF6B6B" />,
       color: '#FF6B6B'
     },
     {
@@ -101,7 +101,7 @@ export default function AnalyticsScreen() {
       amount: 120.50,
       limit: 150,
       percentage: 80,
-      icon: <Users size={24} color="#FFFFFF" />,
+      icon: <Users size={24} color="#10B981" />,
       color: '#10B981'
     }
   ]);
@@ -182,9 +182,7 @@ export default function AnalyticsScreen() {
     <View style={[styles.summaryPanel, isDark && styles.panelDark]}>
       <View style={styles.summaryRow}>
         <View style={styles.summaryItem}>
-          <View style={[styles.summaryIconContainer, { backgroundColor: '#FFD700' }]}>
-            <Wallet size={24} color="#FFFFFF" />
-          </View>
+          <Wallet size={24} color="#FFD700" />
           <View>
             <Text style={[styles.summaryLabel, isDark && styles.textLightDark]}>Balance</Text>
             <Text style={[styles.summaryValue, isDark && styles.textDark]}>$1,245.50</Text>
@@ -192,9 +190,7 @@ export default function AnalyticsScreen() {
         </View>
         
         <View style={styles.summaryItem}>
-          <View style={[styles.summaryIconContainer, { backgroundColor: '#10B981' }]}>
-            <TrendingUp size={24} color="#FFFFFF" />
-          </View>
+          <TrendingUp size={24} color="#10B981" />
           <View>
             <Text style={[styles.summaryLabel, isDark && styles.textLightDark]}>Transactions</Text>
             <Text style={[styles.summaryValue, isDark && styles.textDark]}>24</Text>
@@ -204,9 +200,7 @@ export default function AnalyticsScreen() {
 
       <View style={styles.summaryRow}>
         <View style={styles.summaryItem}>
-          <View style={[styles.summaryIconContainer, { backgroundColor: '#EF4444' }]}>
-            <ArrowUpRight size={24} color="#FFFFFF" />
-          </View>
+          <ArrowUpRight size={24} color="#EF4444" />
           <View>
             <Text style={[styles.summaryLabel, isDark && styles.textLightDark]}>Highest Spend</Text>
             <Text style={[styles.summaryValue, isDark && styles.textDark]}>{highestCategory.name}</Text>
@@ -214,9 +208,7 @@ export default function AnalyticsScreen() {
         </View>
         
         <View style={styles.summaryItem}>
-          <View style={[styles.summaryIconContainer, { backgroundColor: '#10B981' }]}>
-            <ArrowDownRight size={24} color="#FFFFFF" />
-          </View>
+          <ArrowDownRight size={24} color="#10B981" />
           <View>
             <Text style={[styles.summaryLabel, isDark && styles.textLightDark]}>Last Updated</Text>
             <Text style={[styles.summaryValue, isDark && styles.textDark]}>2h ago</Text>
@@ -233,9 +225,7 @@ export default function AnalyticsScreen() {
       style={[styles.budgetCard, isDark && styles.cardDark]}
     >
       <View style={styles.budgetHeader}>
-        <View style={[styles.budgetIcon, { backgroundColor: budget.color }]}>
-          {budget.icon}
-        </View>
+        {budget.icon}
         <View style={styles.budgetInfo}>
           <Text style={[styles.budgetName, isDark && styles.textDark]}>{budget.name}</Text>
           <Text style={[styles.budgetAmount, isDark && styles.textLightDark]}>
@@ -300,7 +290,8 @@ export default function AnalyticsScreen() {
             <Text style={[
               styles.tabText,
               activeTab === 'analytics' && styles.activeTabText,
-              isDark && styles.textDark
+              isDark && styles.tabTextDark,
+              activeTab === 'analytics' && isDark && styles.activeTabTextDark
             ]}>
               Analytics
             </Text>
@@ -318,7 +309,8 @@ export default function AnalyticsScreen() {
             <Text style={[
               styles.tabText,
               activeTab === 'budget' && styles.activeTabText,
-              isDark && styles.textDark
+              isDark && styles.tabTextDark,
+              activeTab === 'budget' && isDark && styles.activeTabTextDark
             ]}>
               Budget
             </Text>
@@ -339,9 +331,7 @@ export default function AnalyticsScreen() {
             <View style={styles.legend}>
               {categories.map((category) => (
                 <View key={category.id} style={styles.legendItem}>
-                  <View style={[styles.legendIcon, { backgroundColor: category.color }]}>
-                    {category.icon}
-                  </View>
+                  {category.icon}
                   <View style={styles.legendTextContainer}>
                     <Text style={[styles.legendText, isDark && styles.textDark]}>
                       {category.name}
@@ -444,7 +434,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
     color: '#6B7280',
   },
+  tabTextDark: {
+    color: '#A6A6A6',
+  },
   activeTabText: {
+    color: '#000000',
+    fontFamily: 'Inter-SemiBold',
+  },
+  activeTabTextDark: {
     color: '#000000',
     fontFamily: 'Inter-SemiBold',
   },
@@ -475,13 +472,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  summaryIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   summaryLabel: {
     fontSize: 14,
     fontFamily: 'Inter-Regular',
@@ -500,6 +490,8 @@ const styles = StyleSheet.create({
   chartContainer: {
     position: 'relative',
     marginBottom: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   chartSegment: {
     position: 'absolute',
@@ -518,16 +510,20 @@ const styles = StyleSheet.create({
     left: '50%',
     transform: [{ translateX: -50 }, { translateY: -50 }],
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
   },
   chartCenterAmount: {
     fontSize: 24,
     fontFamily: 'Inter-Bold',
     color: '#2C2C2C',
+    textAlign: 'center',
   },
   chartCenterLabel: {
     fontSize: 14,
     fontFamily: 'Inter-Regular',
     color: '#6B7280',
+    textAlign: 'center',
   },
   legend: {
     width: '100%',
@@ -537,17 +533,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  legendIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    gap: 12,
   },
   legendTextContainer: {
     flex: 1,
-    marginLeft: 12,
   },
   legendText: {
     fontSize: 16,
@@ -583,14 +572,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
-  },
-  budgetIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
+    gap: 12,
   },
   budgetInfo: {
     flex: 1,
