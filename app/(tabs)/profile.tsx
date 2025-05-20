@@ -4,12 +4,14 @@ import { User, Shield, Bell, Wallet, ChevronRight, LogOut } from 'lucide-react-n
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 
+type SettingsRoute = '/account-settings/security' | '/account-settings/notifications' | '/account-settings/payment-methods';
+
 interface MenuItem {
   id: string;
   title: string;
   subtitle: string;
   icon: React.ReactNode;
-  route: string;
+  route: SettingsRoute;
 }
 
 export default function ProfileScreen() {
@@ -24,21 +26,21 @@ export default function ProfileScreen() {
       title: 'Security Settings',
       subtitle: 'PIN, password, and authentication',
       icon: <Shield size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
-      route: '/settings/security',
+      route: '/account-settings/security',
     },
     {
       id: '2',
       title: 'Notifications',
       subtitle: 'Manage your notification preferences',
       icon: <Bell size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
-      route: '/settings/notifications',
+      route: '/account-settings/notifications',
     },
     {
       id: '3',
       title: 'Payment Methods',
       subtitle: 'Manage your payment options',
       icon: <Wallet size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
-      route: '/settings/payment-methods',
+      route: '/account-settings/payment-methods',
     },
   ];
 
