@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Home, ChartLine as LineChart, CircleHelp as HelpCircle, Settings, ArrowLeftRight, User } from 'lucide-react-native';
+import { Chrome as Home, ChartLine as LineChart, CircleHelp as HelpCircle, Settings, ArrowLeftRight, User } from 'lucide-react-native';
 import { Platform, useColorScheme } from 'react-native';
 
 export default function TabLayout() {
