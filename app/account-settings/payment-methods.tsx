@@ -79,7 +79,7 @@ export default function PaymentMethodsScreen() {
               style={[styles.paymentCard, isDark && styles.paymentCardDark]}
             >
               <View style={styles.paymentCardContent}>
-                <CreditCard size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+                <CreditCard size={24} color="#FFD700" />
                 <View style={styles.paymentInfo}>
                   <Text style={[styles.paymentName, isDark && styles.paymentNameDark]}>
                     {method.name}
