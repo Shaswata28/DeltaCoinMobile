@@ -296,6 +296,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E7EB',
   },
   sendButtonDark: {
-    backgroundColor: isDark ? '#2E2E2E' : '#4D9FFF',
+    backgroundColor: '#2E2E2E',
   },
 });
