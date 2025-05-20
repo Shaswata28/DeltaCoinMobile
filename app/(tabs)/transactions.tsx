@@ -1,7 +1,7 @@
 // Update the imports at the top of the file
 import { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, useWindowDimensions } from 'react-native';
-import { Building2, CreditCard, Smartphone, Book, Coffee, Beaker, Users, ArrowLeft, MoreHorizontal, QrCode } from 'lucide-react-native';
+import { Building2, CreditCard, Smartphone, Book, Coffee, Beaker, Users, ArrowLeft, MoveHorizontal as MoreHorizontal, QrCode } from 'lucide-react-native';
 import { QRScanner } from '@/components/payment/QRScanner';
 
 // Add showScanner state and handleScan function inside the component
