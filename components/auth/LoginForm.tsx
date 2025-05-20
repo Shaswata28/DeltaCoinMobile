@@ -7,43 +7,37 @@ import { useRouter } from 'expo-router';
 import { FormInput } from '@/components/common/FormInput';
 import { Button } from '@/components/common/Button';
 import { CheckBox } from '@/components/common/CheckBox';
-import { validateUsername } from '@/utils/validation';
+import { signIn } from '@/lib/auth';
 
 export function LoginForm() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({
-    username: '',
+    email: '',
     password: '',
     general: ''
   });
 
   const handleLogin = async () => {
-    setErrors({ username: '', password: '', general: '' });
+    setErrors({ email: '', password: '', general: '' });
     
     let isValid = true;
-    const newErrors = { username: '', password: '', general: '' };
+    const newErrors = { email: '', password: '', general: '' };
     
-    if (!username) {
-      newErrors.username = 'Username is required';
-      isValid = false;
-    } else if (!validateUsername(username)) {
-      newErrors.username = 'Please enter a valid username';
+    if (!email) {
+      newErrors.email = 'Email is required';
       isValid = false;
     }
     
     if (!password) {
       newErrors.password = 'Password is required';
-      isValid = false;
-    } else if (password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
       isValid = false;
     }
     
@@ -55,13 +49,21 @@ export function LoginForm() {
     setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const { data, error } = await signIn({ email, password });
+      
+      if (error) {
+        setErrors({ 
+          ...newErrors, 
+          general: error.message 
+        });
+        return;
+      }
+
       router.replace('/(tabs)');
-    } catch (error) {
+    } catch (error: any) {
       setErrors({ 
         ...newErrors, 
-        general: 'Invalid username or password. Please try again.' 
+        general: 'An unexpected error occurred. Please try again.' 
       });
     } finally {
       setIsLoading(false);
@@ -88,14 +90,15 @@ export function LoginForm() {
       
       <View style={styles.form}>
         <FormInput
-          label="Username"
-          value={username}
-          onChangeText={setUsername}
-          placeholder="Enter your username"
+          label="Email"
+          value={email}
+          onChangeText={setEmail}
+          placeholder="Enter your email"
           autoCapitalize="none"
-          error={errors.username}
+          error={errors.email}
           disabled={isLoading}
-          autoComplete="username"
+          keyboardType="email-address"
+          autoComplete="email"
         />
         
         <FormInput
