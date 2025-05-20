@@ -14,9 +14,10 @@ export interface StudentInfo {
 interface StudentInfoStepProps {
   onNext: (data: StudentInfo) => void;
   initialData?: StudentInfo;
+  error?: string;
 }
 
-export default function StudentInfoStep({ onNext, initialData }: StudentInfoStepProps) {
+export default function StudentInfoStep({ onNext, initialData, error }: StudentInfoStepProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   
@@ -66,6 +67,12 @@ export default function StudentInfoStep({ onNext, initialData }: StudentInfoStep
           Please provide your basic information to get started
         </Text>
       </View>
+
+      {error && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
 
       <View style={styles.form}>
         <FormInput
@@ -153,5 +160,18 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: 20,
+  },
+  errorContainer: {
+    backgroundColor: '#FEF2F2',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#FF4D4F',
+  },
+  errorText: {
+    color: '#FF4D4F',
+    fontFamily: 'Inter-Medium',
+    fontSize: 14,
   }
 });

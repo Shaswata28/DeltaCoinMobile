@@ -3,11 +3,11 @@ import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, useColorS
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 
 import StudentInfoStep, { StudentInfo } from '@/components/signup/StudentInfoStep';
 import SecurityStep, { SecurityInfo } from '@/components/signup/SecurityStep';
 import PinStep, { PinInfo } from '@/components/signup/PinStep';
+import { signUp } from '@/lib/auth';
 
 interface FormData {
   studentInfo: Partial<StudentInfo>;
@@ -25,6 +25,7 @@ export default function SignupScreen() {
     securityInfo: {},
     pinInfo: {},
   });
+  const [error, setError] = useState<string | null>(null);
 
   const handleStudentInfoNext = (data: StudentInfo) => {
     setFormData(prev => ({ ...prev, studentInfo: data }));
@@ -42,9 +43,25 @@ export default function SignupScreen() {
 
   const handlePinSubmit = async (data: PinInfo) => {
     setFormData(prev => ({ ...prev, pinInfo: data }));
-    // Here you would typically submit the complete form data
-    console.log('Complete form data:', { ...formData, pinInfo: data });
-    router.replace('/(tabs)');
+    
+    try {
+      const { error } = await signUp({
+        username: formData.securityInfo.username!,
+        password: formData.securityInfo.password!,
+        fullName: formData.studentInfo.fullName!,
+        studentId: formData.studentInfo.studentId!,
+        contactNumber: formData.studentInfo.contactNumber!,
+      });
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      router.replace('/(tabs)');
+    } catch (err: any) {
+      setError(err.message || 'An unexpected error occurred');
+    }
   };
 
   const handlePinBack = () => {
@@ -58,6 +75,7 @@ export default function SignupScreen() {
           <StudentInfoStep
             onNext={handleStudentInfoNext}
             initialData={formData.studentInfo as StudentInfo}
+            error={error}
           />
         );
       case 1:
@@ -66,6 +84,7 @@ export default function SignupScreen() {
             onNext={handleSecurityNext}
             onBack={handleSecurityBack}
             initialData={formData.securityInfo as SecurityInfo}
+            error={error}
           />
         );
       case 2:
@@ -74,6 +93,7 @@ export default function SignupScreen() {
             onSubmit={handlePinSubmit}
             onBack={handlePinBack}
             initialData={formData.pinInfo as PinInfo}
+            error={error}
           />
         );
       default:
