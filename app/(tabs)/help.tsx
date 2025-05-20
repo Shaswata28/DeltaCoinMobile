@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
   },
   contactText: {
     marginTop: 8,
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Inter-Medium',
     color: '#2C2C2C',
   },
