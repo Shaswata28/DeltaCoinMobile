@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useColorScheme, useWindowDimensions } from 'react-native';
-import { Building2, CreditCard, Smartphone, Book, Coffee, Beaker, Users, ArrowLeft, MoveHorizontal as MoreHorizontal, QrCode } from 'lucide-react-native';
+import { Building2, CreditCard, Smartphone, Book, Coffee, Beaker, Users, ArrowLeft, MoveHorizontal as MoreHorizontal } from 'lucide-react-native';
 import Animated, { 
   FadeInDown,
   useAnimatedStyle,
@@ -18,7 +18,6 @@ import { AmountInput } from '@/components/payment/AmountInput';
 import { PaymentSummary } from '@/components/payment/PaymentSummary';
 import { FormInput } from '@/components/common/FormInput';
 import { Button } from '@/components/common/Button';
-import { QRScanner } from '@/components/payment/QRScanner';
 
 type PaymentMethod = 'bank' | 'card' | 'mobile';
 type PaymentDestination = 'canteen' | 'library' | 'lab' | 'club' | 'other';
@@ -40,7 +39,6 @@ export default function TransactionsScreen() {
   
   const [activeTab, setActiveTab] = useState<'topup' | 'payment'>('topup');
   const [step, setStep] = useState<'selection' | 'amount' | 'summary' | 'club'>('selection');
-  const [showScanner, setShowScanner] = useState(false);
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails>({
     amount: '',
   });
@@ -125,24 +123,6 @@ export default function TransactionsScreen() {
     }
   };
 
-  const handleScan = (data: string) => {
-    try {
-      const scannedData = JSON.parse(data);
-      if (scannedData.amount && scannedData.recipient) {
-        setPaymentDetails(prev => ({
-          ...prev,
-          amount: scannedData.amount.toString(),
-          destination: scannedData.destination || 'other',
-          details: scannedData.details || `Payment to ${scannedData.recipient}`,
-        }));
-        setStep('summary');
-      }
-    } catch (error) {
-      console.error('Invalid QR code data:', error);
-    }
-    setShowScanner(false);
-  };
-
   const renderTopUpMethods = () => (
     <Animated.View 
       entering={FadeInDown.duration(300)} 
@@ -152,7 +132,7 @@ export default function TransactionsScreen() {
         style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleMethodSelect('bank')}
       >
-        <Building2 size={32} color="#FFD700" />
+        <Building2 size={32} color={isDark ? '#FFD700' : '#FFB800'} />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Bank Transfer</Text>
       </TouchableOpacity>
 
@@ -160,7 +140,7 @@ export default function TransactionsScreen() {
         style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleMethodSelect('card')}
       >
-        <CreditCard size={32} color="#4D9FFF" />
+        <CreditCard size={32} color={isDark ? '#4D9FFF' : '#0066CC'} />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Credit/Debit Card</Text>
       </TouchableOpacity>
 
@@ -168,7 +148,7 @@ export default function TransactionsScreen() {
         style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleMethodSelect('mobile')}
       >
-        <Smartphone size={32} color="#10B981" />
+        <Smartphone size={32} color={isDark ? '#10B981' : '#059669'} />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Mobile Banking</Text>
       </TouchableOpacity>
     </Animated.View>
@@ -181,17 +161,9 @@ export default function TransactionsScreen() {
     >
       <TouchableOpacity
         style={[styles.methodCard, isDark && styles.methodCardDark]}
-        onPress={() => setShowScanner(true)}
-      >
-        <QrCode size={32} color="#FFD700" />
-        <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Scan QR Code</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleDestinationSelect('canteen')}
       >
-        <Coffee size={32} color="#4D9FFF" />
+        <Coffee size={32} color={isDark ? '#4D9FFF' : '#0066CC'} />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Canteen</Text>
       </TouchableOpacity>
 
@@ -199,7 +171,7 @@ export default function TransactionsScreen() {
         style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleDestinationSelect('library')}
       >
-        <Book size={32} color="#FF6B6B" />
+        <Book size={32} color={isDark ? '#FF6B6B' : '#DC2626'} />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Library</Text>
       </TouchableOpacity>
 
@@ -207,7 +179,7 @@ export default function TransactionsScreen() {
         style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleDestinationSelect('lab')}
       >
-        <Beaker size={32} color="#10B981" />
+        <Beaker size={32} color={isDark ? '#10B981' : '#059669'} />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Lab</Text>
       </TouchableOpacity>
 
@@ -215,7 +187,7 @@ export default function TransactionsScreen() {
         style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleDestinationSelect('club')}
       >
-        <Users size={32} color="#A78BFA" />
+        <Users size={32} color={isDark ? '#A78BFA' : '#7C3AED'} />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Club</Text>
       </TouchableOpacity>
 
@@ -223,7 +195,7 @@ export default function TransactionsScreen() {
         style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleDestinationSelect('other')}
       >
-        <MoreHorizontal size={32} color="#A78BFA" />
+        <MoreHorizontal size={32} color={isDark ? '#A78BFA' : '#7C3AED'} />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Other</Text>
       </TouchableOpacity>
     </Animated.View>
@@ -346,74 +318,70 @@ export default function TransactionsScreen() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      {showScanner ? (
-        <QRScanner onClose={() => setShowScanner(false)} onScan={handleScan} />
-      ) : (
-        <ScrollView 
-          ref={scrollRef}
-          style={[styles.container, isDark && styles.containerDark]}
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.header}>
-            <Text style={[styles.title, isDark && styles.titleDark]}>Transactions</Text>
+      <ScrollView 
+        ref={scrollRef}
+        style={[styles.container, isDark && styles.containerDark]}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <Text style={[styles.title, isDark && styles.titleDark]}>Transactions</Text>
+          
+          <View style={[styles.tabs, isDark && styles.tabsDark]}>
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === 'topup' && styles.activeTab,
+                isDark && styles.tabDark,
+                activeTab === 'topup' && isDark && styles.activeTabDark
+              ]}
+              onPress={() => {
+                setActiveTab('topup');
+                setStep('selection');
+                setPaymentDetails({ amount: '' });
+              }}
+            >
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === 'topup' && styles.activeTabText,
+                  isDark && styles.tabTextDark,
+                  activeTab === 'topup' && isDark && styles.activeTabTextDark
+                ]}
+              >
+                Top-Up
+              </Text>
+            </TouchableOpacity>
             
-            <View style={[styles.tabs, isDark && styles.tabsDark]}>
-              <TouchableOpacity
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === 'payment' && styles.activeTab,
+                isDark && styles.tabDark,
+                activeTab === 'payment' && isDark && styles.activeTabDark
+              ]}
+              onPress={() => {
+                setActiveTab('payment');
+                setStep('selection');
+                setPaymentDetails({ amount: '' });
+              }}
+            >
+              <Text
                 style={[
-                  styles.tab,
-                  activeTab === 'topup' && styles.activeTab,
-                  isDark && styles.tabDark,
-                  activeTab === 'topup' && isDark && styles.activeTabDark
+                  styles.tabText,
+                  activeTab === 'payment' && styles.activeTabText,
+                  isDark && styles.tabTextDark,
+                  activeTab === 'payment' && isDark && styles.activeTabTextDark
                 ]}
-                onPress={() => {
-                  setActiveTab('topup');
-                  setStep('selection');
-                  setPaymentDetails({ amount: '' });
-                }}
               >
-                <Text
-                  style={[
-                    styles.tabText,
-                    activeTab === 'topup' && styles.activeTabText,
-                    isDark && styles.tabTextDark,
-                    activeTab === 'topup' && isDark && styles.activeTabTextDark
-                  ]}
-                >
-                  Top-Up
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[
-                  styles.tab,
-                  activeTab === 'payment' && styles.activeTab,
-                  isDark && styles.tabDark,
-                  activeTab === 'payment' && isDark && styles.activeTabDark
-                ]}
-                onPress={() => {
-                  setActiveTab('payment');
-                  setStep('selection');
-                  setPaymentDetails({ amount: '' });
-                }}
-              >
-                <Text
-                  style={[
-                    styles.tabText,
-                    activeTab === 'payment' && styles.activeTabText,
-                    isDark && styles.tabTextDark,
-                    activeTab === 'payment' && isDark && styles.activeTabTextDark
-                  ]}
-                >
-                  Payment
-                </Text>
-              </TouchableOpacity>
-            </View>
+                Payment
+              </Text>
+            </TouchableOpacity>
           </View>
+        </View>
 
-          {renderContent()}
-        </ScrollView>
-      )}
+        {renderContent()}
+      </ScrollView>
     </GestureHandlerRootView>
   );
 }
