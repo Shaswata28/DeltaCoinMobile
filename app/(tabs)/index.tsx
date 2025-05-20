@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, useColorScheme } from 'react-native';
-import { ArrowUpRight, ArrowDownRight, Send, Wallet, Receipt, Clock, CircleHelp as HelpCircle } from 'lucide-react-native';
+import { ArrowUpRight, ArrowDownRight, Send, Wallet, PlusCircle, Clock, CircleHelp as HelpCircle } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 
@@ -125,7 +125,7 @@ export default function HomeScreen() {
           style={[styles.actionButton, isDark && styles.actionButtonDark]}
           onPress={() => router.push('/transactions')}
         >
-          <Receipt size={24} color="#4D9FFF" />
+          <PlusCircle size={24} color="#4D9FFF" />
           <Text style={[styles.actionText, isDark && styles.textDark]}>Top-up</Text>
         </TouchableOpacity>
         
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     marginTop: 8,
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: 'Inter-Medium',
     color: '#1F2937',
     textAlign: 'center',
