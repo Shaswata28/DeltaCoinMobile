@@ -22,28 +22,28 @@ export default function NotificationSettingsScreen() {
       id: '1',
       title: 'Push Notifications',
       description: 'Receive alerts on your device',
-      icon: <Bell size={20} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
+      icon: <Bell size={20} color="#FFD700" />,
       enabled: true,
     },
     {
       id: '2',
       title: 'Email Notifications',
       description: 'Get updates in your inbox',
-      icon: <Mail size={20} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
+      icon: <Mail size={20} color="#4D9FFF" />,
       enabled: true,
     },
     {
       id: '3',
       title: 'Transaction Alerts',
       description: 'Real-time payment notifications',
-      icon: <CreditCard size={20} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
+      icon: <CreditCard size={20} color="#10B981" />,
       enabled: true,
     },
     {
       id: '4',
       title: 'SMS Alerts',
       description: 'Get text message updates',
-      icon: <Smartphone size={20} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
+      icon: <Smartphone size={20} color="#A78BFA" />,
       enabled: false,
     },
   ]);
@@ -101,7 +101,7 @@ export default function NotificationSettingsScreen() {
                 <Switch
                   value={setting.enabled}
                   onValueChange={() => toggleSetting(setting.id)}
-                  trackColor={{ false: '#767577', true: isDark ? '#82B1FF' : '#4D9FFF' }}
+                  trackColor={{ false: '#767577', true: setting.id === '1' ? '#FFD700' : setting.id === '2' ? '#4D9FFF' : setting.id === '3' ? '#10B981' : '#A78BFA' }}
                   thumbColor={isDark ? '#FFFFFF' : '#FFFFFF'}
                 />
               </View>
