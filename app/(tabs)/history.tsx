@@ -102,13 +102,35 @@ export default function HistoryScreen() {
   };
 
   return (
-    <ScrollView 
-      style={[styles.container, isDark && styles.containerDark]}
-      showsVerticalScrollIndicator={false}
-    >
+    <View style={[styles.container, isDark && styles.containerDark]}>
       <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Text style={[styles.title, isDark && styles.titleDark]}>Transaction History</Text>
+        <Text style={[styles.title, isDark && styles.titleDark]}>Transaction History</Text>
+        
+        <View style={styles.headerControls}>
+          <View style={[styles.filterContainer, isDark && styles.filterContainerDark]}>
+            {(['all', 'sent', 'received'] as const).map((filter) => (
+              <TouchableOpacity
+                key={filter}
+                style={[
+                  styles.filterButton,
+                  selectedFilter === filter && styles.filterButtonActive,
+                  isDark && styles.filterButtonDark,
+                  selectedFilter === filter && isDark && styles.filterButtonActiveDark
+                ]}
+                onPress={() => setSelectedFilter(filter)}
+              >
+                <Text style={[
+                  styles.filterText,
+                  selectedFilter === filter && styles.filterTextActive,
+                  isDark && styles.filterTextDark,
+                  selectedFilter === filter && isDark && styles.filterTextActiveDark
+                ]}>
+                  {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           <View style={styles.actions}>
             <TouchableOpacity style={[styles.actionButton, isDark && styles.actionButtonDark]}>
               <Filter size={20} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
@@ -118,83 +140,61 @@ export default function HistoryScreen() {
             </TouchableOpacity>
           </View>
         </View>
+      </View>
 
-        <View style={[styles.filterContainer, isDark && styles.filterContainerDark]}>
-          {(['all', 'sent', 'received'] as const).map((filter) => (
-            <TouchableOpacity
-              key={filter}
-              style={[
-                styles.filterButton,
-                selectedFilter === filter && styles.filterButtonActive,
-                isDark && styles.filterButtonDark,
-                selectedFilter === filter && isDark && styles.filterButtonActiveDark
-              ]}
-              onPress={() => setSelectedFilter(filter)}
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.transactionList}>
+          {filteredTransactions.map((transaction, index) => (
+            <Animated.View
+              key={transaction.id}
+              entering={FadeInDown.delay(index * 100).duration(400)}
+              style={[styles.transactionCard, isDark && styles.transactionCardDark]}
             >
-              <Text style={[
-                styles.filterText,
-                selectedFilter === filter && styles.filterTextActive,
-                isDark && styles.filterTextDark,
-                selectedFilter === filter && isDark && styles.filterTextActiveDark
-              ]}>
-                {filter.charAt(0).toUpperCase() + filter.slice(1)}
-              </Text>
-            </TouchableOpacity>
+              <View style={styles.transactionHeader}>
+                <View style={styles.transactionIcon}>
+                  {transaction.type === 'send' ? (
+                    <ArrowUpRight size={20} color="#FF4D4F" />
+                  ) : (
+                    <ArrowDownRight size={20} color="#10B981" />
+                  )}
+                </View>
+                <View style={styles.transactionInfo}>
+                  <Text style={[styles.recipientText, isDark && styles.recipientTextDark]}>
+                    {transaction.recipient}
+                  </Text>
+                  <Text style={[styles.categoryText, isDark && styles.categoryTextDark]}>
+                    {transaction.category}
+                  </Text>
+                </View>
+                <Text style={[
+                  styles.amountText,
+                  transaction.type === 'send' ? styles.amountNegative : styles.amountPositive
+                ]}>
+                  {transaction.type === 'send' ? '-' : '+'}${transaction.amount.toFixed(2)}
+                </Text>
+              </View>
+              
+              <View style={styles.transactionFooter}>
+                <Text style={[styles.timestampText, isDark && styles.timestampTextDark]}>
+                  {formatDate(transaction.timestamp)} at {formatTime(transaction.timestamp)}
+                </Text>
+                <View style={[
+                  styles.statusBadge,
+                  { backgroundColor: `${getStatusColor(transaction.status)}20` }
+                ]}>
+                  <Text style={[
+                    styles.statusText,
+                    { color: getStatusColor(transaction.status) }
+                  ]}>
+                    {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                  </Text>
+                </View>
+              </View>
+            </Animated.View>
           ))}
         </View>
-      </View>
-
-      <View style={styles.transactionList}>
-        {filteredTransactions.map((transaction, index) => (
-          <Animated.View
-            key={transaction.id}
-            entering={FadeInDown.delay(index * 100).duration(400)}
-            style={[styles.transactionCard, isDark && styles.transactionCardDark]}
-          >
-            <View style={styles.transactionHeader}>
-              <View style={styles.transactionIcon}>
-                {transaction.type === 'send' ? (
-                  <ArrowUpRight size={20} color="#FF4D4F" />
-                ) : (
-                  <ArrowDownRight size={20} color="#10B981" />
-                )}
-              </View>
-              <View style={styles.transactionInfo}>
-                <Text style={[styles.recipientText, isDark && styles.recipientTextDark]}>
-                  {transaction.recipient}
-                </Text>
-                <Text style={[styles.categoryText, isDark && styles.categoryTextDark]}>
-                  {transaction.category}
-                </Text>
-              </View>
-              <Text style={[
-                styles.amountText,
-                transaction.type === 'send' ? styles.amountNegative : styles.amountPositive
-              ]}>
-                {transaction.type === 'send' ? '-' : '+'}${transaction.amount.toFixed(2)}
-              </Text>
-            </View>
-            
-            <View style={styles.transactionFooter}>
-              <Text style={[styles.timestampText, isDark && styles.timestampTextDark]}>
-                {formatDate(transaction.timestamp)} at {formatTime(transaction.timestamp)}
-              </Text>
-              <View style={[
-                styles.statusBadge,
-                { backgroundColor: `${getStatusColor(transaction.status)}20` }
-              ]}>
-                <Text style={[
-                  styles.statusText,
-                  { color: getStatusColor(transaction.status) }
-                ]}>
-                  {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
-                </Text>
-              </View>
-            </View>
-          </Animated.View>
-        ))}
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -209,12 +209,7 @@ const styles = StyleSheet.create({
   header: {
     padding: 20,
     paddingTop: 40,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
+    gap: 20,
   },
   title: {
     fontSize: 32,
@@ -224,14 +219,19 @@ const styles = StyleSheet.create({
   titleDark: {
     color: '#FFFFFF',
   },
-  actions: {
+  headerControls: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
   },
+  actions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
   actionButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
@@ -245,6 +245,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E1E1E',
   },
   filterContainer: {
+    flex: 1,
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
