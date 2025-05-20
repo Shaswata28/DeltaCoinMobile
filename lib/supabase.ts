@@ -23,3 +23,13 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     },
   },
 });
+
+// Helper function for data fetching
+export async function fetchData<T>(
+  promise: Promise<{ data: T | null; error: any }>
+): Promise<T> {
+  const { data, error } = await promise;
+  if (error) throw error;
+  if (!data) throw new Error('No data returned');
+  return data;
+}
