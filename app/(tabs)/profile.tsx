@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, useColorScheme } from 'react-native';
-import { User, CreditCard as Edit3, Shield, Bell, Wallet, Users, ChevronRight, LogOut } from 'lucide-react-native';
+import { User, CreditCard as Edit3, Shield, Bell, Wallet, ChevronRight, LogOut } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 interface MenuItem {
@@ -38,13 +38,6 @@ export default function ProfileScreen() {
       icon: <Wallet size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
       action: () => console.log('Payment Methods'),
     },
-    {
-      id: '4',
-      title: 'Connected Accounts',
-      subtitle: 'Link your student and club accounts',
-      icon: <Users size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
-      action: () => console.log('Connected Accounts'),
-    },
   ];
 
   const handleLogout = () => {
@@ -60,7 +53,6 @@ export default function ProfileScreen() {
       <View style={styles.header}>
         <View style={styles.profileSection}>
           <View style={[styles.avatarContainer, isDark && styles.avatarContainerDark]}>
-            {/* Replace with actual user avatar */}
             <Image
               source={{ uri: 'https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg' }}
               style={styles.avatar}
