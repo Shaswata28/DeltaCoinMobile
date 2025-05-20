@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, Linking } from 'react-native';
-import { ChevronRight, Mail, Phone, MessageCircle, HelpCircle, Shield, Wallet, Bell, Settings, ExternalLink } from 'lucide-react-native';
+import { ChevronRight, Mail, Phone, MessageCircle, CircleHelp as HelpCircle, Shield, Wallet, Bell, Settings, ExternalLink } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 interface FAQItem {
