@@ -63,7 +63,11 @@ export default function TransactionsScreen() {
   const renderTopUpMethods = () => (
     <View style={styles.methodsContainer}>
       <TouchableOpacity
-        style={[styles.methodCard, isDark && styles.methodCardDark]}
+        style={[
+          styles.methodCard,
+          { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' },
+          isDark && styles.methodCardDark
+        ]}
         onPress={() => handleMethodSelect('bank')}
       >
         <Bank size={32} color={isDark ? '#82B1FF' : '#4D9FFF'} />
@@ -71,7 +75,11 @@ export default function TransactionsScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.methodCard, isDark && styles.methodCardDark]}
+        style={[
+          styles.methodCard,
+          { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' },
+          isDark && styles.methodCardDark
+        ]}
         onPress={() => handleMethodSelect('card')}
       >
         <CreditCard size={32} color={isDark ? '#82B1FF' : '#4D9FFF'} />
@@ -79,7 +87,11 @@ export default function TransactionsScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.methodCard, isDark && styles.methodCardDark]}
+        style={[
+          styles.methodCard,
+          { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' },
+          isDark && styles.methodCardDark
+        ]}
         onPress={() => handleMethodSelect('mobile')}
       >
         <Smartphone size={32} color={isDark ? '#82B1FF' : '#4D9FFF'} />
@@ -91,7 +103,11 @@ export default function TransactionsScreen() {
   const renderPaymentDestinations = () => (
     <View style={styles.methodsContainer}>
       <TouchableOpacity
-        style={[styles.methodCard, isDark && styles.methodCardDark]}
+        style={[
+          styles.methodCard,
+          { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' },
+          isDark && styles.methodCardDark
+        ]}
         onPress={() => handleDestinationSelect('canteen')}
       >
         <Coffee size={32} color={isDark ? '#82B1FF' : '#4D9FFF'} />
@@ -99,7 +115,11 @@ export default function TransactionsScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.methodCard, isDark && styles.methodCardDark]}
+        style={[
+          styles.methodCard,
+          { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' },
+          isDark && styles.methodCardDark
+        ]}
         onPress={() => handleDestinationSelect('library')}
       >
         <Book size={32} color={isDark ? '#82B1FF' : '#4D9FFF'} />
@@ -107,7 +127,11 @@ export default function TransactionsScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.methodCard, isDark && styles.methodCardDark]}
+        style={[
+          styles.methodCard,
+          { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' },
+          isDark && styles.methodCardDark
+        ]}
         onPress={() => handleDestinationSelect('lab')}
       >
         <Beaker size={32} color={isDark ? '#82B1FF' : '#4D9FFF'} />
@@ -115,7 +139,11 @@ export default function TransactionsScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.methodCard, isDark && styles.methodCardDark]}
+        style={[
+          styles.methodCard,
+          { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' },
+          isDark && styles.methodCardDark
+        ]}
         onPress={() => handleDestinationSelect('club')}
       >
         <Users size={32} color={isDark ? '#82B1FF' : '#4D9FFF'} />
@@ -131,7 +159,11 @@ export default function TransactionsScreen() {
         {['Photography', 'Tech', 'Art', 'Sports', 'Music'].map((club, index) => (
           <TouchableOpacity
             key={club}
-            style={[styles.clubOption, isDark && styles.clubOptionDark]}
+            style={[
+              styles.clubOption,
+              { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' },
+              isDark && styles.clubOptionDark
+            ]}
             onPress={() => handleClubSelect(club.toLowerCase() as Club)}
           >
             <Text style={[styles.clubText, isDark && styles.clubTextDark]}>{club}</Text>
@@ -213,7 +245,10 @@ export default function TransactionsScreen() {
     >
       <Text style={[styles.title, isDark && styles.titleDark]}>Transactions</Text>
       
-      <View style={styles.tabs}>
+      <View style={[
+        styles.tabs,
+        { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' }
+      ]}>
         <TouchableOpacity
           style={[
             styles.tab,
@@ -292,9 +327,8 @@ const styles = StyleSheet.create({
   },
   tabs: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 4,
+    borderRadius: 16,
+    padding: 6,
     marginBottom: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -306,16 +340,16 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: 12,
   },
   tabDark: {
     backgroundColor: '#1E1E1E',
   },
   activeTab: {
-    backgroundColor: '#4D9FFF',
+    backgroundColor: '#FFD700',
   },
   activeTabDark: {
-    backgroundColor: '#82B1FF',
+    backgroundColor: '#FFD700',
   },
   tabText: {
     fontSize: 16,
@@ -326,10 +360,12 @@ const styles = StyleSheet.create({
     color: '#A6A6A6',
   },
   activeTabText: {
-    color: '#FFFFFF',
+    color: '#000000',
+    fontWeight: '600',
   },
   activeTabTextDark: {
-    color: '#1E1E1E',
+    color: '#000000',
+    fontWeight: '600',
   },
   methodsContainer: {
     gap: 16,
@@ -337,7 +373,6 @@ const styles = StyleSheet.create({
   methodCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     shadowColor: '#000',
@@ -374,7 +409,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   clubOption: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     shadowColor: '#000',
