@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, useColorScheme } from 'react-native';
-import { User, CreditCard as Edit3, Shield, Bell, Wallet, ChevronRight, LogOut } from 'lucide-react-native';
+import { User, Shield, Bell, Wallet, ChevronRight, LogOut } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useRouter } from 'expo-router';
 
 interface MenuItem {
   id: string;
   title: string;
   subtitle: string;
   icon: React.ReactNode;
-  action: () => void;
+  route: string;
 }
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [isEditing, setIsEditing] = useState(false);
@@ -22,21 +24,21 @@ export default function ProfileScreen() {
       title: 'Security Settings',
       subtitle: 'PIN, password, and authentication',
       icon: <Shield size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
-      action: () => console.log('Security Settings'),
+      route: '/settings/security',
     },
     {
       id: '2',
       title: 'Notifications',
       subtitle: 'Manage your notification preferences',
       icon: <Bell size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
-      action: () => console.log('Notifications'),
+      route: '/settings/notifications',
     },
     {
       id: '3',
       title: 'Payment Methods',
       subtitle: 'Manage your payment options',
       icon: <Wallet size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
-      action: () => console.log('Payment Methods'),
+      route: '/settings/payment-methods',
     },
   ];
 
@@ -61,7 +63,7 @@ export default function ProfileScreen() {
               style={[styles.editButton, isDark && styles.editButtonDark]}
               onPress={() => setIsEditing(true)}
             >
-              <Edit3 size={16} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+              <User size={16} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
             </TouchableOpacity>
           </View>
 
@@ -100,7 +102,7 @@ export default function ProfileScreen() {
           >
             <TouchableOpacity
               style={[styles.menuItem, isDark && styles.menuItemDark]}
-              onPress={item.action}
+              onPress={() => router.push(item.route)}
             >
               {item.icon}
               <View style={styles.menuItemContent}>
