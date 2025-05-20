@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, useColorScheme, useWindowDimensions } from 'react-native';
-import { ArrowUpRight, ArrowDownRight, QrCode, Send, Wallet, Receipt, Clock, ChevronRight, CircleHelp as HelpCircle } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, useColorScheme } from 'react-native';
+import { ArrowUpRight, ArrowDownRight, Send, Wallet, Receipt, Clock, CircleHelp as HelpCircle } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 
@@ -16,7 +16,6 @@ export default function HomeScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const { width: windowWidth } = useWindowDimensions();
   const [greeting, setGreeting] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
@@ -107,37 +106,44 @@ export default function HomeScreen() {
           <Text style={[styles.balanceAmount, isDark && styles.textDark]}>
             {formatCurrency(balance)}
           </Text>
-          <View style={styles.quickActions}>
-            <TouchableOpacity 
-              style={[styles.quickAction, isDark && styles.quickActionDark]}
-              onPress={() => router.push('/transactions')}
-            >
-              <Send size={24} color="#FFD700" />
-              <Text style={[styles.quickActionText, isDark && styles.quickActionTextDark]}>Pay</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.quickAction, isDark && styles.quickActionDark]}
-              onPress={() => router.push('/transactions')}
-            >
-              <Receipt size={24} color="#4D9FFF" />
-              <Text style={[styles.quickActionText, isDark && styles.quickActionTextDark]}>Top-up</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.quickAction, isDark && styles.quickActionDark]}
-              onPress={() => router.push('/history')}
-            >
-              <Clock size={24} color="#10B981" />
-              <Text style={[styles.quickActionText, isDark && styles.quickActionTextDark]}>History</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.quickAction, isDark && styles.quickActionDark]}
-              onPress={() => router.push('/help')}
-            >
-              <HelpCircle size={24} color="#A78BFA" />
-              <Text style={[styles.quickActionText, isDark && styles.quickActionTextDark]}>Help</Text>
-            </TouchableOpacity>
-          </View>
         </View>
+      </Animated.View>
+
+      <Animated.View 
+        entering={FadeInDown.delay(400).duration(600).springify()}
+        style={styles.quickActions}
+      >
+        <TouchableOpacity 
+          style={[styles.actionButton, isDark && styles.actionButtonDark]}
+          onPress={() => router.push('/transactions')}
+        >
+          <Send size={24} color="#FFD700" />
+          <Text style={[styles.actionText, isDark && styles.textDark]}>Pay</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.actionButton, isDark && styles.actionButtonDark]}
+          onPress={() => router.push('/transactions')}
+        >
+          <Receipt size={24} color="#4D9FFF" />
+          <Text style={[styles.actionText, isDark && styles.textDark]}>Top-up</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.actionButton, isDark && styles.actionButtonDark]}
+          onPress={() => router.push('/history')}
+        >
+          <Clock size={24} color="#10B981" />
+          <Text style={[styles.actionText, isDark && styles.textDark]}>History</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.actionButton, isDark && styles.actionButtonDark]}
+          onPress={() => router.push('/help')}
+        >
+          <HelpCircle size={24} color="#A78BFA" />
+          <Text style={[styles.actionText, isDark && styles.textDark]}>Help</Text>
+        </TouchableOpacity>
       </Animated.View>
 
       <View style={styles.section}>
@@ -250,7 +256,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 20,
     overflow: 'hidden',
-    height: 180,
+    height: 100,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -261,12 +267,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E1E1E',
   },
   cardLeftSection: {
-    width: 120,
+    width: 100,
     backgroundColor: '#2C3E50',
     justifyContent: 'center',
     alignItems: 'center',
-    borderTopLeftRadius: 20,
-    borderBottomLeftRadius: 20,
   },
   cardLeftSectionDark: {
     backgroundColor: '#2C3E50',
@@ -275,7 +279,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
     padding: 20,
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
   cardRightSectionDark: {
     backgroundColor: '#1E1E1E',
@@ -294,26 +298,31 @@ const styles = StyleSheet.create({
   quickActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    paddingHorizontal: 20,
+    marginBottom: 24,
+    gap: 12,
   },
-  quickAction: {
-    backgroundColor: '#F3F4F6',
+  actionButton: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: 12,
+    padding: 16,
     alignItems: 'center',
-    width: '22%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  quickActionDark: {
-    backgroundColor: '#2E2E2E',
+  actionButtonDark: {
+    backgroundColor: '#1E1E1E',
   },
-  quickActionText: {
+  actionText: {
     marginTop: 8,
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: 'Inter-Medium',
-    color: '#2C2C2C',
-  },
-  quickActionTextDark: {
-    color: '#FFFFFF',
+    color: '#1F2937',
+    textAlign: 'center',
   },
   section: {
     marginBottom: 24,
