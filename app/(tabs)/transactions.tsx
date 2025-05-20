@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useColorScheme, useWindowDimensions } from 'react-native';
-import { Building2, CreditCard, Smartphone, Book, Coffee, Beaker, Users, ArrowLeft, MoreHorizontal, QrCode } from 'lucide-react-native';
+import { Building2, CreditCard, Smartphone, Book, Coffee, Beaker, Users, ArrowLeft, MoveHorizontal as MoreHorizontal, QrCode } from 'lucide-react-native';
 import Animated, { 
   FadeInDown,
   useAnimatedStyle,
