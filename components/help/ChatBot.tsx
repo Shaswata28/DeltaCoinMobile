@@ -21,7 +21,7 @@ export function ChatBot({ onClose }: ChatBotProps) {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       id: '1',
-      text: 'Hello! I'm your DeltaCoin assistant. How can I help you today?',
+      text: "Hello! I'm your DeltaCoin assistant. How can I help you today?",
       sender: 'ai',
       timestamp: new Date(),
     },
