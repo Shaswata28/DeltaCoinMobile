@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useColorScheme } from 'react-native';
-import { Bank, CreditCard, Smartphone, Book, Coffee, Beaker, Users } from 'lucide-react-native';
+import { Ban as Bank, CreditCard, Smartphone, Book, Coffee, Beaker, Users } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { AmountInput } from '@/components/payment/AmountInput';
 import { PaymentSummary } from '@/components/payment/PaymentSummary';
