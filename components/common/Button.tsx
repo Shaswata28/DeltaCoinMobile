@@ -1,4 +1,5 @@
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, View, ViewStyle, useColorScheme } from 'react-native';
+import React, { ReactNode } from 'react';
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, View, ViewStyle, TextStyle, useColorScheme } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 type ButtonProps = {
@@ -9,6 +10,8 @@ type ButtonProps = {
   loading?: boolean;
   disabled?: boolean;
   style?: ViewStyle;
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
 }
 
 export function Button({
@@ -19,6 +22,8 @@ export function Button({
   loading = false,
   disabled = false,
   style,
+  leftIcon,
+  rightIcon,
 }: ButtonProps) {
   const scale = useSharedValue(1);
   const colorScheme = useColorScheme();
@@ -83,14 +88,26 @@ export function Button({
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
       >
-        {loading ? (
-          <ActivityIndicator 
-            color={variant === 'outline' ? (isDark ? '#82B1FF' : '#4D9FFF') : '#FFF'} 
-            size="small" 
-          />
-        ) : (
-          <Text style={getTextStyles()}>{title}</Text>
-        )}
+        <View style={styles.contentContainer}>
+          {loading ? (
+            <ActivityIndicator 
+              color={variant === 'outline' ? (isDark ? '#82B1FF' : '#4D9FFF') : '#FFF'} 
+              size="small" 
+            />
+          ) : (
+            <>
+              {leftIcon}
+              <Text style={[
+                getTextStyles(),
+                leftIcon ? styles.textWithLeftIcon : null,
+                rightIcon ? styles.textWithRightIcon : null
+              ]}>
+                {title}
+              </Text>
+              {rightIcon}
+            </>
+          )}
+        </View>
       </TouchableOpacity>
     </Animated.View>
   );
@@ -101,6 +118,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  contentContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   smallButton: {
     height: 36,
@@ -147,6 +170,12 @@ const styles = StyleSheet.create({
   text: {
     fontFamily: 'Inter-SemiBold',
     textAlign: 'center',
+  },
+  textWithLeftIcon: {
+    marginLeft: 4,
+  },
+  textWithRightIcon: {
+    marginRight: 4,
   },
   smallText: {
     fontSize: 14,
