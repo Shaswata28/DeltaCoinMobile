@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, useColorScheme } from 'react-native';
-import { User, Shield, Bell, Wallet, ChevronRight, LogOut } from 'lucide-react-native';
+import { User, Shield, Bell, Wallet, ChevronRight, LogOut, CreditCard } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 
@@ -9,7 +9,7 @@ type SettingsRoute = '/account-settings/security' | '/account-settings/notificat
 interface MenuItem {
   id: string;
   title: string;
-  subtitle: string;
+  description: string;
   icon: React.ReactNode;
   route: SettingsRoute;
 }
@@ -23,23 +23,23 @@ export default function ProfileScreen() {
   const menuItems: MenuItem[] = [
     {
       id: '1',
-      title: 'Security Settings',
-      subtitle: 'PIN, password, and authentication',
-      icon: <Shield size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
+      title: 'Security',
+      description: 'Password, biometrics, and 2FA',
+      icon: <Shield size={24} color="#FFD700" />,
       route: '/account-settings/security',
     },
     {
       id: '2',
       title: 'Notifications',
-      subtitle: 'Manage your notification preferences',
-      icon: <Bell size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
+      description: 'Push, email, and SMS alerts',
+      icon: <Bell size={24} color="#4D9FFF" />,
       route: '/account-settings/notifications',
     },
     {
       id: '3',
       title: 'Payment Methods',
-      subtitle: 'Manage your payment options',
-      icon: <Wallet size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
+      description: 'Cards and bank accounts',
+      icon: <CreditCard size={24} color="#10B981" />,
       route: '/account-settings/payment-methods',
     },
   ];
@@ -112,7 +112,7 @@ export default function ProfileScreen() {
                   {item.title}
                 </Text>
                 <Text style={[styles.menuItemSubtitle, isDark && styles.textLightDark]}>
-                  {item.subtitle}
+                  {item.description}
                 </Text>
               </View>
               <ChevronRight size={20} color={isDark ? '#A6A6A6' : '#6B6B6B'} />
