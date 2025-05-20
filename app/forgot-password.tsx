@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, KeyboardAvoidingView, ScrollView, Platform, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Mail, ShieldCheck } from 'lucide-react-native';
+import { ArrowLeft, Mail, ShieldCheck, Check } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { FormInput } from '@/components/common/FormInput';
@@ -27,6 +27,14 @@ export default function ForgotPasswordScreen() {
     newPassword: '',
     confirmPassword: '',
   });
+
+  const steps = [
+    { id: 'email', title: 'Email' },
+    { id: 'code', title: 'Verification' },
+    { id: 'newPassword', title: 'New Password' }
+  ];
+
+  const currentStepIndex = steps.findIndex(step => step.id === currentStep);
 
   const handleSendCode = async () => {
     if (!validateEmail(email)) {
@@ -97,6 +105,50 @@ export default function ForgotPasswordScreen() {
       setIsLoading(false);
     }
   };
+
+  const renderStepIndicator = () => (
+    <View style={styles.stepIndicator}>
+      {steps.map((step, index) => (
+        <View key={step.id} style={styles.stepItem}>
+          <View style={[
+            styles.stepCircle,
+            index <= currentStepIndex && styles.stepCircleActive,
+            isDark && styles.stepCircleDark,
+            index <= currentStepIndex && isDark && styles.stepCircleActiveDark
+          ]}>
+            {index < currentStepIndex ? (
+              <Check size={16} color="#FFFFFF" />
+            ) : (
+              <Text style={[
+                styles.stepNumber,
+                index <= currentStepIndex && styles.stepNumberActive,
+                isDark && styles.stepNumberDark,
+                index <= currentStepIndex && isDark && styles.stepNumberActiveDark
+              ]}>
+                {index + 1}
+              </Text>
+            )}
+          </View>
+          <Text style={[
+            styles.stepText,
+            index <= currentStepIndex && styles.stepTextActive,
+            isDark && styles.stepTextDark,
+            index <= currentStepIndex && isDark && styles.stepTextActiveDark
+          ]}>
+            {step.title}
+          </Text>
+          {index < steps.length - 1 && (
+            <View style={[
+              styles.stepLine,
+              index < currentStepIndex && styles.stepLineActive,
+              isDark && styles.stepLineDark,
+              index < currentStepIndex && isDark && styles.stepLineActiveDark
+            ]} />
+          )}
+        </View>
+      ))}
+    </View>
+  );
 
   const renderEmailStep = () => (
     <Animated.View entering={FadeInDown.duration(300)}>
@@ -237,6 +289,8 @@ export default function ForgotPasswordScreen() {
           <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
         </TouchableOpacity>
 
+        {renderStepIndicator()}
+
         <View style={styles.content}>
           {currentStep === 'email' && renderEmailStep()}
           {currentStep === 'code' && renderCodeStep()}
@@ -269,6 +323,82 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     paddingVertical: 40,
+  },
+  stepIndicator: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+    paddingHorizontal: 20,
+  },
+  stepItem: {
+    flex: 1,
+    alignItems: 'center',
+    position: 'relative',
+  },
+  stepCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#E5E7EB',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  stepCircleDark: {
+    backgroundColor: '#2E2E2E',
+  },
+  stepCircleActive: {
+    backgroundColor: '#4D9FFF',
+  },
+  stepCircleActiveDark: {
+    backgroundColor: '#82B1FF',
+  },
+  stepNumber: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#6B7280',
+  },
+  stepNumberDark: {
+    color: '#A6A6A6',
+  },
+  stepNumberActive: {
+    color: '#FFFFFF',
+  },
+  stepNumberActiveDark: {
+    color: '#FFFFFF',
+  },
+  stepText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+    color: '#6B7280',
+  },
+  stepTextDark: {
+    color: '#A6A6A6',
+  },
+  stepTextActive: {
+    color: '#4D9FFF',
+  },
+  stepTextActiveDark: {
+    color: '#82B1FF',
+  },
+  stepLine: {
+    position: 'absolute',
+    top: 14,
+    right: -50,
+    width: 100,
+    height: 2,
+    backgroundColor: '#E5E7EB',
+    zIndex: -1,
+  },
+  stepLineDark: {
+    backgroundColor: '#2E2E2E',
+  },
+  stepLineActive: {
+    backgroundColor: '#4D9FFF',
+  },
+  stepLineActiveDark: {
+    backgroundColor: '#82B1FF',
   },
   stepTitle: {
     fontSize: 24,
