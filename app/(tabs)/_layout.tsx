@@ -32,7 +32,7 @@ export default function TabLayout() {
         name="index"
         options={{
           tabBarIcon: ({ color }) => (
-            <Home size={24} color={color} strokeWidth={2} />
+            <Home size={24} color={color === '#FFD700' ? '#FFD700' : (isDark ? '#82B1FF' : '#4D9FFF')} strokeWidth={2} />
           ),
         }}
       />
@@ -40,7 +40,7 @@ export default function TabLayout() {
         name="transactions"
         options={{
           tabBarIcon: ({ color }) => (
-            <ArrowLeftRight size={24} color={color} strokeWidth={2} />
+            <ArrowLeftRight size={24} color={color === '#FFD700' ? '#FFD700' : (isDark ? '#82B1FF' : '#4D9FFF')} strokeWidth={2} />
           ),
         }}
       />
@@ -48,7 +48,7 @@ export default function TabLayout() {
         name="analytics"
         options={{
           tabBarIcon: ({ color }) => (
-            <LineChart size={24} color={color} strokeWidth={2} />
+            <LineChart size={24} color={color === '#FFD700' ? '#FFD700' : (isDark ? '#82B1FF' : '#4D9FFF')} strokeWidth={2} />
           ),
         }}
       />
@@ -56,7 +56,7 @@ export default function TabLayout() {
         name="help"
         options={{
           tabBarIcon: ({ color }) => (
-            <HelpCircle size={24} color={color} strokeWidth={2} />
+            <HelpCircle size={24} color={color === '#FFD700' ? '#FFD700' : (isDark ? '#82B1FF' : '#4D9FFF')} strokeWidth={2} />
           ),
         }}
       />
@@ -64,7 +64,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           tabBarIcon: ({ color }) => (
-            <User size={24} color={color} strokeWidth={2} />
+            <User size={24} color={color === '#FFD700' ? '#FFD700' : (isDark ? '#82B1FF' : '#4D9FFF')} strokeWidth={2} />
           ),
         }}
       />
@@ -72,7 +72,7 @@ export default function TabLayout() {
         name="settings"
         options={{
           tabBarIcon: ({ color }) => (
-            <Settings size={24} color={color} strokeWidth={2} />
+            <Settings size={24} color={color === '#FFD700' ? '#FFD700' : (isDark ? '#82B1FF' : '#4D9FFF')} strokeWidth={2} />
           ),
         }}
       />
