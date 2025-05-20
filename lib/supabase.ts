@@ -14,9 +14,8 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     storage: AsyncStorage,
   },
   realtime: {
-    params: {
-      eventsPerSecond: 2,
-    },
+    // Disable realtime subscriptions
+    enabled: false,
   },
   global: {
     headers: {
