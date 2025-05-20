@@ -18,4 +18,9 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       eventsPerSecond: 2,
     },
   },
+  global: {
+    headers: {
+      'X-Client-Info': 'deltacoin-mobile',
+    },
+  },
 });
