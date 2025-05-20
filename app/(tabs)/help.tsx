@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, Linking } from 'react-native';
 import { ChevronRight, Mail, Phone, MessageCircle, CircleHelp as HelpCircle, Shield, Wallet, Bell, Bug } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { ChatBot } from '@/components/help/ChatBot';
-import { BugReport } from '@/components/help/BugReport';
+import { ChatBot } from '../../components/help/ChatBot';
+import { BugReport } from '../../components/help/BugReport';
 
 interface FAQItem {
   id: string;
@@ -39,7 +39,7 @@ export default function HelpScreen() {
     {
       id: '3',
       question: 'How do I reset my PIN?',
-      answer: 'To reset your PIN, go to Settings > Security > Reset PIN. You'll need to verify your identity through your registered email address.'
+      answer: "To reset your PIN, go to Settings > Security > Reset PIN. You'll need to verify your identity through your registered email address."
     },
     {
       id: '4',
