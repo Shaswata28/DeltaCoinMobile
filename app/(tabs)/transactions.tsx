@@ -12,7 +12,9 @@ import Animated, {
 import { 
   Gesture,
   GestureDetector,
-  GestureHandlerRootView 
+  GestureHandlerRootView,
+  GestureUpdateEvent,
+  PanGestureHandlerEventPayload
 } from 'react-native-gesture-handler';
 import { AmountInput } from '@/components/payment/AmountInput';
 import { PaymentSummary } from '@/components/payment/PaymentSummary';
@@ -50,7 +52,7 @@ export default function TransactionsScreen() {
     .onStart(() => {
       context.value = { x: translateX.value };
     })
-    .onUpdate((event) => {
+    .onUpdate((event: GestureUpdateEvent<PanGestureHandlerEventPayload>) => {
       translateX.value = event.translationX + context.value.x;
     })
     .onEnd(() => {
