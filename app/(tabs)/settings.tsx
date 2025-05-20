@@ -101,7 +101,6 @@ export default function SettingsScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.header}>
-        <SettingsIcon size={32} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
         <Text style={[styles.title, isDark && styles.titleDark]}>Settings</Text>
       </View>
 
