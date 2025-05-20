@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Settings as SettingsIcon, ChevronRight, Moon, Bell, Shield, CreditCard, HelpCircle, Info, Languages, LogOut } from 'lucide-react-native';
+import { Settings as SettingsIcon, ChevronRight, Moon, Bell, Shield, CreditCard, CircleHelp as HelpCircle, Info, Languages, LogOut } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 interface SettingItem {
