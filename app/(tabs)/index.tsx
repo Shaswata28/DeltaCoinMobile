@@ -1,4 +1,192 @@
-on, isDark && styles.cardLeftSectionDark]}>
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, useColorScheme, ActivityIndicator } from 'react-native';
+import { ArrowUpRight, ArrowDownRight, Send, Wallet, PlusCircle, Clock, CircleHelp as HelpCircle } from 'lucide-react-native';
+import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
+import { useRouter } from 'expo-router';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
+
+interface Transaction {
+  id: string;
+  type: 'send' | 'receive';
+  amount: number;
+  recipient: string;
+  timestamp: Date;
+}
+
+interface WalletData {
+  balance: number;
+  monthlySpent: number;
+  monthlyLimit: number;
+  recentTransactions: Transaction[];
+}
+
+export default function HomeScreen() {
+  const router = useRouter();
+  const { user } = useAuth();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  
+  const [greeting, setGreeting] = useState('');
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [walletData, setWalletData] = useState<WalletData>({
+    balance: 0,
+    monthlySpent: 0,
+    monthlyLimit: 2000, // Default limit
+    recentTransactions: []
+  });
+
+  useEffect(() => {
+    const updateGreeting = () => {
+      const hour = new Date().getHours();
+      if (hour < 12) setGreeting('Good Morning');
+      else if (hour < 17) setGreeting('Good Afternoon');
+      else setGreeting('Good Evening');
+    };
+
+    updateGreeting();
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+      updateGreeting();
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchWalletData = async () => {
+    try {
+      // Fetch wallet balance
+      const { data: walletData, error: walletError } = await supabase
+        .from('wallets')
+        .select('balance')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (walletError) throw walletError;
+
+      // Fetch recent transactions
+      const { data: transactionsData, error: transactionsError } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('wallet_id', walletData.id)
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (transactionsError) throw transactionsError;
+
+      // Calculate monthly spent
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const { data: monthlyData, error: monthlyError } = await supabase
+        .from('transactions')
+        .select('amount')
+        .eq('wallet_id', walletData.id)
+        .eq('type', 'send')
+        .gte('created_at', startOfMonth.toISOString())
+        .order('created_at', { ascending: false });
+
+      if (monthlyError) throw monthlyError;
+
+      const monthlySpent = monthlyData.reduce((sum, tx) => sum + tx.amount, 0);
+
+      setWalletData({
+        balance: walletData.balance,
+        monthlySpent,
+        monthlyLimit: 2000, // This could be fetched from a settings table
+        recentTransactions: transactionsData.map(tx => ({
+          ...tx,
+          timestamp: new Date(tx.created_at)
+        }))
+      });
+
+      setError(null);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWalletData();
+  }, [user]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchWalletData();
+    setRefreshing(false);
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount);
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color="#FFD700" />
+        <Text style={styles.loadingText}>Loading your wallet...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, styles.errorContainer]}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchWalletData}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const spendingProgress = (walletData.monthlySpent / walletData.monthlyLimit) * 100;
+
+  return (
+    <ScrollView 
+      style={[styles.container, isDark && styles.containerDark]}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
+      <View style={styles.header}>
+        <Animated.View entering={FadeInDown.duration(600).springify()}>
+          <Text style={[styles.greeting, isDark && styles.textDark]}>
+            {greeting}, {user?.user_metadata?.full_name?.split(' ')[0]}
+          </Text>
+          <Text style={[styles.date, isDark && styles.textLightDark]}>
+            {currentTime.toLocaleDateString('en-US', { 
+              weekday: 'long',
+              month: 'long',
+              day: 'numeric'
+            })}
+          </Text>
+        </Animated.View>
+      </View>
+
+      <Animated.View 
+        entering={FadeInDown.delay(200).duration(600).springify()}
+        style={[styles.balanceCard, isDark && styles.balanceCardDark]}
+      >
+        <View style={[styles.cardLeftSection, isDark && styles.cardLeftSectionDark]}>
           <Wallet size={48} color="#FFD700" />
         </View>
         <View style={[styles.cardRightSection, isDark && styles.cardRightSectionDark]}>
@@ -92,7 +280,7 @@ on, isDark && styles.cardLeftSectionDark]}>
             <Text style={styles.seeAll}>See All</Text>
           </TouchableOpacity>
         </View>
-        {recentTransactions.map((transaction, index) => (
+        {walletData.recentTransactions.map((transaction, index) => (
           <Animated.View
             key={transaction.id}
             entering={FadeInRight.delay(index * 200).duration(600).springify()}
