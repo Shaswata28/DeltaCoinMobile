@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, useColorScheme, useWindowDimensions } from 'react-native';
-import { ArrowUpRight, ArrowDownRight, QrCode, Send, Wallet, Receipt, Clock, ChevronRight, Users } from 'lucide-react-native';
+import { ArrowUpRight, ArrowDownRight, QrCode, Send, Wallet, Receipt, Clock } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 
 interface Transaction {
@@ -33,23 +33,6 @@ export default function HomeScreen() {
     { id: '1', type: 'receive', amount: 250.00, recipient: 'Sarah Johnson', timestamp: new Date(2024, 2, 15, 14, 30) },
     { id: '2', type: 'send', amount: 75.50, recipient: 'Coffee Shop', timestamp: new Date(2024, 2, 15, 10, 15) },
     { id: '3', type: 'send', amount: 120.00, recipient: 'Book Store', timestamp: new Date(2024, 2, 14, 16, 45) },
-  ]);
-
-  const [budgetCategories] = useState<BudgetCategory[]>([
-    { 
-      id: '1', 
-      name: 'Food & Dining', 
-      spent: 450, 
-      limit: 600,
-      icon: <Receipt size={24} color="#FFD700" />
-    },
-    { 
-      id: '2', 
-      name: 'Transportation', 
-      spent: 200, 
-      limit: 300,
-      icon: <Users size={24} color="#4D9FFF" />
-    },
   ]);
 
   useEffect(() => {
@@ -126,7 +109,7 @@ export default function HomeScreen() {
         style={[styles.balanceCard, isDark && styles.balanceCardDark]}
       >
         <View style={[styles.cardLeftSection, isDark && styles.cardLeftSectionDark]}>
-          <Wallet size={32} color="#FFD700" />
+          <Wallet size={48} color="#FFD700" />
         </View>
         <View style={[styles.cardRightSection, isDark && styles.cardRightSectionDark]}>
           <Text style={[styles.balanceLabel, isDark && styles.textLightDark]}>
@@ -135,92 +118,21 @@ export default function HomeScreen() {
           <Text style={[styles.balanceAmount, isDark && styles.textDark]}>
             {formatCurrency(balance)}
           </Text>
+          <View style={styles.quickActions}>
+            <TouchableOpacity style={[styles.quickAction, isDark && styles.quickActionDark]}>
+              <Send size={20} color="#FFD700" />
+              <Text style={[styles.quickActionText, isDark && styles.quickActionTextDark]}>Send</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.quickAction, isDark && styles.quickActionDark]}>
+              <Receipt size={20} color="#4D9FFF" />
+              <Text style={[styles.quickActionText, isDark && styles.quickActionTextDark]}>Request</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.quickAction, isDark && styles.quickActionDark]}>
+              <QrCode size={20} color="#10B981" />
+              <Text style={[styles.quickActionText, isDark && styles.quickActionTextDark]}>Scan</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </Animated.View>
-
-      <Animated.View 
-        entering={FadeInDown.delay(400).duration(600).springify()}
-        style={styles.quickActions}
-      >
-        <TouchableOpacity 
-          style={[
-            styles.actionButton, 
-            isDark && styles.actionButtonDark,
-            { width: actionButtonSize, height: actionButtonSize }
-          ]}
-        >
-          <Send size={iconSize} color="#FFD700" />
-          <Text 
-            style={[
-              styles.actionText, 
-              isDark && styles.textDark,
-              { fontSize }
-            ]} 
-            numberOfLines={1}
-          >
-            Send
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[
-            styles.actionButton, 
-            isDark && styles.actionButtonDark,
-            { width: actionButtonSize, height: actionButtonSize }
-          ]}
-        >
-          <Receipt size={iconSize} color="#4D9FFF" />
-          <Text 
-            style={[
-              styles.actionText, 
-              isDark && styles.textDark,
-              { fontSize }
-            ]} 
-            numberOfLines={1}
-          >
-            Request
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[
-            styles.actionButton, 
-            isDark && styles.actionButtonDark,
-            { width: actionButtonSize, height: actionButtonSize }
-          ]}
-        >
-          <QrCode size={iconSize} color="#10B981" />
-          <Text 
-            style={[
-              styles.actionText, 
-              isDark && styles.textDark,
-              { fontSize }
-            ]} 
-            numberOfLines={1}
-          >
-            Scan
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[
-            styles.actionButton, 
-            isDark && styles.actionButtonDark,
-            { width: actionButtonSize, height: actionButtonSize }
-          ]}
-        >
-          <Wallet size={iconSize} color={isDark ? '#82B1FF' : '#4D9FFF'} />
-          <Text 
-            style={[
-              styles.actionText, 
-              isDark && styles.textDark,
-              { fontSize }
-            ]} 
-            numberOfLines={1}
-          >
-            Top Up
-          </Text>
-        </TouchableOpacity>
       </Animated.View>
 
       <View style={styles.section}>
@@ -300,36 +212,6 @@ export default function HomeScreen() {
           </Animated.View>
         ))}
       </View>
-
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, isDark && styles.textDark]}>
-            Quick Transfer
-          </Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAll}>View All</Text>
-          </TouchableOpacity>
-        </View>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          style={styles.contactsScroll}
-        >
-          {[...Array(5)].map((_, index) => (
-            <TouchableOpacity 
-              key={index}
-              style={[styles.contactButton, isDark && styles.contactButtonDark]}
-            >
-              <View style={[styles.contactAvatar, isDark && styles.contactAvatarDark]}>
-                <Users size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />
-              </View>
-              <Text style={[styles.contactName, isDark && styles.textDark]}>
-                Contact {index + 1}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
     </ScrollView>
   );
 }
@@ -363,7 +245,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 20,
     overflow: 'hidden',
-    height: 100,
+    height: 180,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -374,7 +256,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E1E1E',
   },
   cardLeftSection: {
-    width: 100,
+    width: 120,
     backgroundColor: '#2C3E50',
     justifyContent: 'center',
     alignItems: 'center',
@@ -388,49 +270,45 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
     padding: 20,
-    paddingLeft: 30,
-    justifyContent: 'center',
+    justifyContent: 'space-between',
   },
   cardRightSectionDark: {
     backgroundColor: '#1E1E1E',
   },
   balanceLabel: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: 'Inter-Medium',
     color: '#6B7280',
     marginBottom: 4,
   },
   balanceAmount: {
-    fontSize: 28,
+    fontSize: 32,
     fontFamily: 'Inter-Bold',
     color: '#1F2937',
   },
   quickActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginBottom: 24,
+    marginTop: 20,
   },
-  actionButton: {
-    backgroundColor: '#FFFFFF',
+  quickAction: {
+    backgroundColor: '#F3F4F6',
     borderRadius: 12,
     padding: 12,
     alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    width: '30%',
   },
-  actionButtonDark: {
-    backgroundColor: '#1E1E1E',
+  quickActionDark: {
+    backgroundColor: '#2E2E2E',
   },
-  actionText: {
-    fontFamily: 'Inter-Medium',
-    color: '#1F2937',
+  quickActionText: {
     marginTop: 8,
-    textAlign: 'center',
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+    color: '#2C2C2C',
+  },
+  quickActionTextDark: {
+    color: '#FFFFFF',
   },
   section: {
     marginBottom: 24,
@@ -545,35 +423,6 @@ const styles = StyleSheet.create({
   },
   amountNegative: {
     color: '#FF4D4F',
-  },
-  contactsScroll: {
-    paddingHorizontal: 20,
-  },
-  contactButton: {
-    alignItems: 'center',
-    marginRight: 16,
-    width: 80,
-  },
-  contactButtonDark: {
-    backgroundColor: 'transparent',
-  },
-  contactAvatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#F3F4F6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  contactAvatarDark: {
-    backgroundColor: '#2E2E2E',
-  },
-  contactName: {
-    fontSize: 12,
-    fontFamily: 'Inter-Medium',
-    color: '#1F2937',
-    textAlign: 'center',
   },
   textDark: {
     color: '#FFFFFF',
