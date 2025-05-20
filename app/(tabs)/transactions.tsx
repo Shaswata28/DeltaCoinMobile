@@ -1,7 +1,19 @@
-import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useColorScheme } from 'react-native';
+import { useState, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useColorScheme, useWindowDimensions } from 'react-native';
 import { Ban as Bank, CreditCard, Smartphone, Book, Coffee, Beaker, Users } from 'lucide-react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { 
+  FadeInDown,
+  useAnimatedStyle,
+  withSpring,
+  useSharedValue,
+  withTiming,
+  runOnJS
+} from 'react-native-reanimated';
+import { 
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView 
+} from 'react-native-gesture-handler';
 import { AmountInput } from '@/components/payment/AmountInput';
 import { PaymentSummary } from '@/components/payment/PaymentSummary';
 import { FormInput } from '@/components/common/FormInput';
@@ -22,12 +34,39 @@ interface PaymentDetails {
 export default function TransactionsScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const { width: windowWidth } = useWindowDimensions();
+  const scrollRef = useRef<ScrollView>(null);
   
   const [activeTab, setActiveTab] = useState<'topup' | 'payment'>('topup');
   const [step, setStep] = useState<'selection' | 'amount' | 'summary'>('selection');
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails>({
     amount: '',
   });
+
+  const translateX = useSharedValue(0);
+  const context = useSharedValue({ x: 0 });
+
+  const gesture = Gesture.Pan()
+    .onStart(() => {
+      context.value = { x: translateX.value };
+    })
+    .onUpdate((event) => {
+      translateX.value = event.translationX + context.value.x;
+    })
+    .onEnd(() => {
+      const shouldSwitch = Math.abs(translateX.value) > windowWidth * 0.3;
+      if (shouldSwitch) {
+        const newTab = translateX.value > 0 ? 'topup' : 'payment';
+        runOnJS(setActiveTab)(newTab);
+        runOnJS(setStep)('selection');
+        runOnJS(setPaymentDetails)({ amount: '' });
+      }
+      translateX.value = withSpring(0);
+    });
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
 
   const handleMethodSelect = (method: PaymentMethod) => {
     setPaymentDetails(prev => ({ ...prev, method }));
@@ -185,7 +224,13 @@ export default function TransactionsScreen() {
 
   const renderContent = () => {
     if (step === 'selection') {
-      return activeTab === 'topup' ? renderTopUpMethods() : renderPaymentDestinations();
+      return (
+        <GestureDetector gesture={gesture}>
+          <Animated.View style={[styles.contentContainer, animatedStyle]}>
+            {activeTab === 'topup' ? renderTopUpMethods() : renderPaymentDestinations()}
+          </Animated.View>
+        </GestureDetector>
+      );
     }
 
     if (step === 'amount') {
@@ -239,69 +284,75 @@ export default function TransactionsScreen() {
   };
 
   return (
-    <ScrollView 
-      style={[styles.container, isDark && styles.containerDark]}
-      contentContainerStyle={styles.content}
-    >
-      <Text style={[styles.title, isDark && styles.titleDark]}>Transactions</Text>
-      
-      <View style={[
-        styles.tabs,
-        { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' }
-      ]}>
-        <TouchableOpacity
-          style={[
-            styles.tab,
-            activeTab === 'topup' && styles.activeTab,
-            isDark && styles.tabDark,
-            activeTab === 'topup' && isDark && styles.activeTabDark
-          ]}
-          onPress={() => {
-            setActiveTab('topup');
-            setStep('selection');
-            setPaymentDetails({ amount: '' });
-          }}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === 'topup' && styles.activeTabText,
-              isDark && styles.tabTextDark,
-              activeTab === 'topup' && isDark && styles.activeTabTextDark
-            ]}
-          >
-            Top-Up
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[
-            styles.tab,
-            activeTab === 'payment' && styles.activeTab,
-            isDark && styles.tabDark,
-            activeTab === 'payment' && isDark && styles.activeTabDark
-          ]}
-          onPress={() => {
-            setActiveTab('payment');
-            setStep('selection');
-            setPaymentDetails({ amount: '' });
-          }}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === 'payment' && styles.activeTabText,
-              isDark && styles.tabTextDark,
-              activeTab === 'payment' && isDark && styles.activeTabTextDark
-            ]}
-          >
-            Payment
-          </Text>
-        </TouchableOpacity>
-      </View>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ScrollView 
+        ref={scrollRef}
+        style={[styles.container, isDark && styles.containerDark]}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <Text style={[styles.title, isDark && styles.titleDark]}>Transactions</Text>
+          
+          <View style={[
+            styles.tabs,
+            { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' }
+          ]}>
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === 'topup' && styles.activeTab,
+                isDark && styles.tabDark,
+                activeTab === 'topup' && isDark && styles.activeTabDark
+              ]}
+              onPress={() => {
+                setActiveTab('topup');
+                setStep('selection');
+                setPaymentDetails({ amount: '' });
+              }}
+            >
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === 'topup' && styles.activeTabText,
+                  isDark && styles.tabTextDark,
+                  activeTab === 'topup' && isDark && styles.activeTabTextDark
+                ]}
+              >
+                Top-Up
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === 'payment' && styles.activeTab,
+                isDark && styles.tabDark,
+                activeTab === 'payment' && isDark && styles.activeTabDark
+              ]}
+              onPress={() => {
+                setActiveTab('payment');
+                setStep('selection');
+                setPaymentDetails({ amount: '' });
+              }}
+            >
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === 'payment' && styles.activeTabText,
+                  isDark && styles.tabTextDark,
+                  activeTab === 'payment' && isDark && styles.activeTabTextDark
+                ]}
+              >
+                Payment
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
-      {renderContent()}
-    </ScrollView>
+        {renderContent()}
+      </ScrollView>
+    </GestureHandlerRootView>
   );
 }
 
@@ -315,6 +366,10 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+    paddingBottom: 40,
+  },
+  header: {
+    marginBottom: 24,
   },
   title: {
     fontSize: 28,
@@ -324,6 +379,9 @@ const styles = StyleSheet.create({
   },
   titleDark: {
     color: '#FFFFFF',
+  },
+  contentContainer: {
+    width: '100%',
   },
   tabs: {
     flexDirection: 'row',
@@ -361,11 +419,11 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     color: '#000000',
-    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
   },
   activeTabTextDark: {
     color: '#000000',
-    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
   },
   methodsContainer: {
     gap: 16,
