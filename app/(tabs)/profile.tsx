@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, useColorScheme } from 'react-native';
-import { User, Shield, Bell, Wallet, ChevronRight, LogOut, CreditCard } from 'lucide-react-native';
+import { User, Shield, Bell, Wallet, ChevronRight, LogOut, CreditCard, Menu } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 
@@ -55,6 +55,12 @@ export default function ProfileScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.header}>
+        <TouchableOpacity 
+          style={[styles.settingsButton, isDark && styles.settingsButtonDark]}
+          onPress={() => router.push('/settings')}
+        >
+          <Menu size={24} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+        </TouchableOpacity>
         <View style={styles.profileSection}>
           <View style={[styles.avatarContainer, isDark && styles.avatarContainerDark]}>
             <Image
@@ -315,5 +321,25 @@ const styles = StyleSheet.create({
   },
   textLightDark: {
     color: '#A6A6A6',
+  },
+  settingsButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    zIndex: 1,
+  },
+  settingsButtonDark: {
+    backgroundColor: '#2E2E2E',
   },
 });
