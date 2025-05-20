@@ -41,14 +41,14 @@ export default function HomeScreen() {
       name: 'Food & Dining', 
       spent: 450, 
       limit: 600,
-      icon: <Receipt size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+      icon: <Receipt size={24} color="#FFD700" />
     },
     { 
       id: '2', 
       name: 'Transportation', 
       spent: 200, 
       limit: 300,
-      icon: <Users size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+      icon: <Users size={24} color="#4D9FFF" />
     },
   ]);
 
@@ -149,7 +149,7 @@ export default function HomeScreen() {
             { width: actionButtonSize, height: actionButtonSize }
           ]}
         >
-          <Send size={iconSize} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+          <Send size={iconSize} color="#FFD700" />
           <Text 
             style={[
               styles.actionText, 
@@ -169,7 +169,7 @@ export default function HomeScreen() {
             { width: actionButtonSize, height: actionButtonSize }
           ]}
         >
-          <Receipt size={iconSize} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+          <Receipt size={iconSize} color="#4D9FFF" />
           <Text 
             style={[
               styles.actionText, 
@@ -189,7 +189,7 @@ export default function HomeScreen() {
             { width: actionButtonSize, height: actionButtonSize }
           ]}
         >
-          <QrCode size={iconSize} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+          <QrCode size={iconSize} color="#10B981" />
           <Text 
             style={[
               styles.actionText, 
