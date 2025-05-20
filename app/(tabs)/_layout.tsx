@@ -12,9 +12,9 @@ export default function TabLayout() {
       tabBarActiveTintColor: '#FFD700',
       tabBarInactiveTintColor: isDark ? '#A6A6A6' : '#808080',
       tabBarStyle: {
-        backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
-        height: Platform.OS === 'ios' ? '8%' : 64,
-        paddingBottom: 10,
+        backgroundColor: '#2C3E50',
+        height: Platform.OS === 'ios' ? '10%' : 80,
+        paddingBottom: Platform.OS === 'ios' ? 20 : 15,
         borderTopWidth: 0,
         elevation: 8,
         shadowColor: '#000',
@@ -24,9 +24,9 @@ export default function TabLayout() {
       },
       headerShown: false,
       tabBarIconStyle: {
-        marginTop: Platform.OS === 'ios' ? 10 : 0,
+        marginTop: Platform.OS === 'ios' ? 15 : 10,
       },
-      tabBarAdaptive: true,
+      
     }}>
       <Tabs.Screen
         name="index"
