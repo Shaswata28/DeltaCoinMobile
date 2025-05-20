@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useColorScheme, useWindowDimensions } from 'react-native';
-import { Ban as Bank, CreditCard, Smartphone, Book, Coffee, Beaker, Users, ArrowLeft } from 'lucide-react-native';
+import { Building2, CreditCard, Smartphone, Book, Coffee, Beaker, Users, ArrowLeft, MoreHorizontal } from 'lucide-react-native';
 import Animated, { 
   FadeInDown,
   useAnimatedStyle,
@@ -20,7 +20,7 @@ import { FormInput } from '@/components/common/FormInput';
 import { Button } from '@/components/common/Button';
 
 type PaymentMethod = 'bank' | 'card' | 'mobile';
-type PaymentDestination = 'canteen' | 'library' | 'lab' | 'club';
+type PaymentDestination = 'canteen' | 'library' | 'lab' | 'club' | 'other';
 type Club = 'photography' | 'tech' | 'art' | 'sports' | 'music';
 
 interface PaymentDetails {
@@ -132,7 +132,7 @@ export default function TransactionsScreen() {
         style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleMethodSelect('bank')}
       >
-        <Bank size={32} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+        <Building2 size={32} color="#FFD700" />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Bank Transfer</Text>
       </TouchableOpacity>
 
@@ -140,7 +140,7 @@ export default function TransactionsScreen() {
         style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleMethodSelect('card')}
       >
-        <CreditCard size={32} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+        <CreditCard size={32} color="#4D9FFF" />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Credit/Debit Card</Text>
       </TouchableOpacity>
 
@@ -148,7 +148,7 @@ export default function TransactionsScreen() {
         style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleMethodSelect('mobile')}
       >
-        <Smartphone size={32} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+        <Smartphone size={32} color="#10B981" />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Mobile Banking</Text>
       </TouchableOpacity>
     </Animated.View>
@@ -163,7 +163,7 @@ export default function TransactionsScreen() {
         style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleDestinationSelect('canteen')}
       >
-        <Coffee size={32} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+        <Coffee size={32} color="#FFD700" />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Canteen</Text>
       </TouchableOpacity>
 
@@ -171,7 +171,7 @@ export default function TransactionsScreen() {
         style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleDestinationSelect('library')}
       >
-        <Book size={32} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+        <Book size={32} color="#4D9FFF" />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Library</Text>
       </TouchableOpacity>
 
@@ -179,7 +179,7 @@ export default function TransactionsScreen() {
         style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleDestinationSelect('lab')}
       >
-        <Beaker size={32} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+        <Beaker size={32} color="#FF6B6B" />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Lab</Text>
       </TouchableOpacity>
 
@@ -187,8 +187,16 @@ export default function TransactionsScreen() {
         style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleDestinationSelect('club')}
       >
-        <Users size={32} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+        <Users size={32} color="#10B981" />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Club</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.methodCard, isDark && styles.methodCardDark]}
+        onPress={() => handleDestinationSelect('other')}
+      >
+        <MoreHorizontal size={32} color="#A78BFA" />
+        <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Other</Text>
       </TouchableOpacity>
     </Animated.View>
   );
