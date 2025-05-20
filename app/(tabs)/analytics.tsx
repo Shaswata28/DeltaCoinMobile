@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, useWindowDimensions, ActivityIndicator } from 'react-native';
-import { Wallet, TrendingUp, ArrowDownRight, ArrowUpRight, Filter, Calendar, Coffee, Book, Beaker, Users, MoveHorizontal as MoreHorizontal } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, useWindowDimensions, ActivityIndicator, Platform } from 'react-native';
+import { Wallet, TrendingUp, ArrowDownRight, ArrowUpRight, Filter, Calendar, Coffee, Book, Beaker, Users, MoveHorizontal as MoreHorizontal, Download, Bell } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 
 interface CategoryData {
   id: string;
@@ -14,6 +16,7 @@ interface CategoryData {
 
 interface BudgetCategory extends CategoryData {
   limit: number;
+  notifications: boolean;
 }
 
 export default function AnalyticsScreen() {
@@ -67,7 +70,7 @@ export default function AnalyticsScreen() {
     }
   ]);
 
-  const [budgets] = useState<BudgetCategory[]>([
+  const [budgets, setBudgets] = useState<BudgetCategory[]>([
     {
       id: '1',
       name: 'Canteen',
@@ -75,7 +78,8 @@ export default function AnalyticsScreen() {
       limit: 300,
       percentage: 83,
       icon: <Coffee size={24} color="#FFD700" />,
-      color: '#FFD700'
+      color: '#FFD700',
+      notifications: true
     },
     {
       id: '2',
@@ -84,7 +88,8 @@ export default function AnalyticsScreen() {
       limit: 150,
       percentage: 67,
       icon: <Book size={24} color="#4D9FFF" />,
-      color: '#4D9FFF'
+      color: '#4D9FFF',
+      notifications: true
     },
     {
       id: '3',
@@ -93,7 +98,8 @@ export default function AnalyticsScreen() {
       limit: 200,
       percentage: 90,
       icon: <Beaker size={24} color="#FF6B6B" />,
-      color: '#FF6B6B'
+      color: '#FF6B6B',
+      notifications: true
     },
     {
       id: '4',
@@ -102,7 +108,8 @@ export default function AnalyticsScreen() {
       limit: 150,
       percentage: 80,
       icon: <Users size={24} color="#10B981" />,
-      color: '#10B981'
+      color: '#10B981',
+      notifications: false
     }
   ]);
 
@@ -123,6 +130,52 @@ export default function AnalyticsScreen() {
     if (percentage <= 70) return '#10B981';
     if (percentage <= 90) return '#F59E0B';
     return '#EF4444';
+  };
+
+  const toggleNotifications = (budgetId: string) => {
+    setBudgets(prev => prev.map(budget => 
+      budget.id === budgetId 
+        ? { ...budget, notifications: !budget.notifications }
+        : budget
+    ));
+  };
+
+  const generateReport = async () => {
+    try {
+      // Generate report content
+      const reportContent = `DeltaCoin Monthly Analytics Report
+${new Date().toLocaleDateString()}
+
+Total Spent: $${totalSpent.toFixed(2)}
+Highest Spending Category: ${highestCategory.name}
+
+Spending by Category:
+${categories.map(cat => `${cat.name}: $${cat.amount.toFixed(2)} (${cat.percentage}%)`).join('\n')}
+
+Budget Status:
+${budgets.map(budget => `${budget.name}: $${budget.amount.toFixed(2)}/$${budget.limit.toFixed(2)} (${budget.percentage}% used)`).join('\n')}
+`;
+
+      if (Platform.OS === 'web') {
+        // For web, create a Blob and download
+        const blob = new Blob([reportContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'deltacoin-report.txt';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } else {
+        // For mobile, use expo-file-system and expo-sharing
+        const fileUri = `${FileSystem.documentDirectory}deltacoin-report.txt`;
+        await FileSystem.writeAsStringAsync(fileUri, reportContent);
+        await Sharing.shareAsync(fileUri);
+      }
+    } catch (error) {
+      console.error('Error generating report:', error);
+    }
   };
 
   const renderDonutChart = () => {
@@ -232,6 +285,12 @@ export default function AnalyticsScreen() {
             ${budget.amount.toFixed(2)} / ${budget.limit.toFixed(2)}
           </Text>
         </View>
+        <TouchableOpacity onPress={() => toggleNotifications(budget.id)}>
+          <Bell 
+            size={20} 
+            color={budget.notifications ? '#FFD700' : (isDark ? '#A6A6A6' : '#6B6B6B')}
+          />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.progressContainer}>
@@ -268,6 +327,12 @@ export default function AnalyticsScreen() {
         <View style={styles.titleRow}>
           <Text style={[styles.title, isDark && styles.textDark]}>Analytics</Text>
           <View style={styles.actions}>
+            <TouchableOpacity 
+              style={[styles.actionButton, isDark && styles.actionButtonDark]}
+              onPress={generateReport}
+            >
+              <Download size={20} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+            </TouchableOpacity>
             <TouchableOpacity style={[styles.actionButton, isDark && styles.actionButtonDark]}>
               <Filter size={20} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
             </TouchableOpacity>
