@@ -6,60 +6,25 @@ export type AuthError = {
   status?: number;
 };
 
-export async function signUp(params: {
-  email: string;
-  password: string;
-  fullName: string;
-  studentId: string;
-  contactNumber: string;
-  username: string;
-}): Promise<{ data: any; error: AuthError | null }> {
-  try {
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: params.email,
-      password: params.password,
-      options: {
-        data: {
-          full_name: params.fullName,
-          student_id: params.studentId,
-          contact_number: params.contactNumber,
-          username: params.username,
-        },
-      },
-    });
-
-    if (authError) throw authError;
-
-    // Create user profile
-    const { error: profileError } = await supabase.from('users').insert({
-      id: authData.user!.id,
-      username: params.username,
-      full_name: params.fullName,
-      student_id: params.studentId,
-      contact_number: params.contactNumber,
-    });
-
-    if (profileError) throw profileError;
-
-    return { data: authData, error: null };
-  } catch (error: any) {
-    return {
-      data: null,
-      error: {
-        message: error.message || 'An error occurred during sign up',
-        status: error.status,
-      },
-    };
-  }
-}
-
 export async function signIn(params: {
-  email: string;
+  username: string;
   password: string;
 }): Promise<{ data: any; error: AuthError | null }> {
   try {
+    // First get the email associated with the username
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('username', params.username)
+      .single();
+
+    if (userError || !userData) {
+      throw new Error('Invalid username or password');
+    }
+
+    // Then sign in with the user's ID
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: params.email,
+      email: `${userData.id}@users.deltacoin.app`, // Using ID as email
       password: params.password,
     });
 
@@ -71,6 +36,53 @@ export async function signIn(params: {
       data: null,
       error: {
         message: error.message || 'An error occurred during sign in',
+        status: error.status,
+      },
+    };
+  }
+}
+
+export async function signUp(params: {
+  username: string;
+  password: string;
+  fullName: string;
+  studentId: string;
+  contactNumber: string;
+}): Promise<{ data: any; error: AuthError | null }> {
+  try {
+    // Check if username is already taken
+    const { data: existingUser, error: checkError } = await supabase
+      .from('users')
+      .select('username')
+      .eq('username', params.username)
+      .single();
+
+    if (existingUser) {
+      throw new Error('Username is already taken');
+    }
+
+    // Create auth user with generated email
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: `${crypto.randomUUID()}@users.deltacoin.app`,
+      password: params.password,
+      options: {
+        data: {
+          username: params.username,
+          full_name: params.fullName,
+          student_id: params.studentId,
+          contact_number: params.contactNumber,
+        },
+      },
+    });
+
+    if (authError) throw authError;
+
+    return { data: authData, error: null };
+  } catch (error: any) {
+    return {
+      data: null,
+      error: {
+        message: error.message || 'An error occurred during sign up',
         status: error.status,
       },
     };

@@ -8,31 +8,35 @@ import { FormInput } from '@/components/common/FormInput';
 import { Button } from '@/components/common/Button';
 import { CheckBox } from '@/components/common/CheckBox';
 import { signIn } from '@/lib/auth';
+import { validateUsername } from '@/utils/validation';
 
 export function LoginForm() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({
-    email: '',
+    username: '',
     password: '',
     general: ''
   });
 
   const handleLogin = async () => {
-    setErrors({ email: '', password: '', general: '' });
+    setErrors({ username: '', password: '', general: '' });
     
     let isValid = true;
-    const newErrors = { email: '', password: '', general: '' };
+    const newErrors = { username: '', password: '', general: '' };
     
-    if (!email) {
-      newErrors.email = 'Email is required';
+    if (!username) {
+      newErrors.username = 'Username is required';
+      isValid = false;
+    } else if (!validateUsername(username)) {
+      newErrors.username = 'Please enter a valid username';
       isValid = false;
     }
     
@@ -49,7 +53,7 @@ export function LoginForm() {
     setIsLoading(true);
     
     try {
-      const { data, error } = await signIn({ email, password });
+      const { data, error } = await signIn({ username, password });
       
       if (error) {
         setErrors({ 
@@ -90,15 +94,14 @@ export function LoginForm() {
       
       <View style={styles.form}>
         <FormInput
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          placeholder="Enter your email"
+          label="Username"
+          value={username}
+          onChangeText={setUsername}
+          placeholder="Enter your username"
           autoCapitalize="none"
-          error={errors.email}
+          error={errors.username}
           disabled={isLoading}
-          keyboardType="email-address"
-          autoComplete="email"
+          autoComplete="username"
         />
         
         <FormInput
