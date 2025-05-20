@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, useWindowDimensions, ActivityIndicator, Platform } from 'react-native';
 import { Wallet, TrendingUp, ArrowDownRight, ArrowUpRight, Filter, Calendar, Coffee, Book, Beaker, Users, MoveHorizontal as MoreHorizontal, Download, Bell } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import * as FileSystem from 'expo-file-system';
+import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 
 interface CategoryData {
@@ -140,41 +140,89 @@ export default function AnalyticsScreen() {
     ));
   };
 
-  const generateReport = async () => {
+  const generatePDFReport = async () => {
     try {
-      // Generate report content
-      const reportContent = `DeltaCoin Monthly Analytics Report
-${new Date().toLocaleDateString()}
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+            <style>
+              body { font-family: 'Helvetica', sans-serif; padding: 20px; }
+              h1 { color: #2C2C2C; font-size: 24px; margin-bottom: 20px; }
+              .section { margin-bottom: 30px; }
+              .section-title { color: #4D9FFF; font-size: 18px; margin-bottom: 15px; }
+              .data-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
+              .category { color: #6B7280; }
+              .amount { font-weight: bold; }
+              .chart { width: 100%; height: 200px; margin: 20px 0; }
+              .footer { margin-top: 40px; color: #6B7280; font-size: 12px; }
+            </style>
+          </head>
+          <body>
+            <h1>DeltaCoin Analytics Report</h1>
+            <div class="section">
+              <div class="section-title">Overview</div>
+              <div class="data-row">
+                <span class="category">Total Spent:</span>
+                <span class="amount">$${totalSpent.toFixed(2)}</span>
+              </div>
+              <div class="data-row">
+                <span class="category">Highest Spending:</span>
+                <span class="amount">${highestCategory.name}</span>
+              </div>
+            </div>
 
-Total Spent: $${totalSpent.toFixed(2)}
-Highest Spending Category: ${highestCategory.name}
+            <div class="section">
+              <div class="section-title">Spending by Category</div>
+              ${categories.map(cat => `
+                <div class="data-row">
+                  <span class="category">${cat.name}</span>
+                  <span class="amount">$${cat.amount.toFixed(2)} (${cat.percentage}%)</span>
+                </div>
+              `).join('')}
+            </div>
 
-Spending by Category:
-${categories.map(cat => `${cat.name}: $${cat.amount.toFixed(2)} (${cat.percentage}%)`).join('\n')}
+            <div class="section">
+              <div class="section-title">Budget Status</div>
+              ${budgets.map(budget => `
+                <div class="data-row">
+                  <span class="category">${budget.name}</span>
+                  <span class="amount">$${budget.amount.toFixed(2)}/$${budget.limit.toFixed(2)} (${budget.percentage}% used)</span>
+                </div>
+              `).join('')}
+            </div>
 
-Budget Status:
-${budgets.map(budget => `${budget.name}: $${budget.amount.toFixed(2)}/$${budget.limit.toFixed(2)} (${budget.percentage}% used)`).join('\n')}
-`;
+            <div class="footer">
+              Generated on ${new Date().toLocaleString()}
+              <br>
+              DeltaCoin Analytics Report
+            </div>
+          </body>
+        </html>
+      `;
+
+      const { uri } = await Print.printToFileAsync({
+        html: htmlContent,
+        base64: false
+      });
 
       if (Platform.OS === 'web') {
-        // For web, create a Blob and download
-        const blob = new Blob([reportContent], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href = url;
-        link.download = 'deltacoin-report.txt';
+        link.href = uri;
+        link.download = 'deltacoin-report.pdf';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        URL.revokeObjectURL(url);
       } else {
-        // For mobile, use expo-file-system and expo-sharing
-        const fileUri = `${FileSystem.documentDirectory}deltacoin-report.txt`;
-        await FileSystem.writeAsStringAsync(fileUri, reportContent);
-        await Sharing.shareAsync(fileUri);
+        await Sharing.shareAsync(uri, {
+          mimeType: 'application/pdf',
+          dialogTitle: 'Download Analytics Report',
+          UTI: 'com.adobe.pdf'
+        });
       }
     } catch (error) {
-      console.error('Error generating report:', error);
+      console.error('Error generating PDF report:', error);
     }
   };
 
@@ -329,7 +377,7 @@ ${budgets.map(budget => `${budget.name}: $${budget.amount.toFixed(2)}/$${budget.
           <View style={styles.actions}>
             <TouchableOpacity 
               style={[styles.actionButton, isDark && styles.actionButtonDark]}
-              onPress={generateReport}
+              onPress={generatePDFReport}
             >
               <Download size={20} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
             </TouchableOpacity>
