@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, useWindowDimensions } from 'react-native';
-import { Wallet, Trimport { Wallet, TrendingUp, ArrowDownRight, ArrowUpRight, Filter, Calendar, Coffee, Book, Beaker, Users, MoveHorizontal as MoreHorizontal } from 'lucide-react-native'd';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, useWindowDimensions, ActivityIndicator } from 'react-native';
+import { Wallet, TrendingUp, ArrowDownRight, ArrowUpRight, Filter, Calendar, Coffee, Book, Beaker, Users, MoveHorizontal as MoreHorizontal } from 'lucide-react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 interface CategoryData {
   id: string;
@@ -29,7 +30,7 @@ export default function AnalyticsScreen() {
       name: 'Canteen',
       amount: 250.50,
       percentage: 35,
-      icon: <Coffee size={24} color="#FFD700" />,
+      icon: <Coffee size={24} color="#FFFFFF" />,
       color: '#FFD700'
     },
     {
@@ -37,7 +38,7 @@ export default function AnalyticsScreen() {
       name: 'Library',
       amount: 100.00,
       percentage: 15,
-      icon: <Book size={24} color="#4D9FFF" />,
+      icon: <Book size={24} color="#FFFFFF" />,
       color: '#4D9FFF'
     },
     {
@@ -45,7 +46,7 @@ export default function AnalyticsScreen() {
       name: 'Laboratory',
       amount: 180.00,
       percentage: 25,
-      icon: <Beaker size={24} color="#FF6B6B" />,
+      icon: <Beaker size={24} color="#FFFFFF" />,
       color: '#FF6B6B'
     },
     {
@@ -53,7 +54,7 @@ export default function AnalyticsScreen() {
       name: 'Clubs',
       amount: 120.50,
       percentage: 15,
-      icon: <Users size={24} color="#10B981" />,
+      icon: <Users size={24} color="#FFFFFF" />,
       color: '#10B981'
     },
     {
@@ -61,7 +62,7 @@ export default function AnalyticsScreen() {
       name: 'Others',
       amount: 75.00,
       percentage: 10,
-      icon: <MoreHorizontal size={24} color="#A78BFA" />,
+      icon: <MoreHorizontal size={24} color="#FFFFFF" />,
       color: '#A78BFA'
     }
   ]);
@@ -73,7 +74,7 @@ export default function AnalyticsScreen() {
       amount: 250.50,
       limit: 300,
       percentage: 83,
-      icon: <Coffee size={24} color="#FFD700" />,
+      icon: <Coffee size={24} color="#FFFFFF" />,
       color: '#FFD700'
     },
     {
@@ -82,7 +83,7 @@ export default function AnalyticsScreen() {
       amount: 100.00,
       limit: 150,
       percentage: 67,
-      icon: <Book size={24} color="#4D9FFF" />,
+      icon: <Book size={24} color="#FFFFFF" />,
       color: '#4D9FFF'
     },
     {
@@ -91,7 +92,7 @@ export default function AnalyticsScreen() {
       amount: 180.00,
       limit: 200,
       percentage: 90,
-      icon: <Beaker size={24} color="#FF6B6B" />,
+      icon: <Beaker size={24} color="#FFFFFF" />,
       color: '#FF6B6B'
     },
     {
@@ -100,7 +101,7 @@ export default function AnalyticsScreen() {
       amount: 120.50,
       limit: 150,
       percentage: 80,
-      icon: <Users size={24} color="#10B981" />,
+      icon: <Users size={24} color="#FFFFFF" />,
       color: '#10B981'
     }
   ]);
@@ -181,8 +182,8 @@ export default function AnalyticsScreen() {
     <View style={[styles.summaryPanel, isDark && styles.panelDark]}>
       <View style={styles.summaryRow}>
         <View style={styles.summaryItem}>
-          <View style={styles.summaryIconContainer}>
-            <Wallet size={24} color="#FFD700" />
+          <View style={[styles.summaryIconContainer, { backgroundColor: '#FFD700' }]}>
+            <Wallet size={24} color="#FFFFFF" />
           </View>
           <View>
             <Text style={[styles.summaryLabel, isDark && styles.textLightDark]}>Balance</Text>
@@ -191,8 +192,8 @@ export default function AnalyticsScreen() {
         </View>
         
         <View style={styles.summaryItem}>
-          <View style={styles.summaryIconContainer}>
-            <TrendingUp size={24} color="#10B981" />
+          <View style={[styles.summaryIconContainer, { backgroundColor: '#10B981' }]}>
+            <TrendingUp size={24} color="#FFFFFF" />
           </View>
           <View>
             <Text style={[styles.summaryLabel, isDark && styles.textLightDark]}>Transactions</Text>
@@ -203,8 +204,8 @@ export default function AnalyticsScreen() {
 
       <View style={styles.summaryRow}>
         <View style={styles.summaryItem}>
-          <View style={styles.summaryIconContainer}>
-            <ArrowUpRight size={24} color="#EF4444" />
+          <View style={[styles.summaryIconContainer, { backgroundColor: '#EF4444' }]}>
+            <ArrowUpRight size={24} color="#FFFFFF" />
           </View>
           <View>
             <Text style={[styles.summaryLabel, isDark && styles.textLightDark]}>Highest Spend</Text>
@@ -213,8 +214,8 @@ export default function AnalyticsScreen() {
         </View>
         
         <View style={styles.summaryItem}>
-          <View style={styles.summaryIconContainer}>
-            <ArrowDownRight size={24} color="#10B981" />
+          <View style={[styles.summaryIconContainer, { backgroundColor: '#10B981' }]}>
+            <ArrowDownRight size={24} color="#FFFFFF" />
           </View>
           <View>
             <Text style={[styles.summaryLabel, isDark && styles.textLightDark]}>Last Updated</Text>
@@ -232,7 +233,7 @@ export default function AnalyticsScreen() {
       style={[styles.budgetCard, isDark && styles.cardDark]}
     >
       <View style={styles.budgetHeader}>
-        <View style={styles.budgetIcon}>
+        <View style={[styles.budgetIcon, { backgroundColor: budget.color }]}>
           {budget.icon}
         </View>
         <View style={styles.budgetInfo}>
@@ -277,10 +278,10 @@ export default function AnalyticsScreen() {
         <View style={styles.titleRow}>
           <Text style={[styles.title, isDark && styles.textDark]}>Analytics</Text>
           <View style={styles.actions}>
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity style={[styles.actionButton, isDark && styles.actionButtonDark]}>
               <Filter size={20} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity style={[styles.actionButton, isDark && styles.actionButtonDark]}>
               <Calendar size={20} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
             </TouchableOpacity>
           </View>
@@ -338,9 +339,19 @@ export default function AnalyticsScreen() {
             <View style={styles.legend}>
               {categories.map((category) => (
                 <View key={category.id} style={styles.legendItem}>
-                  <View style={[styles.legendColor, { backgroundColor: category.color }]} />
-                  <Text style={[styles.legendText, isDark && styles.textDark]}>
-                    {category.name} ({category.percentage}%)
+                  <View style={[styles.legendIcon, { backgroundColor: category.color }]}>
+                    {category.icon}
+                  </View>
+                  <View style={styles.legendTextContainer}>
+                    <Text style={[styles.legendText, isDark && styles.textDark]}>
+                      {category.name}
+                    </Text>
+                    <Text style={[styles.legendPercentage, isDark && styles.textLightDark]}>
+                      {category.percentage}%
+                    </Text>
+                  </View>
+                  <Text style={[styles.legendAmount, isDark && styles.textDark]}>
+                    ${category.amount.toFixed(2)}
                   </Text>
                 </View>
               ))}
@@ -395,6 +406,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+  },
+  actionButtonDark: {
+    backgroundColor: '#1E1E1E',
   },
   tabs: {
     flexDirection: 'row',
@@ -465,7 +479,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -518,21 +531,38 @@ const styles = StyleSheet.create({
   },
   legend: {
     width: '100%',
+    gap: 16,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    justifyContent: 'space-between',
   },
-  legendColor: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 8,
+  legendIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  legendTextContainer: {
+    flex: 1,
+    marginLeft: 12,
   },
   legendText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
+    color: '#2C2C2C',
+  },
+  legendPercentage: {
     fontSize: 14,
     fontFamily: 'Inter-Regular',
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  legendAmount: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
     color: '#2C2C2C',
   },
   budgetCard: {
@@ -558,7 +588,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
