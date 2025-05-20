@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Bell, Mail, Smartphone, CreditCard, Users } from 'lucide-react-native';
+import { ArrowLeft, Bell, Mail, Smartphone, CreditCard } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 interface NotificationSetting {
@@ -41,13 +41,6 @@ export default function NotificationSettingsScreen() {
     },
     {
       id: '4',
-      title: 'Club Updates',
-      description: 'News from your clubs',
-      icon: <Users size={20} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
-      enabled: false,
-    },
-    {
-      id: '5',
       title: 'SMS Alerts',
       description: 'Get text message updates',
       icon: <Smartphone size={20} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
@@ -83,21 +76,25 @@ export default function NotificationSettingsScreen() {
       <View style={styles.content}>
         <Animated.View 
           entering={FadeInDown.delay(100).duration(400)}
-          style={[styles.section, isDark && styles.sectionDark]}
+          style={[styles.list, isDark && styles.listDark]}
         >
           {settings.map((setting, index) => (
             <Animated.View
               key={setting.id}
               entering={FadeInDown.delay(index * 100).duration(400)}
-              style={[styles.option, isDark && styles.optionDark]}
+              style={[
+                styles.listItem,
+                isDark && styles.listItemDark,
+                index === settings.length - 1 && styles.lastItem
+              ]}
             >
-              <View style={styles.optionContent}>
+              <View style={styles.itemContent}>
                 {setting.icon}
-                <View style={styles.optionText}>
-                  <Text style={[styles.optionTitle, isDark && styles.optionTitleDark]}>
+                <View style={styles.itemText}>
+                  <Text style={[styles.itemTitle, isDark && styles.itemTitleDark]}>
                     {setting.title}
                   </Text>
-                  <Text style={[styles.optionDescription, isDark && styles.optionDescriptionDark]}>
+                  <Text style={[styles.itemDescription, isDark && styles.itemDescriptionDark]}>
                     {setting.description}
                   </Text>
                 </View>
@@ -161,51 +158,53 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 24,
   },
-  section: {
+  list: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 20,
-    gap: 16,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
   },
-  sectionDark: {
+  listDark: {
     backgroundColor: '#1E1E1E',
   },
-  option: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 12,
+  listItem: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
     padding: 16,
   },
-  optionDark: {
-    backgroundColor: '#2E2E2E',
+  listItemDark: {
+    borderBottomColor: '#2E2E2E',
   },
-  optionContent: {
+  lastItem: {
+    borderBottomWidth: 0,
+  },
+  itemContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  optionText: {
+  itemText: {
     flex: 1,
   },
-  optionTitle: {
+  itemTitle: {
     fontSize: 16,
     fontFamily: 'Inter-Medium',
     color: '#2C2C2C',
     marginBottom: 2,
   },
-  optionTitleDark: {
+  itemTitleDark: {
     color: '#FFFFFF',
   },
-  optionDescription: {
+  itemDescription: {
     fontSize: 14,
     fontFamily: 'Inter-Regular',
     color: '#6B6B6B',
   },
-  optionDescriptionDark: {
+  itemDescriptionDark: {
     color: '#A6A6A6',
   },
   infoCard: {
