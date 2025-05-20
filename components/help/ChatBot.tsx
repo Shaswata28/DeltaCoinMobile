@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, useColorScheme } from 'react-native';
+import { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, useColorScheme, Dimensions } from 'react-native';
 import { Send } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -18,6 +18,9 @@ export function ChatBot({ onClose }: ChatBotProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [chatInput, setChatInput] = useState('');
+  const scrollViewRef = useRef<ScrollView>(null);
+  const windowHeight = Dimensions.get('window').height;
+  
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       id: '1',
@@ -26,6 +29,13 @@ export function ChatBot({ onClose }: ChatBotProps) {
       timestamp: new Date(),
     },
   ]);
+
+  useEffect(() => {
+    // Scroll to bottom when new messages arrive
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollToEnd({ animated: true });
+    }
+  }, [chatMessages]);
 
   const handleSendMessage = () => {
     if (!chatInput.trim()) return;
@@ -53,7 +63,6 @@ export function ChatBot({ onClose }: ChatBotProps) {
   };
 
   const generateAIResponse = (userInput: string): string => {
-    // Simple response generation logic - can be enhanced with more sophisticated patterns
     const input = userInput.toLowerCase();
     
     if (input.includes('payment') || input.includes('transaction')) {
@@ -74,16 +83,28 @@ export function ChatBot({ onClose }: ChatBotProps) {
   return (
     <Animated.View 
       entering={FadeInDown.duration(300)}
-      style={[styles.container, isDark && styles.containerDark]}
+      style={[
+        styles.container, 
+        isDark && styles.containerDark,
+        { height: Math.min(windowHeight * 0.7, 500) }
+      ]}
     >
-      <View style={styles.header}>
+      <View style={[styles.header, isDark && styles.headerDark]}>
         <Text style={[styles.title, isDark && styles.titleDark]}>AI Support Chat</Text>
-        <TouchableOpacity onPress={onClose}>
-          <Text style={styles.closeButton}>Close</Text>
+        <TouchableOpacity 
+          style={styles.closeButtonContainer} 
+          onPress={onClose}
+        >
+          <Text style={[styles.closeButton, isDark && styles.closeButtonDark]}>Close</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.messages}>
+      <ScrollView 
+        ref={scrollViewRef}
+        style={styles.messages}
+        contentContainerStyle={styles.messagesContent}
+        showsVerticalScrollIndicator={true}
+      >
         {chatMessages.map((message) => (
           <View
             key={message.id}
@@ -95,11 +116,16 @@ export function ChatBot({ onClose }: ChatBotProps) {
           >
             <Text style={[
               styles.messageText,
+              message.sender === 'ai' && styles.aiMessageText,
               isDark && styles.messageTextDark
             ]}>
               {message.text}
             </Text>
-            <Text style={styles.timestamp}>
+            <Text style={[
+              styles.timestamp,
+              message.sender === 'ai' && styles.aiTimestamp,
+              isDark && styles.timestampDark
+            ]}>
               {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </Text>
           </View>
@@ -114,13 +140,19 @@ export function ChatBot({ onClose }: ChatBotProps) {
           placeholder="Type your message..."
           placeholderTextColor={isDark ? '#A6A6A6' : '#6B6B6B'}
           onSubmitEditing={handleSendMessage}
+          multiline
+          maxLength={500}
         />
         <TouchableOpacity 
-          style={[styles.sendButton, !chatInput.trim() && styles.sendButtonDisabled]} 
+          style={[
+            styles.sendButton, 
+            !chatInput.trim() && styles.sendButtonDisabled,
+            isDark && styles.sendButtonDark
+          ]} 
           onPress={handleSendMessage}
           disabled={!chatInput.trim()}
         >
-          <Send size={20} color={chatInput.trim() ? '#FFFFFF' : '#A6A6A6'} />
+          <Send size={20} color={chatInput.trim() ? '#FFFFFF' : (isDark ? '#4D4D4D' : '#A6A6A6')} />
         </TouchableOpacity>
       </View>
     </Animated.View>
@@ -132,12 +164,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     margin: 20,
     borderRadius: 16,
-    height: 400,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
+    overflow: 'hidden',
   },
   containerDark: {
     backgroundColor: '#1E1E1E',
@@ -149,6 +181,11 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
+  },
+  headerDark: {
+    backgroundColor: '#1E1E1E',
+    borderBottomColor: '#2E2E2E',
   },
   title: {
     fontSize: 18,
@@ -158,14 +195,23 @@ const styles = StyleSheet.create({
   titleDark: {
     color: '#FFFFFF',
   },
+  closeButtonContainer: {
+    padding: 8,
+  },
   closeButton: {
     color: '#4D9FFF',
     fontSize: 16,
     fontFamily: 'Inter-Medium',
   },
+  closeButtonDark: {
+    color: '#82B1FF',
+  },
   messages: {
     flex: 1,
+  },
+  messagesContent: {
     padding: 16,
+    paddingBottom: 24,
   },
   messageContainer: {
     maxWidth: '80%',
@@ -191,6 +237,10 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontFamily: 'Inter-Regular',
+    lineHeight: 20,
+  },
+  aiMessageText: {
+    color: '#2C2C2C',
   },
   messageTextDark: {
     color: '#FFFFFF',
@@ -201,14 +251,22 @@ const styles = StyleSheet.create({
     marginTop: 4,
     alignSelf: 'flex-end',
   },
+  aiTimestamp: {
+    color: 'rgba(0, 0, 0, 0.5)',
+  },
+  timestampDark: {
+    color: 'rgba(255, 255, 255, 0.5)',
+  },
   inputContainer: {
     flexDirection: 'row',
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
     gap: 12,
   },
   inputContainerDark: {
+    backgroundColor: '#1E1E1E',
     borderTopColor: '#2E2E2E',
   },
   input: {
@@ -220,6 +278,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter-Regular',
     color: '#2C2C2C',
+    maxHeight: 100,
   },
   inputDark: {
     backgroundColor: '#2E2E2E',
@@ -235,5 +294,8 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: {
     backgroundColor: '#E5E7EB',
+  },
+  sendButtonDark: {
+    backgroundColor: isDark ? '#2E2E2E' : '#4D9FFF',
   },
 });
