@@ -1,19 +1,6 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, useWindowDimensions, ActivityIndicator } from 'react-native';
-import { 
-  Wallet, 
-  TrendingUp, 
-  ArrowDownRight, 
-  ArrowUpRight, 
-  Filter, 
-  Calendar,
-  Coffee,
-  Book,
-  Beaker,
-  Users,
-  MoreHorizontal
-} from 'lucide-react-native';
-import Animated, { FadeInDown, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, useWindowDimensions } from 'react-native';
+import { Wallet, Trimport { Wallet, TrendingUp, ArrowDownRight, ArrowUpRight, Filter, Calendar, Coffee, Book, Beaker, Users, MoveHorizontal as MoreHorizontal } from 'lucide-react-native'd';
 
 interface CategoryData {
   id: string;
@@ -290,10 +277,10 @@ export default function AnalyticsScreen() {
         <View style={styles.titleRow}>
           <Text style={[styles.title, isDark && styles.textDark]}>Analytics</Text>
           <View style={styles.actions}>
-            <TouchableOpacity style={[styles.actionButton, isDark && styles.actionButtonDark]}>
+            <TouchableOpacity style={styles.actionButton}>
               <Filter size={20} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.actionButton, isDark && styles.actionButtonDark]}>
+            <TouchableOpacity style={styles.actionButton}>
               <Calendar size={20} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
             </TouchableOpacity>
           </View>
@@ -312,8 +299,7 @@ export default function AnalyticsScreen() {
             <Text style={[
               styles.tabText,
               activeTab === 'analytics' && styles.activeTabText,
-              isDark && styles.tabTextDark,
-              activeTab === 'analytics' && isDark && styles.activeTabTextDark
+              isDark && styles.textDark
             ]}>
               Analytics
             </Text>
@@ -331,8 +317,7 @@ export default function AnalyticsScreen() {
             <Text style={[
               styles.tabText,
               activeTab === 'budget' && styles.activeTabText,
-              isDark && styles.tabTextDark,
-              activeTab === 'budget' && isDark && styles.activeTabTextDark
+              isDark && styles.textDark
             ]}>
               Budget
             </Text>
@@ -406,16 +391,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  actionButtonDark: {
-    backgroundColor: '#1E1E1E',
-    borderWidth: 1,
-    borderColor: '#2C2C2C',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   tabs: {
     flexDirection: 'row',
@@ -451,14 +430,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
     color: '#6B7280',
   },
-  tabTextDark: {
-    color: '#A6A6A6',
-  },
   activeTabText: {
-    color: '#000000',
-    fontFamily: 'Inter-SemiBold',
-  },
-  activeTabTextDark: {
     color: '#000000',
     fontFamily: 'Inter-SemiBold',
   },
