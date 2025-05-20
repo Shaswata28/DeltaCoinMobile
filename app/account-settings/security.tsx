@@ -34,7 +34,7 @@ export default function SecuritySettingsScreen() {
         >
           <TouchableOpacity style={[styles.listItem, isDark && styles.listItemDark]}>
             <View style={styles.itemContent}>
-              <Key size={20} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+              <Key size={20} color="#FFD700" />
               <View style={styles.itemText}>
                 <Text style={[styles.itemTitle, isDark && styles.itemTitleDark]}>
                   Change Password
@@ -49,7 +49,7 @@ export default function SecuritySettingsScreen() {
 
           <View style={[styles.listItem, isDark && styles.listItemDark]}>
             <View style={styles.itemContent}>
-              <Fingerprint size={20} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+              <Fingerprint size={20} color="#4D9FFF" />
               <View style={styles.itemText}>
                 <Text style={[styles.itemTitle, isDark && styles.itemTitleDark]}>
                   Biometric Login
@@ -61,7 +61,7 @@ export default function SecuritySettingsScreen() {
               <Switch
                 value={biometricEnabled}
                 onValueChange={setBiometricEnabled}
-                trackColor={{ false: '#767577', true: isDark ? '#82B1FF' : '#4D9FFF' }}
+                trackColor={{ false: '#767577', true: '#4D9FFF' }}
                 thumbColor={isDark ? '#FFFFFF' : '#FFFFFF'}
               />
             </View>
@@ -69,7 +69,7 @@ export default function SecuritySettingsScreen() {
 
           <View style={[styles.listItem, isDark && styles.listItemDark]}>
             <View style={styles.itemContent}>
-              <Smartphone size={20} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+              <Smartphone size={20} color="#10B981" />
               <View style={styles.itemText}>
                 <Text style={[styles.itemTitle, isDark && styles.itemTitleDark]}>
                   Two-Factor Authentication
@@ -81,7 +81,7 @@ export default function SecuritySettingsScreen() {
               <Switch
                 value={twoFactorEnabled}
                 onValueChange={setTwoFactorEnabled}
-                trackColor={{ false: '#767577', true: isDark ? '#82B1FF' : '#4D9FFF' }}
+                trackColor={{ false: '#767577', true: '#10B981' }}
                 thumbColor={isDark ? '#FFFFFF' : '#FFFFFF'}
               />
             </View>
