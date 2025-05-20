@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, useColorScheme, ActivityIndicator } from 'react-native';
-import { ArrowUpRight, ArrowDownRight, Send, Wallet, PlusCircle, Clock, CircleHelp as HelpCircle } from 'lucide-react-native';
+import { ArrowUpRight, ArrowDownRight, Send, Wallet, CirclePlus as PlusCircle, Clock, CircleHelp as HelpCircle } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
