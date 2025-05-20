@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Plus, CreditCard, Trash2 } from 'lucide-react-native';
@@ -97,7 +97,7 @@ export default function PaymentMethodsScreen() {
 
               <View style={styles.paymentActions}>
                 {!method.isDefault && (
-                  <>
+                  <React.Fragment>
                     <TouchableOpacity
                       style={styles.actionButton}
                       onPress={() => handleSetDefault(method.id)}
@@ -110,7 +110,7 @@ export default function PaymentMethodsScreen() {
                     >
                       <Trash2 size={20} color="#FF4D4F" />
                     </TouchableOpacity>
-                  </>
+                  </React.Fragment>
                 )}
                 {method.isDefault && (
                   <View style={styles.defaultBadge}>
@@ -126,7 +126,7 @@ export default function PaymentMethodsScreen() {
           title="Add Payment Method"
           onPress={handleAddPaymentMethod}
           style={styles.addButton}
-          icon={<Plus size={20} color="#FFFFFF" />}
+          leftIcon={<Plus size={20} color="#FFFFFF" />}
         />
 
         <Animated.View 
