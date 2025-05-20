@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, useColorScheme } from 'react-native';
+import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, useColorScheme, TouchableOpacity, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 import StudentInfoStep, { StudentInfo } from '@/components/signup/StudentInfoStep';
 import SecurityStep, { SecurityInfo } from '@/components/signup/SecurityStep';
@@ -99,6 +100,14 @@ export default function SignupScreen() {
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
+      <TouchableOpacity 
+        style={styles.redirectButton} 
+        onPress={() => router.push('/login')}
+      >
+        <Text style={[styles.redirectText, isDark && styles.redirectTextDark]}>
+          Already have an account? <Text style={styles.loginText}>Login</Text> here
+        </Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -120,5 +129,24 @@ const styles = StyleSheet.create({
   stepContainer: {
     flex: 1,
     padding: 20,
+  },
+  redirectButton: {
+    position: 'absolute',
+    bottom: 20,
+    alignSelf: 'center',
+    padding: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: 8,
+  },
+  redirectText: {
+    fontSize: 16,
+    color: '#000000',
+  },
+  redirectTextDark: {
+    color: '#FFFFFF',
+  },
+  loginText: {
+    color: '#007AFF',
+    fontWeight: '600',
   },
 });
