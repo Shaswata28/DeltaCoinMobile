@@ -1,12 +1,15 @@
-import { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useColorScheme, useWindowDimensions } from 'react-native';
-import { Building2, CreditCard, Smartphone, Book, Coffee, Beaker, Users, ArrowLeft, MoreHorizontal } from 'lucide-react-native';
+import { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, useWindowDimensions } from 'react-native';
+import { ArrowUpRight, ArrowDownRight, QrCode, Send, Wallet, Receipt, Clock, ChevronRight, Users, Building2, CreditCard, Smartphone, Book, Coffee, Beaker, ArrowLeft, MoveHorizontal as MoreHorizontal } from 'lucide-react-native';
 import Animated, { 
-  FadeInDown,
-  useAnimatedStyle,
+  FadeIn,
+  Layout,
+  SlideInRight,
   withSpring,
-  useSharedValue,
   withTiming,
+  useAnimatedStyle,
+  useSharedValue,
+  FadeInDown,
   runOnJS
 } from 'react-native-reanimated';
 import { 
@@ -18,6 +21,22 @@ import { AmountInput } from '@/components/payment/AmountInput';
 import { PaymentSummary } from '@/components/payment/PaymentSummary';
 import { FormInput } from '@/components/common/FormInput';
 import { Button } from '@/components/common/Button';
+
+interface Transaction {
+  id: string;
+  type: 'send' | 'receive';
+  amount: number;
+  recipient: string;
+  timestamp: Date;
+}
+
+interface BudgetCategory {
+  id: string;
+  name: string;
+  spent: number;
+  limit: number;
+  icon: React.ReactNode;
+}
 
 type PaymentMethod = 'bank' | 'card' | 'mobile';
 type PaymentDestination = 'canteen' | 'library' | 'lab' | 'club' | 'other';
@@ -241,80 +260,59 @@ export default function TransactionsScreen() {
     </Animated.View>
   );
 
-  const renderContent = () => {
-    switch (step) {
-      case 'selection':
-        return (
-          <GestureDetector gesture={panGesture}>
-            <Animated.View style={[styles.contentContainer, animatedStyle]}>
-              {activeTab === 'topup' ? renderTopUpMethods() : renderPaymentDestinations()}
-            </Animated.View>
-          </GestureDetector>
-        );
-      case 'club':
-        return renderClubSelection();
-      case 'amount':
-        return (
-          <Animated.View 
-            entering={FadeInDown.duration(300)} 
-            style={styles.amountContainer}
-          >
-            <View style={styles.headerRow}>
-              <TouchableOpacity 
-                style={styles.backButton} 
-                onPress={handleBack}
-              >
-                <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
-              </TouchableOpacity>
-              <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>
-                Enter Amount
-              </Text>
-              <View style={styles.backButton} />
-            </View>
-            <AmountInput
-              value={paymentDetails.amount}
-              onChange={(value) => setPaymentDetails(prev => ({ ...prev, amount: value }))}
-            />
-            <Button
-              title="Continue"
-              onPress={handleAmountSubmit}
-              disabled={!paymentDetails.amount || parseFloat(paymentDetails.amount) <= 0}
-            />
-          </Animated.View>
-        );
-      case 'summary':
-        return (
-          <Animated.View 
-            entering={FadeInDown.duration(300)} 
-            style={styles.summaryContainer}
-          >
-            <View style={styles.headerRow}>
-              <TouchableOpacity 
-                style={styles.backButton} 
-                onPress={handleBack}
-              >
-                <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
-              </TouchableOpacity>
-              <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>
-                Payment Summary
-              </Text>
-              <View style={styles.backButton} />
-            </View>
-            <PaymentSummary
-              amount={paymentDetails.amount}
-              method={paymentDetails.method}
-              destination={paymentDetails.destination}
-              club={paymentDetails.club}
-              details={paymentDetails.details}
-            />
-            <Button
-              title="Confirm Payment"
-              onPress={() => {}}
-            />
-          </Animated.View>
-        );
-    }
-  };
+  const renderAmountInput = () => (
+    <View style={styles.amountContainer}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={handleBack}
+        >
+          <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+        </TouchableOpacity>
+        <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>
+          Enter Amount
+        </Text>
+        <View style={styles.backButton} />
+      </View>
+      <AmountInput
+        value={paymentDetails.amount}
+        onChange={(value) => setPaymentDetails(prev => ({ ...prev, amount: value }))}
+      />
+      <Button
+        title="Continue"
+        onPress={handleAmountSubmit}
+        disabled={!paymentDetails.amount || parseFloat(paymentDetails.amount) <= 0}
+      />
+    </View>
+  );
+
+  const renderSummary = () => (
+    <View style={styles.summaryContainer}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={handleBack}
+        >
+          <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+        </TouchableOpacity>
+        <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>
+          Payment Summary
+        </Text>
+        <View style={styles.backButton} />
+      </View>
+      <PaymentSummary
+        amount={paymentDetails.amount}
+        method={paymentDetails.method}
+        destination={paymentDetails.destination}
+        club={paymentDetails.club}
+        details={paymentDetails.details}
+      />
+      <Button
+        title="Confirm Payment"
+        onPress={() => {}}
+      />
+    </View>
+  );
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -324,7 +322,10 @@ export default function TransactionsScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
+        <Animated.View 
+          entering={FadeIn.duration(300)}
+          style={styles.header}
+        >
           <Text style={[styles.title, isDark && styles.titleDark]}>Transactions</Text>
           
           <View style={[styles.tabs, isDark && styles.tabsDark]}>
@@ -378,9 +379,50 @@ export default function TransactionsScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
 
-        {renderContent()}
+        <GestureDetector gesture={panGesture}>
+          <Animated.View 
+            style={[styles.contentContainer, animatedStyle]}
+            layout={Layout.springify()}
+          >
+            {step === 'selection' && (
+              <Animated.View 
+                entering={FadeIn.duration(300)}
+                style={styles.methodsContainer}
+              >
+                {activeTab === 'topup' ? renderTopUpMethods() : renderPaymentDestinations()}
+              </Animated.View>
+            )}
+
+            {step === 'club' && (
+              <Animated.View 
+                entering={SlideInRight.duration(300)}
+                style={styles.clubContainer}
+              >
+                {renderClubSelection()}
+              </Animated.View>
+            )}
+
+            {step === 'amount' && (
+              <Animated.View 
+                entering={SlideInRight.duration(300)}
+                style={styles.amountContainer}
+              >
+                {renderAmountInput()}
+              </Animated.View>
+            )}
+
+            {step === 'summary' && (
+              <Animated.View 
+                entering={SlideInRight.duration(300)}
+                style={styles.summaryContainer}
+              >
+                {renderSummary()}
+              </Animated.View>
+            )}
+          </Animated.View>
+        </GestureDetector>
       </ScrollView>
     </GestureHandlerRootView>
   );
