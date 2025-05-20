@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Moon, Bell, Languages, Wallet, CircleHelp as HelpCircle, Info, Smartphone, ArrowLeft } from 'lucide-react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 
 interface SettingItem {
   id: string;
@@ -96,20 +96,23 @@ export default function SettingsScreen() {
       style={[styles.container, isDark && styles.containerDark]}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.header}>
+      <Animated.View 
+        entering={FadeIn.duration(400)}
+        style={styles.header}
+      >
         <TouchableOpacity 
           onPress={() => router.back()}
         >
           <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
         </TouchableOpacity>
         <Text style={[styles.title, isDark && styles.titleDark]}>Settings</Text>
-      </View>
+      </Animated.View>
 
       <View style={styles.content}>
         {settingItems.map((item, index) => (
           <Animated.View
             key={item.id}
-            entering={FadeInDown.delay(index * 100).duration(400)}
+            entering={FadeInDown.delay(index * 50).duration(300).springify()}
           >
             <TouchableOpacity
               style={[styles.settingItem, isDark && styles.settingItemDark]}
