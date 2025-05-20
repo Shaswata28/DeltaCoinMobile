@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, useColorScheme } from 'react-native';
-import { User, Edit3, Shield, Bell, Wallet, Users, ChevronRight, LogOut } from 'lucide-react-native';
+import { User, CreditCard as Edit3, Shield, Bell, Wallet, Users, ChevronRight, LogOut } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 interface MenuItem {
