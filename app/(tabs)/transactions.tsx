@@ -12,9 +12,7 @@ import Animated, {
 import { 
   Gesture,
   GestureDetector,
-  GestureHandlerRootView,
-  GestureUpdateEvent,
-  PanGestureHandlerEventPayload
+  GestureHandlerRootView
 } from 'react-native-gesture-handler';
 import { AmountInput } from '@/components/payment/AmountInput';
 import { PaymentSummary } from '@/components/payment/PaymentSummary';
@@ -40,30 +38,40 @@ export default function TransactionsScreen() {
   const scrollRef = useRef<ScrollView>(null);
   
   const [activeTab, setActiveTab] = useState<'topup' | 'payment'>('topup');
-  const [step, setStep] = useState<'selection' | 'amount' | 'summary'>('selection');
+  const [step, setStep] = useState<'selection' | 'amount' | 'summary' | 'club'>('selection');
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails>({
     amount: '',
   });
 
   const translateX = useSharedValue(0);
-  const context = useSharedValue({ x: 0 });
+  const context = useSharedValue(0);
 
-  const gesture = Gesture.Pan()
-    .onStart(() => {
-      context.value = { x: translateX.value };
+  const panGesture = Gesture.Pan()
+    .onBegin(() => {
+      context.value = translateX.value;
     })
-    .onUpdate((event: GestureUpdateEvent<PanGestureHandlerEventPayload>) => {
-      translateX.value = event.translationX + context.value.x;
+    .onUpdate((event) => {
+      translateX.value = context.value + event.translationX;
     })
-    .onEnd(() => {
-      const shouldSwitch = Math.abs(translateX.value) > windowWidth * 0.3;
+    .onEnd((event) => {
+      const velocity = event.velocityX;
+      const shouldSwitch = 
+        Math.abs(translateX.value) > windowWidth * 0.2 || 
+        Math.abs(velocity) > 500;
+
       if (shouldSwitch) {
         const newTab = translateX.value > 0 ? 'topup' : 'payment';
+        translateX.value = withSpring(0, {
+          velocity: velocity,
+          stiffness: 90,
+          damping: 15
+        });
         runOnJS(setActiveTab)(newTab);
         runOnJS(setStep)('selection');
         runOnJS(setPaymentDetails)({ amount: '' });
+      } else {
+        translateX.value = withSpring(0);
       }
-      translateX.value = withSpring(0);
     });
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -77,7 +85,9 @@ export default function TransactionsScreen() {
 
   const handleDestinationSelect = (destination: PaymentDestination) => {
     setPaymentDetails(prev => ({ ...prev, destination }));
-    if (destination !== 'club') {
+    if (destination === 'club') {
+      setStep('club');
+    } else {
       setStep('amount');
     }
   };
@@ -94,21 +104,32 @@ export default function TransactionsScreen() {
   };
 
   const handleBack = () => {
-    if (step === 'summary') {
-      setStep('amount');
-    } else if (step === 'amount') {
-      setStep('selection');
+    switch (step) {
+      case 'summary':
+        setStep('amount');
+        break;
+      case 'amount':
+        if (paymentDetails.destination === 'club') {
+          setStep('club');
+        } else {
+          setStep('selection');
+        }
+        break;
+      case 'club':
+        setStep('selection');
+        break;
+      default:
+        setStep('selection');
     }
   };
 
   const renderTopUpMethods = () => (
-    <View style={styles.methodsContainer}>
+    <Animated.View 
+      entering={FadeInDown.duration(300)} 
+      style={styles.methodsContainer}
+    >
       <TouchableOpacity
-        style={[
-          styles.methodCard,
-          { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' },
-          isDark && styles.methodCardDark
-        ]}
+        style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleMethodSelect('bank')}
       >
         <Bank size={32} color={isDark ? '#82B1FF' : '#4D9FFF'} />
@@ -116,11 +137,7 @@ export default function TransactionsScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[
-          styles.methodCard,
-          { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' },
-          isDark && styles.methodCardDark
-        ]}
+        style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleMethodSelect('card')}
       >
         <CreditCard size={32} color={isDark ? '#82B1FF' : '#4D9FFF'} />
@@ -128,27 +145,22 @@ export default function TransactionsScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[
-          styles.methodCard,
-          { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' },
-          isDark && styles.methodCardDark
-        ]}
+        style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleMethodSelect('mobile')}
       >
         <Smartphone size={32} color={isDark ? '#82B1FF' : '#4D9FFF'} />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Mobile Banking</Text>
       </TouchableOpacity>
-    </View>
+    </Animated.View>
   );
 
   const renderPaymentDestinations = () => (
-    <View style={styles.methodsContainer}>
+    <Animated.View 
+      entering={FadeInDown.duration(300)} 
+      style={styles.methodsContainer}
+    >
       <TouchableOpacity
-        style={[
-          styles.methodCard,
-          { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' },
-          isDark && styles.methodCardDark
-        ]}
+        style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleDestinationSelect('canteen')}
       >
         <Coffee size={32} color={isDark ? '#82B1FF' : '#4D9FFF'} />
@@ -156,11 +168,7 @@ export default function TransactionsScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[
-          styles.methodCard,
-          { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' },
-          isDark && styles.methodCardDark
-        ]}
+        style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleDestinationSelect('library')}
       >
         <Book size={32} color={isDark ? '#82B1FF' : '#4D9FFF'} />
@@ -168,11 +176,7 @@ export default function TransactionsScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[
-          styles.methodCard,
-          { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' },
-          isDark && styles.methodCardDark
-        ]}
+        style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleDestinationSelect('lab')}
       >
         <Beaker size={32} color={isDark ? '#82B1FF' : '#4D9FFF'} />
@@ -180,31 +184,35 @@ export default function TransactionsScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[
-          styles.methodCard,
-          { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' },
-          isDark && styles.methodCardDark
-        ]}
+        style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleDestinationSelect('club')}
       >
         <Users size={32} color={isDark ? '#82B1FF' : '#4D9FFF'} />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Club</Text>
       </TouchableOpacity>
-    </View>
+    </Animated.View>
   );
 
   const renderClubSelection = () => (
-    <View style={styles.clubContainer}>
-      <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>Select Club</Text>
+    <Animated.View 
+      entering={FadeInDown.duration(300)} 
+      style={styles.clubContainer}
+    >
+      <View style={styles.headerRow}>
+        <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>Select Club</Text>
+        <Button
+          title="Back"
+          variant="outline"
+          onPress={handleBack}
+          size="small"
+        />
+      </View>
+
       <View style={styles.clubOptions}>
-        {['Photography', 'Tech', 'Art', 'Sports', 'Music'].map((club, index) => (
+        {['Photography', 'Tech', 'Art', 'Sports', 'Music'].map((club) => (
           <TouchableOpacity
             key={club}
-            style={[
-              styles.clubOption,
-              { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' },
-              isDark && styles.clubOptionDark
-            ]}
+            style={[styles.clubOption, isDark && styles.clubOptionDark]}
             onPress={() => handleClubSelect(club.toLowerCase() as Club)}
           >
             <Text style={[styles.clubText, isDark && styles.clubTextDark]}>{club}</Text>
@@ -221,67 +229,77 @@ export default function TransactionsScreen() {
           style={styles.detailsInput}
         />
       </View>
-    </View>
+    </Animated.View>
   );
 
   const renderContent = () => {
-    if (step === 'selection') {
-      return (
-        <GestureDetector gesture={gesture}>
-          <Animated.View style={[styles.contentContainer, animatedStyle]}>
-            {activeTab === 'topup' ? renderTopUpMethods() : renderPaymentDestinations()}
+    switch (step) {
+      case 'selection':
+        return (
+          <GestureDetector gesture={panGesture}>
+            <Animated.View style={[styles.contentContainer, animatedStyle]}>
+              {activeTab === 'topup' ? renderTopUpMethods() : renderPaymentDestinations()}
+            </Animated.View>
+          </GestureDetector>
+        );
+      case 'club':
+        return renderClubSelection();
+      case 'amount':
+        return (
+          <Animated.View 
+            entering={FadeInDown.duration(300)} 
+            style={styles.amountContainer}
+          >
+            <View style={styles.headerRow}>
+              <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>
+                Enter Amount
+              </Text>
+              <Button
+                title="Back"
+                variant="outline"
+                onPress={handleBack}
+                size="small"
+              />
+            </View>
+            <AmountInput
+              value={paymentDetails.amount}
+              onChange={(value) => setPaymentDetails(prev => ({ ...prev, amount: value }))}
+            />
+            <Button
+              title="Continue"
+              onPress={handleAmountSubmit}
+              disabled={!paymentDetails.amount || parseFloat(paymentDetails.amount) <= 0}
+            />
           </Animated.View>
-        </GestureDetector>
-      );
-    }
-
-    if (step === 'amount') {
-      return (
-        <Animated.View 
-          entering={FadeInDown.duration(300)} 
-          style={styles.amountContainer}
-        >
-          <AmountInput
-            value={paymentDetails.amount}
-            onChange={(value) => setPaymentDetails(prev => ({ ...prev, amount: value }))}
-          />
-          <Button
-            title="Continue"
-            onPress={handleAmountSubmit}
-            disabled={!paymentDetails.amount || parseFloat(paymentDetails.amount) <= 0}
-          />
-        </Animated.View>
-      );
-    }
-
-    if (step === 'summary') {
-      return (
-        <Animated.View 
-          entering={FadeInDown.duration(300)} 
-          style={styles.summaryContainer}
-        >
-          <PaymentSummary
-            amount={paymentDetails.amount}
-            method={paymentDetails.method}
-            destination={paymentDetails.destination}
-            club={paymentDetails.club}
-            details={paymentDetails.details}
-          />
-          <View style={styles.buttonContainer}>
-            <Button
-              title="Back"
-              onPress={handleBack}
-              variant="outline"
-              style={styles.backButton}
+        );
+      case 'summary':
+        return (
+          <Animated.View 
+            entering={FadeInDown.duration(300)} 
+            style={styles.summaryContainer}
+          >
+            <PaymentSummary
+              amount={paymentDetails.amount}
+              method={paymentDetails.method}
+              destination={paymentDetails.destination}
+              club={paymentDetails.club}
+              details={paymentDetails.details}
             />
-            <Button
-              title="Confirm Payment"
-              onPress={() => {}}
-              style={styles.confirmButton}
-            />
-          </View>
-        </Animated.View>
-      );
+            <View style={styles.buttonContainer}>
+              <Button
+                title="Back"
+                onPress={handleBack}
+                variant="outline"
+                style={styles.backButton}
+              />
+              <Button
+                title="Confirm Payment"
+                onPress={() => {}}
+                style={styles.confirmButton}
+              />
+            </View>
+          </Animated.View>
+        );
     }
   };
 
@@ -296,10 +314,7 @@ export default function TransactionsScreen() {
         <View style={styles.header}>
           <Text style={[styles.title, isDark && styles.titleDark]}>Transactions</Text>
           
-          <View style={[
-            styles.tabs,
-            { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' }
-          ]}>
+          <View style={[styles.tabs, isDark && styles.tabsDark]}>
             <TouchableOpacity
               style={[
                 styles.tab,
@@ -373,6 +388,12 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 24,
   },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
   title: {
     fontSize: 28,
     fontFamily: 'Inter-Bold',
@@ -387,6 +408,7 @@ const styles = StyleSheet.create({
   },
   tabs: {
     flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 6,
     marginBottom: 24,
@@ -395,6 +417,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  tabsDark: {
+    backgroundColor: '#1E1E1E',
   },
   tab: {
     flex: 1,
@@ -433,6 +458,7 @@ const styles = StyleSheet.create({
   methodCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     shadowColor: '#000',
@@ -460,7 +486,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'Inter-SemiBold',
     color: '#2C2C2C',
-    marginBottom: 8,
   },
   sectionTitleDark: {
     color: '#FFFFFF',
@@ -469,6 +494,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   clubOption: {
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     shadowColor: '#000',
