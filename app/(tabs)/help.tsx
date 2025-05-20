@@ -48,25 +48,25 @@ export default function HelpScreen() {
     {
       id: '1',
       title: 'Account Security',
-      icon: <Shield size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
+      icon: <Shield size={24} color="#FFD700" />,
       description: 'PIN reset, security settings, and account protection'
     },
     {
       id: '2',
       title: 'Payments & Transfers',
-      icon: <Wallet size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
+      icon: <Wallet size={24} color="#4D9FFF" />,
       description: 'Transaction issues, payment methods, and limits'
     },
     {
       id: '3',
       title: 'Notifications',
-      icon: <Bell size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
+      icon: <Bell size={24} color="#10B981" />,
       description: 'Push notifications, email alerts, and preferences'
     },
     {
       id: '4',
       title: 'App Settings',
-      icon: <Settings size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />,
+      icon: <Settings size={24} color="#A78BFA" />,
       description: 'App configuration, display, and accessibility'
     }
   ];
@@ -105,7 +105,7 @@ export default function HelpScreen() {
           style={[styles.contactButton, isDark && styles.contactButtonDark]}
           onPress={handleEmailSupport}
         >
-          <Mail size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+          <Mail size={24} color="#FFD700" />
           <Text style={[styles.contactText, isDark && styles.contactTextDark]}>Email</Text>
         </TouchableOpacity>
 
@@ -113,7 +113,7 @@ export default function HelpScreen() {
           style={[styles.contactButton, isDark && styles.contactButtonDark]}
           onPress={handlePhoneSupport}
         >
-          <Phone size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+          <Phone size={24} color="#4D9FFF" />
           <Text style={[styles.contactText, isDark && styles.contactTextDark]}>Call</Text>
         </TouchableOpacity>
 
@@ -121,7 +121,7 @@ export default function HelpScreen() {
           style={[styles.contactButton, isDark && styles.contactButtonDark]}
           onPress={handleChatSupport}
         >
-          <MessageCircle size={24} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+          <MessageCircle size={24} color="#10B981" />
           <Text style={[styles.contactText, isDark && styles.contactTextDark]}>Chat</Text>
         </TouchableOpacity>
       </View>
@@ -167,7 +167,7 @@ export default function HelpScreen() {
                 onPress={() => setExpandedFaq(expandedFaq === faq.id ? null : faq.id)}
               >
                 <View style={styles.faqHeader}>
-                  <HelpCircle size={20} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+                  <HelpCircle size={20} color="#FFD700" />
                   <Text style={[styles.faqQuestion, isDark && styles.faqQuestionDark]}>
                     {faq.question}
                   </Text>
@@ -190,7 +190,7 @@ export default function HelpScreen() {
         <Text style={[styles.knowledgeBaseText, isDark && styles.knowledgeBaseTextDark]}>
           Visit Knowledge Base
         </Text>
-        <ExternalLink size={20} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+        <ExternalLink size={20} color="#4D9FFF" />
       </TouchableOpacity>
     </ScrollView>
   );
