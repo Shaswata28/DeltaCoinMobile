@@ -38,6 +38,7 @@ export default function RootLayout() {
         <Stack.Screen name="signup" />
         <Stack.Screen name="forgot-password" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="account-settings" />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />

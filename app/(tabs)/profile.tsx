@@ -4,14 +4,12 @@ import { User, Shield, Bell, Wallet, ChevronRight, LogOut } from 'lucide-react-n
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 
-type SettingsRoute = '/account-settings/security' | '/account-settings/notifications' | '/account-settings/payment-methods';
-
 interface MenuItem {
   id: string;
   title: string;
   subtitle: string;
   icon: React.ReactNode;
-  route: SettingsRoute;
+  route: string;
 }
 
 export default function ProfileScreen() {
