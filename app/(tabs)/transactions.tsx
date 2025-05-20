@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useColorScheme, useWindowDimensions } from 'react-native';
-import { Ban as Bank, CreditCard, Smartphone, Book, Coffee, Beaker, Users } from 'lucide-react-native';
+import { Ban as Bank, CreditCard, Smartphone, Book, Coffee, Beaker, Users, ArrowLeft } from 'lucide-react-native';
 import Animated, { 
   FadeInDown,
   useAnimatedStyle,
@@ -199,13 +199,14 @@ export default function TransactionsScreen() {
       style={styles.clubContainer}
     >
       <View style={styles.headerRow}>
-        <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>Select Club</Text>
-        <Button
-          title="Back"
-          variant="outline"
+        <TouchableOpacity 
+          style={styles.backButton} 
           onPress={handleBack}
-          size="small"
-        />
+        >
+          <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+        </TouchableOpacity>
+        <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>Select Club</Text>
+        <View style={styles.backButton} />
       </View>
 
       <View style={styles.clubOptions}>
@@ -251,15 +252,16 @@ export default function TransactionsScreen() {
             style={styles.amountContainer}
           >
             <View style={styles.headerRow}>
+              <TouchableOpacity 
+                style={styles.backButton} 
+                onPress={handleBack}
+              >
+                <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+              </TouchableOpacity>
               <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>
                 Enter Amount
               </Text>
-              <Button
-                title="Back"
-                variant="outline"
-                onPress={handleBack}
-                size="small"
-              />
+              <View style={styles.backButton} />
             </View>
             <AmountInput
               value={paymentDetails.amount}
@@ -278,6 +280,18 @@ export default function TransactionsScreen() {
             entering={FadeInDown.duration(300)} 
             style={styles.summaryContainer}
           >
+            <View style={styles.headerRow}>
+              <TouchableOpacity 
+                style={styles.backButton} 
+                onPress={handleBack}
+              >
+                <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+              </TouchableOpacity>
+              <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>
+                Payment Summary
+              </Text>
+              <View style={styles.backButton} />
+            </View>
             <PaymentSummary
               amount={paymentDetails.amount}
               method={paymentDetails.method}
@@ -285,19 +299,10 @@ export default function TransactionsScreen() {
               club={paymentDetails.club}
               details={paymentDetails.details}
             />
-            <View style={styles.buttonContainer}>
-              <Button
-                title="Back"
-                onPress={handleBack}
-                variant="outline"
-                style={styles.backButton}
-              />
-              <Button
-                title="Confirm Payment"
-                onPress={() => {}}
-                style={styles.confirmButton}
-              />
-            </View>
+            <Button
+              title="Confirm Payment"
+              onPress={() => {}}
+            />
           </Animated.View>
         );
     }
@@ -383,10 +388,10 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingBottom: 40,
+    paddingTop: 40,
   },
   header: {
-    marginBottom: 24,
+    marginBottom: 32,
   },
   headerRow: {
     flexDirection: 'row',
@@ -395,10 +400,11 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontFamily: 'Inter-Bold',
     color: '#2C2C2C',
     marginBottom: 24,
+    textAlign: 'left',
   },
   titleDark: {
     color: '#FFFFFF',
@@ -483,9 +489,10 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontFamily: 'Inter-SemiBold',
     color: '#2C2C2C',
+    textAlign: 'center',
   },
   sectionTitleDark: {
     color: '#FFFFFF',
@@ -531,7 +538,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   backButton: {
-    flex: 1,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 20,
   },
   confirmButton: {
     flex: 2,
