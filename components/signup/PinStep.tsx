@@ -1,51 +1,62 @@
-import { useState } from 'react';
-import { View, Text, StyleSheet, useColorScheme, Platform } from 'react-native';
-import { ShieldAlert } from 'lucide-react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import { FormInput } from '@/components/common/FormInput';
+import { useState, useEffect } from 'react';
+import { View, StyleSheet, Text, useColorScheme } from 'react-native';
+import { PinInput } from '@/components/common/PinInput';
 import { TextNavigation } from '@/components/common/TextNavigation';
-import { validatePin, validatePinMatch } from '@/utils/validation';
+import { ErrorMessage } from '@/components/common/ErrorMessage';
 
 export interface PinInfo {
   pin: string;
-  confirmPin: string;
 }
 
 interface PinStepProps {
   onSubmit: (data: PinInfo) => void;
   onBack: () => void;
   initialData?: PinInfo;
+  error?: string;
+  isLoading?: boolean;
 }
 
-export default function PinStep({ onSubmit, onBack, initialData }: PinStepProps) {
+export default function PinStep({ 
+  onSubmit, 
+  onBack, 
+  initialData, 
+  error,
+  isLoading = false 
+}: PinStepProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  
-  const [formData, setFormData] = useState<PinInfo>({
-    pin: initialData?.pin || '',
-    confirmPin: initialData?.confirmPin || '',
-  });
+  const [pin, setPin] = useState(initialData?.pin || '');
+  const [pinError, setPinError] = useState<string | null>(null);
 
-  const [errors, setErrors] = useState<Partial<PinInfo>>({});
-
-  const validateForm = (): boolean => {
-    const newErrors: Partial<PinInfo> = {};
-
-    if (!validatePin(formData.pin)) {
-      newErrors.pin = 'PIN must be exactly 5 digits';
+  useEffect(() => {
+    if (error) {
+      setPinError(error);
     }
+  }, [error]);
 
-    if (!validatePinMatch(formData.pin, formData.confirmPin)) {
-      newErrors.confirmPin = 'PINs do not match';
+  const validatePin = (pin: string): boolean => {
+    if (pin.length !== 5) {
+      setPinError('PIN must be 5 digits');
+      return false;
     }
+    if (!/^\d+$/.test(pin)) {
+      setPinError('PIN must contain only numbers');
+      return false;
+    }
+    setPinError(null);
+    return true;
+  };
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const handlePinChange = (newPin: string) => {
+    setPin(newPin);
+    if (pinError) {
+      validatePin(newPin);
+    }
   };
 
   const handleSubmit = () => {
-    if (validateForm()) {
-      onSubmit(formData);
+    if (validatePin(pin)) {
+      onSubmit({ pin });
     }
   };
 
@@ -53,55 +64,35 @@ export default function PinStep({ onSubmit, onBack, initialData }: PinStepProps)
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={[styles.step, isDark && styles.stepDark]}>Step 3 of 3</Text>
-        <Text style={[styles.title, isDark && styles.titleDark]}>Payment PIN Setup</Text>
+        <Text style={[styles.title, isDark && styles.titleDark]}>
+          Create Your PIN
+        </Text>
         <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>
-          Create a secure 5-digit PIN for transactions
+          This PIN will be used to secure your transactions
         </Text>
       </View>
 
-      <View style={[styles.warningBox, isDark && styles.warningBoxDark]}>
-        <ShieldAlert size={24} color={isDark ? '#FFD700' : '#D97706'} />
-        <Text style={[styles.warningText, isDark && styles.warningTextDark]}>
-          This PIN will be required for all future transactions. Keep it secure and never share it with anyone.
-        </Text>
+      <View style={styles.content}>
+        <View style={styles.pinContainer}>
+          <PinInput
+            value={pin}
+            onChange={handlePinChange}
+            length={5}
+            disabled={isLoading}
+          />
+          {pinError && <ErrorMessage message={pinError} />}
+        </View>
       </View>
 
-      <View style={styles.form}>
-        <FormInput
-          label="Payment PIN"
-          value={formData.pin}
-          onChangeText={(text) => {
-            setFormData(prev => ({ ...prev, pin: text }));
-            if (errors.pin) setErrors(prev => ({ ...prev, pin: '' }));
-          }}
-          placeholder="Enter 5-digit PIN"
-          keyboardType="numeric"
-          maxLength={5}
-          secureTextEntry
-          error={errors.pin}
-          showPasswordToggle
-        />
-
-        <FormInput
-          label="Confirm PIN"
-          value={formData.confirmPin}
-          onChangeText={(text) => {
-            setFormData(prev => ({ ...prev, confirmPin: text }));
-            if (errors.confirmPin) setErrors(prev => ({ ...prev, confirmPin: '' }));
-          }}
-          placeholder="Confirm 5-digit PIN"
-          keyboardType="numeric"
-          maxLength={5}
-          secureTextEntry
-          error={errors.confirmPin}
-          showPasswordToggle
-        />
-
+      <View style={styles.navigationContainer}>
         <TextNavigation 
           onBack={onBack}
-          onNext={handleSubmit}
           backText="← Security"
-          nextText="Complete →"
+        />
+        <TextNavigation 
+          onNext={handleSubmit}
+          nextText={isLoading ? "Creating Account..." : "Complete →"}
+          disabled={isLoading || pin.length !== 5}
         />
       </View>
     </View>
@@ -111,6 +102,7 @@ export default function PinStep({ onSubmit, onBack, initialData }: PinStepProps)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'space-between',
   },
   header: {
     marginBottom: 32,
@@ -125,9 +117,9 @@ const styles = StyleSheet.create({
     color: '#FFD700',
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontFamily: 'Inter-Bold',
-    color: '#2C2C2C',
+    color: '#111827',
     marginBottom: 8,
   },
   titleDark: {
@@ -136,33 +128,27 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     fontFamily: 'Inter-Regular',
-    color: '#6B6B6B',
+    color: '#6B7280',
   },
   subtitleDark: {
     color: '#A6A6A6',
   },
-  warningBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FEF3C7',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 32,
-    gap: 12,
-  },
-  warningBoxDark: {
-    backgroundColor: '#292524',
-  },
-  warningText: {
+  content: {
     flex: 1,
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#92400E',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
   },
-  warningTextDark: {
-    color: '#FCD34D',
+  pinContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 24,
   },
-  form: {
-    gap: 20,
-  }
+  navigationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    marginTop: 16,
+  },
 });
