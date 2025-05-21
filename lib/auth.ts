@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { Database } from '@/types/supabase';
+import * as Crypto from 'expo-crypto';
 
 export type AuthError = {
   message: string;
@@ -63,8 +64,9 @@ export async function signUp(params: {
     }
 
     // Generate a UUID using Web Crypto API
-    const uuid = Array.from(crypto.getRandomValues(new Uint8Array(16)))
-      .map(b => b.toString(16).padStart(2, '0'))
+    const uuidBytes = await Crypto.getRandomBytesAsync(16);
+    const uuid = Array.from(uuidBytes)
+      .map((b) => b.toString(16).padStart(2, '0'))
       .join('');
 
     // Create auth user with generated email
@@ -84,26 +86,22 @@ export async function signUp(params: {
     if (authError) throw authError;
 
     // Create user record in the database
-    const { error: userError } = await supabase
-      .from('users')
-      .insert({
-        id: authData.user!.id,
-        username: params.username,
-        full_name: params.fullName,
-        student_id: params.studentId,
-        contact_number: params.contactNumber,
-        pin: params.pin,
-      });
+    const { error: userError } = await supabase.from('users').insert({
+      id: authData.user!.id,
+      username: params.username,
+      full_name: params.fullName,
+      student_id: params.studentId,
+      contact_number: params.contactNumber,
+      pin: params.pin,
+    });
 
     if (userError) throw userError;
 
     // Create initial wallet for the user
-    const { error: walletError } = await supabase
-      .from('wallets')
-      .insert({
-        user_id: authData.user!.id,
-        balance: 0,
-      });
+    const { error: walletError } = await supabase.from('wallets').insert({
+      user_id: authData.user!.id,
+      balance: 0,
+    });
 
     if (walletError) throw walletError;
 
@@ -119,7 +117,9 @@ export async function signUp(params: {
   }
 }
 
-export async function resetPassword(email: string): Promise<{ error: AuthError | null }> {
+export async function resetPassword(
+  email: string
+): Promise<{ error: AuthError | null }> {
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
@@ -153,7 +153,9 @@ export async function signOut(): Promise<{ error: AuthError | null }> {
   }
 }
 
-export async function updatePassword(password: string): Promise<{ error: AuthError | null }> {
+export async function updatePassword(
+  password: string
+): Promise<{ error: AuthError | null }> {
   try {
     const { error } = await supabase.auth.updateUser({
       password: password,
