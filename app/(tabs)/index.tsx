@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, u
 import { ArrowUpRight, ArrowDownRight, Send, Wallet, CirclePlus as PlusCircle, Clock, CircleHelp as HelpCircle } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 
 interface Transaction {
@@ -59,16 +59,16 @@ export default function HomeScreen() {
   const fetchWalletData = async () => {
     try {
       // Fetch wallet balance
-      const { data: walletData, error: walletError } = await supabase
+      const { data: walletData, error: walletError } = await db
         .from('wallets')
-        .select('balance')
+        .select('balance, id')
         .eq('user_id', user?.id)
         .single();
 
       if (walletError) throw walletError;
 
       // Fetch recent transactions
-      const { data: transactionsData, error: transactionsError } = await supabase
+      const { data: transactionsData, error: transactionsError } = await db
         .from('transactions')
         .select('*')
         .eq('wallet_id', walletData.id)
@@ -82,7 +82,7 @@ export default function HomeScreen() {
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
 
-      const { data: monthlyData, error: monthlyError } = await supabase
+      const { data: monthlyData, error: monthlyError } = await db
         .from('transactions')
         .select('amount')
         .eq('wallet_id', walletData.id)
