@@ -15,104 +15,78 @@ export interface Database {
           username: string
           full_name: string
           student_id: string
+          email: string
           contact_number: string
+          pin: string
           created_at: string
-          updated_at: string
         }
         Insert: {
-          id?: string
+          id: string
           username: string
           full_name: string
           student_id: string
+          email: string
           contact_number: string
+          pin: string
           created_at?: string
-          updated_at?: string
         }
         Update: {
           id?: string
           username?: string
           full_name?: string
           student_id?: string
+          email?: string
           contact_number?: string
+          pin?: string
           created_at?: string
-          updated_at?: string
         }
       }
       wallets: {
         Row: {
-          id: string
           user_id: string
           balance: number
-          created_at: string
           updated_at: string
         }
         Insert: {
-          id?: string
           user_id: string
           balance?: number
-          created_at?: string
           updated_at?: string
         }
         Update: {
-          id?: string
           user_id?: string
           balance?: number
-          created_at?: string
           updated_at?: string
         }
       }
       transactions: {
         Row: {
           id: string
-          wallet_id: string
-          type: 'send' | 'receive'
+          user_id: string
           amount: number
-          recipient: string
-          category: string
-          status: 'completed' | 'pending' | 'failed'
+          type: 'topup' | 'payment'
+          category: 'canteen' | 'library' | 'lab' | 'club' | 'others'
+          club_name?: string
+          description?: string
           created_at: string
         }
         Insert: {
           id?: string
-          wallet_id: string
-          type: 'send' | 'receive'
+          user_id: string
           amount: number
-          recipient: string
-          category: string
-          status: 'completed' | 'pending' | 'failed'
+          type: 'topup' | 'payment'
+          category: 'canteen' | 'library' | 'lab' | 'club' | 'others'
+          club_name?: string
+          description?: string
           created_at?: string
         }
         Update: {
           id?: string
-          wallet_id?: string
-          type?: 'send' | 'receive'
+          user_id?: string
           amount?: number
-          recipient?: string
-          category?: string
-          status?: 'completed' | 'pending' | 'failed'
-          created_at?: string
-        }
-      }
-      categories: {
-        Row: {
-          id: string
-          name: string
-          icon: string
-          color: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          name: string
-          icon: string
-          color: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          name?: string
-          icon?: string
-          color?: string
+          type?: 'topup' | 'payment'
+          category?: 'canteen' | 'library' | 'lab' | 'club' | 'others'
+          club_name?: string
+          description?: string
           created_at?: string
         }
       }
@@ -120,32 +94,26 @@ export interface Database {
         Row: {
           id: string
           user_id: string
-          category_id: string
-          amount: number
-          period: 'monthly' | 'weekly'
-          notifications: boolean
+          month: string
+          category: 'canteen' | 'library' | 'lab' | 'club' | 'others'
+          budget_limit: number
           created_at: string
-          updated_at: string
         }
         Insert: {
           id?: string
           user_id: string
-          category_id: string
-          amount: number
-          period: 'monthly' | 'weekly'
-          notifications?: boolean
+          month: string
+          category: 'canteen' | 'library' | 'lab' | 'club' | 'others'
+          budget_limit: number
           created_at?: string
-          updated_at?: string
         }
         Update: {
           id?: string
           user_id?: string
-          category_id?: string
-          amount?: number
-          period?: 'monthly' | 'weekly'
-          notifications?: boolean
+          month?: string
+          category?: 'canteen' | 'library' | 'lab' | 'club' | 'others'
+          budget_limit?: number
           created_at?: string
-          updated_at?: string
         }
       }
     }
