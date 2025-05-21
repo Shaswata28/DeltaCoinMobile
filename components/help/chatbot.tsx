@@ -162,7 +162,7 @@ export function ChatBot({ onClose }: ChatBotProps) {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#FFFFFF',
-    margin: 20,
+    margin: '2%',
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    padding: '4%',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
     backgroundColor: '#FFFFFF',
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#2E2E2E',
   },
   title: {
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: 'Inter-SemiBold',
     color: '#2C2C2C',
   },
@@ -196,11 +196,11 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   closeButtonContainer: {
-    padding: 8,
+    padding: '2%',
   },
   closeButton: {
     color: '#4D9FFF',
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-Medium',
   },
   closeButtonDark: {
@@ -210,14 +210,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   messagesContent: {
-    padding: 16,
-    paddingBottom: 24,
+    padding: '4%',
+    paddingBottom: '6%',
   },
   messageContainer: {
     maxWidth: '80%',
-    padding: 12,
+    padding: '3%',
     borderRadius: 12,
-    marginBottom: 12,
+    marginBottom: '3%',
   },
   userMessage: {
     backgroundColor: '#4D9FFF',
@@ -235,9 +235,9 @@ const styles = StyleSheet.create({
   },
   messageText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Inter-Regular',
-    lineHeight: 20,
+    lineHeight: 18,
   },
   aiMessageText: {
     color: '#2C2C2C',
@@ -246,9 +246,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   timestamp: {
-    fontSize: 10,
+    fontSize: 9,
     color: 'rgba(255, 255, 255, 0.7)',
-    marginTop: 4,
+    marginTop: 2,
     alignSelf: 'flex-end',
   },
   aiTimestamp: {
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flexDirection: 'row',
-    padding: 16,
+    padding: '4%',
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
     backgroundColor: '#FFFFFF',
@@ -273,9 +273,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F3F4F6',
     borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    fontSize: 14,
+    paddingHorizontal: '4%',
+    paddingVertical: '2%',
+    fontSize: 13,
     fontFamily: 'Inter-Regular',
     color: '#2C2C2C',
     maxHeight: 100,
@@ -285,9 +285,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#4D9FFF',
     justifyContent: 'center',
     alignItems: 'center',
