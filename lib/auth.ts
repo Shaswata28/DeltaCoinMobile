@@ -63,8 +63,8 @@ export async function signUp(params: {
       throw new Error('Username is already taken');
     }
 
-    // Generate a UUID using expo-crypto
-    const uuid = await Crypto.randomUUID();
+    // Generate a UUID using expo-crypto and format it without hyphens
+    const uuid = (await Crypto.randomUUID()).replace(/-/g, '');
 
     // Create auth user with generated email
     const { data: authData, error: authError } = await supabase.auth.signUp({
