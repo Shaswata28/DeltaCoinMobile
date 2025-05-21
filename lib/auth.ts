@@ -63,11 +63,8 @@ export async function signUp(params: {
       throw new Error('Username is already taken');
     }
 
-    // Generate a UUID using Web Crypto API
-    const uuidBytes = await Crypto.getRandomBytesAsync(16);
-    const uuid = Array.from(uuidBytes)
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('');
+    // Generate a UUID using expo-crypto
+    const uuid = await Crypto.randomUUID();
 
     // Create auth user with generated email
     const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -117,9 +114,7 @@ export async function signUp(params: {
   }
 }
 
-export async function resetPassword(
-  email: string
-): Promise<{ error: AuthError | null }> {
+export async function resetPassword(email: string): Promise<{ error: AuthError | null }> {
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
@@ -153,9 +148,7 @@ export async function signOut(): Promise<{ error: AuthError | null }> {
   }
 }
 
-export async function updatePassword(
-  password: string
-): Promise<{ error: AuthError | null }> {
+export async function updatePassword(password: string): Promise<{ error: AuthError | null }> {
   try {
     const { error } = await supabase.auth.updateUser({
       password: password,
