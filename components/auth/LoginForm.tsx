@@ -7,7 +7,6 @@ import { useRouter } from 'expo-router';
 import { FormInput } from '@/components/common/FormInput';
 import { Button } from '@/components/common/Button';
 import { CheckBox } from '@/components/common/CheckBox';
-import { signIn } from '@/lib/auth';
 import { validateUsername } from '@/utils/validation';
 
 export function LoginForm() {
@@ -43,6 +42,9 @@ export function LoginForm() {
     if (!password) {
       newErrors.password = 'Password is required';
       isValid = false;
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+      isValid = false;
     }
     
     if (!isValid) {
@@ -53,16 +55,8 @@ export function LoginForm() {
     setIsLoading(true);
     
     try {
-      const { data, error } = await signIn({ username, password });
-      
-      if (error) {
-        setErrors({ 
-          ...newErrors, 
-          general: error.message 
-        });
-        return;
-      }
-
+      // Simulate login delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       router.replace('/(tabs)');
     } catch (error: any) {
       setErrors({ 
