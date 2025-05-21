@@ -26,6 +26,7 @@ export default function SignupScreen() {
     pinInfo: {},
   });
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleStudentInfoNext = (data: StudentInfo) => {
     setFormData(prev => ({ ...prev, studentInfo: data }));
@@ -42,6 +43,8 @@ export default function SignupScreen() {
   };
 
   const handlePinSubmit = async (data: PinInfo) => {
+    setIsLoading(true);
+    setError(null);
     setFormData(prev => ({ ...prev, pinInfo: data }));
     
     try {
@@ -51,6 +54,7 @@ export default function SignupScreen() {
         fullName: formData.studentInfo.fullName!,
         studentId: formData.studentInfo.studentId!,
         contactNumber: formData.studentInfo.contactNumber!,
+        pin: data.pin,
       });
 
       if (error) {
@@ -58,9 +62,12 @@ export default function SignupScreen() {
         return;
       }
 
+      // Show success message and redirect to home
       router.replace('/(tabs)');
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -94,6 +101,7 @@ export default function SignupScreen() {
             onBack={handlePinBack}
             initialData={formData.pinInfo as PinInfo}
             error={error}
+            isLoading={isLoading}
           />
         );
       default:
@@ -135,7 +143,7 @@ export default function SignupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F9FAFB',
   },
   containerDark: {
     backgroundColor: '#121212',
@@ -145,28 +153,26 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    padding: 20,
   },
   stepContainer: {
     flex: 1,
-    padding: 20,
+    justifyContent: 'center',
   },
   redirectButton: {
-    position: 'absolute',
-    bottom: 20,
-    alignSelf: 'center',
-    padding: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    borderRadius: 8,
+    padding: 20,
+    alignItems: 'center',
   },
   redirectText: {
-    fontSize: 16,
-    color: '#000000',
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#6B7280',
   },
   redirectTextDark: {
-    color: '#FFFFFF',
+    color: '#A6A6A6',
   },
   loginText: {
-    color: '#007AFF',
-    fontWeight: '600',
+    color: '#4D9FFF',
+    fontFamily: 'Inter-Medium',
   },
 });
