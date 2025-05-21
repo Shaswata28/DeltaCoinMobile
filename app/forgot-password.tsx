@@ -7,7 +7,6 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { FormInput } from '@/components/common/FormInput';
 import { Button } from '@/components/common/Button';
 import { validateEmail } from '@/utils/validation';
-import { resetPassword } from '@/lib/auth';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -29,13 +28,8 @@ export default function ForgotPasswordScreen() {
     setError('');
     
     try {
-      const { error: resetError } = await resetPassword(email);
-      
-      if (resetError) {
-        setError(resetError.message);
-        return;
-      }
-
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       setSuccess(true);
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred');
@@ -54,24 +48,22 @@ export default function ForgotPasswordScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <TouchableOpacity 
-          onPress={() => router.back()}
+        <TouchableOpacity
           style={styles.backButton}
+          onPress={() => router.back()}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
         </TouchableOpacity>
 
         <View style={styles.content}>
-          <Text style={[styles.title, isDark && styles.titleDark]}>Reset Password</Text>
-          <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>
-            Enter your email address and we'll send you instructions to reset your password
-          </Text>
-
-          {error && (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
-          )}
+          <View style={styles.header}>
+            <ShieldCheck size={48} color={isDark ? '#82B1FF' : '#4D9FFF'} />
+            <Text style={[styles.title, isDark && styles.titleDark]}>Forgot Password</Text>
+            <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>
+              Enter your email address and we'll send you instructions to reset your password
+            </Text>
+          </View>
 
           {success ? (
             <View style={styles.successContainer}>
@@ -119,40 +111,46 @@ export default function ForgotPasswordScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#FAFAF5',
   },
   containerDark: {
     backgroundColor: '#121212',
   },
   scrollContent: {
     flexGrow: 1,
-    padding: 20,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    marginTop: 20,
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    zIndex: 1,
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
-    paddingVertical: 40,
+    paddingHorizontal: 24,
+    paddingTop: 80,
+    paddingBottom: 24,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 32,
   },
   title: {
     fontSize: 24,
     fontFamily: 'Inter-Bold',
     color: '#2C2C2C',
+    marginTop: 16,
     marginBottom: 8,
   },
   titleDark: {
     color: '#FFFFFF',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-Regular',
     color: '#6B6B6B',
-    marginBottom: 32,
+    textAlign: 'center',
+    lineHeight: 20,
   },
   subtitleDark: {
     color: '#A6A6A6',
@@ -160,37 +158,26 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 24,
   },
-  errorContainer: {
-    backgroundColor: '#FEF2F2',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#FF4D4F',
-  },
-  errorText: {
-    color: '#FF4D4F',
-    fontFamily: 'Inter-Medium',
-    fontSize: 14,
-  },
   successContainer: {
     alignItems: 'center',
     padding: 24,
-    backgroundColor: '#F0FDF4',
+    backgroundColor: '#F6FFED',
     borderRadius: 12,
-    marginTop: 24,
+    borderWidth: 1,
+    borderColor: '#B7EB8F',
   },
   successTitle: {
-    fontSize: 20,
-    fontFamily: 'Inter-Bold',
-    color: '#059669',
-    marginBottom: 12,
+    fontSize: 18,
+    fontFamily: 'Inter-SemiBold',
+    color: '#52C41A',
+    marginBottom: 8,
   },
   successText: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-Regular',
-    color: '#065F46',
+    color: '#52C41A',
     textAlign: 'center',
+    lineHeight: 20,
     marginBottom: 24,
   },
 });
