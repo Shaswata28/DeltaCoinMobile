@@ -1,27 +1,30 @@
 import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createClient } from '@supabase/supabase-js';
+import { GoTrueClient } from '@supabase/gotrue-js';
+import { PostgrestClient } from '@supabase/postgrest-js';
 import { Database } from '@/types/supabase';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    detectSessionInUrl: false,
-    autoRefreshToken: true,
-    storage: AsyncStorage,
+// Auth client setup
+export const auth = new GoTrueClient({
+  url: `${supabaseUrl}/auth/v1`,
+  autoRefreshToken: true,
+  persistSession: true,
+  storageKey: 'supabase.auth.token',
+  storage: AsyncStorage,
+  fetch,
+});
+
+// DB client setup
+export const db = new PostgrestClient(`${supabaseUrl}/rest/v1`, {
+  headers: {
+    apikey: supabaseAnonKey,
+    Authorization: `Bearer ${supabaseAnonKey}`,
+    'X-Client-Info': 'deltacoin-mobile',
   },
-  realtime: {
-    // Disable realtime subscriptions
-    enabled: false,
-  },
-  global: {
-    headers: {
-      'X-Client-Info': 'deltacoin-mobile',
-    },
-  },
+  fetch,
 });
 
 // Helper function for data fetching
