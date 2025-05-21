@@ -62,9 +62,14 @@ export async function signUp(params: {
       throw new Error('Username is already taken');
     }
 
+    // Generate a UUID using Web Crypto API
+    const uuid = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
     // Create auth user with generated email
     const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: `${crypto.randomUUID()}@users.deltacoin.app`,
+      email: `${uuid}@users.deltacoin.app`,
       password: params.password,
       options: {
         data: {
