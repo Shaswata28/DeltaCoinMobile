@@ -1,35 +1,17 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Stack, useSegments, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
 import { SplashScreen } from 'expo-router';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
-import { AuthProvider, useAuth } from '@/hooks/useAuth';
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
-  const { session, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
-
-  useEffect(() => {
-    if (loading) return;
-
-    const inLoginPage = segments[0] === 'login';
-    const inSignupPage = segments[0] === 'signup';
-    const inForgotPasswordPage = segments[0] === 'forgot-password';
-
-    if (session && (inLoginPage || inSignupPage || inForgotPasswordPage)) {
-      // Redirect authenticated users to the home page
-      router.replace('/(tabs)');
-    } else if (!session && !inLoginPage && !inSignupPage && !inForgotPasswordPage) {
-      // Redirect unauthenticated users to the login page
-      router.replace('/login');
-    }
-  }, [session, loading, segments]);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
@@ -67,9 +49,9 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
+    <>
       <RootLayoutNav />
       <StatusBar style="auto" />
-    </AuthProvider>
+    </>
   );
 }
