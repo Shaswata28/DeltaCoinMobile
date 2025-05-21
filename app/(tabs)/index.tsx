@@ -3,8 +3,6 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, u
 import { ArrowUpRight, ArrowDownRight, Send, Wallet, CirclePlus as PlusCircle, Clock, CircleHelp as HelpCircle } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/hooks/useAuth';
 
 interface Transaction {
   id: string;
@@ -23,7 +21,6 @@ interface WalletData {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user } = useAuth();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   
@@ -35,7 +32,7 @@ export default function HomeScreen() {
   const [walletData, setWalletData] = useState<WalletData>({
     balance: 0,
     monthlySpent: 0,
-    monthlyLimit: 2000, // Default limit
+    monthlyLimit: 2000,
     recentTransactions: []
   });
 
@@ -58,55 +55,43 @@ export default function HomeScreen() {
 
   const fetchWalletData = async () => {
     try {
-      // Fetch wallet balance
-      const { data: walletData, error: walletError } = await supabase
-        .from('wallets')
-        .select('balance, id')
-        .eq('user_id', user?.id)
-        .single();
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      if (walletError) throw walletError;
+      // Mock data
+      const mockWalletData: WalletData = {
+        balance: 2500.75,
+        monthlySpent: 850.50,
+        monthlyLimit: 2000,
+        recentTransactions: [
+          {
+            id: '1',
+            type: 'send',
+            amount: 150.00,
+            recipient: 'John Doe',
+            timestamp: new Date(Date.now() - 3600000) // 1 hour ago
+          },
+          {
+            id: '2',
+            type: 'receive',
+            amount: 300.00,
+            recipient: 'Jane Smith',
+            timestamp: new Date(Date.now() - 7200000) // 2 hours ago
+          },
+          {
+            id: '3',
+            type: 'send',
+            amount: 75.50,
+            recipient: 'Coffee Shop',
+            timestamp: new Date(Date.now() - 86400000) // 1 day ago
+          }
+        ]
+      };
 
-      // Fetch recent transactions
-      const { data: transactionsData, error: transactionsError } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('wallet_id', walletData.id)
-        .order('created_at', { ascending: false })
-        .limit(3);
-
-      if (transactionsError) throw transactionsError;
-
-      // Calculate monthly spent
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
-
-      const { data: monthlyData, error: monthlyError } = await supabase
-        .from('transactions')
-        .select('amount')
-        .eq('wallet_id', walletData.id)
-        .eq('type', 'send')
-        .gte('created_at', startOfMonth.toISOString())
-        .order('created_at', { ascending: false });
-
-      if (monthlyError) throw monthlyError;
-
-      const monthlySpent = monthlyData.reduce((sum, tx) => sum + tx.amount, 0);
-
-      setWalletData({
-        balance: walletData.balance,
-        monthlySpent,
-        monthlyLimit: 2000, // This could be fetched from a settings table
-        recentTransactions: transactionsData.map(tx => ({
-          ...tx,
-          timestamp: new Date(tx.created_at)
-        }))
-      });
-
+      setWalletData(mockWalletData);
       setError(null);
     } catch (err: any) {
-      setError(err.message);
+      setError('Failed to load wallet data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -114,7 +99,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     fetchWalletData();
-  }, [user]);
+  }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -170,7 +155,7 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <Animated.View entering={FadeInDown.duration(600).springify()}>
           <Text style={[styles.greeting, isDark && styles.textDark]}>
-            {greeting}, {user?.user_metadata?.full_name?.split(' ')[0]}
+            {greeting}
           </Text>
           <Text style={[styles.date, isDark && styles.textLightDark]}>
             {currentTime.toLocaleDateString('en-US', { 
@@ -248,25 +233,20 @@ export default function HomeScreen() {
         <View style={[styles.budgetCard, isDark && styles.cardDark]}>
           <View style={styles.budgetInfo}>
             <Text style={[styles.budgetText, isDark && styles.textLightDark]}>
-              Spent: {formatCurrency(walletData.monthlySpent)}
+              Monthly Spending
             </Text>
-            <Text style={[styles.budgetText, isDark && styles.textLightDark]}>
-              Limit: {formatCurrency(walletData.monthlyLimit)}
+            <Text style={[styles.budgetAmount, isDark && styles.textDark]}>
+              {formatCurrency(walletData.monthlySpent)} / {formatCurrency(walletData.monthlyLimit)}
             </Text>
           </View>
-          <View style={styles.progressContainer}>
-            <View style={styles.progressBackground}>
-              <View 
-                style={[
-                  styles.progressFill,
-                  { width: `${spendingProgress}%` },
-                  spendingProgress > 80 && styles.progressWarning
-                ]} 
-              />
-            </View>
-            <Text style={[styles.progressText, isDark && styles.textLightDark]}>
-              {spendingProgress.toFixed(1)}% used
-            </Text>
+          <View style={styles.progressBar}>
+            <View 
+              style={[
+                styles.progressFill, 
+                { width: `${Math.min(spendingProgress, 100)}%` },
+                spendingProgress > 100 && styles.progressOverLimit
+              ]} 
+            />
           </View>
         </View>
       </View>
@@ -274,42 +254,38 @@ export default function HomeScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, isDark && styles.textDark]}>
-            Recent Activity
+            Recent Transactions
           </Text>
-          <TouchableOpacity onPress={() => router.push('/history')}>
+          <TouchableOpacity>
             <Text style={styles.seeAll}>See All</Text>
           </TouchableOpacity>
         </View>
         {walletData.recentTransactions.map((transaction, index) => (
-          <Animated.View
+          <Animated.View 
             key={transaction.id}
-            entering={FadeInRight.delay(index * 200).duration(600).springify()}
+            entering={FadeInRight.delay(index * 100).duration(400)}
             style={[styles.transactionCard, isDark && styles.cardDark]}
           >
-            <View style={styles.transactionIcon}>
-              {transaction.type === 'send' ? (
-                <ArrowUpRight size={20} color="#FF4D4F" />
-              ) : (
-                <ArrowDownRight size={20} color="#10B981" />
-              )}
-            </View>
             <View style={styles.transactionInfo}>
-              <Text style={[styles.transactionRecipient, isDark && styles.textDark]}>
+              <Text style={[styles.transactionName, isDark && styles.textDark]}>
                 {transaction.recipient}
               </Text>
               <Text style={[styles.transactionTime, isDark && styles.textLightDark]}>
                 {formatTime(transaction.timestamp)}
               </Text>
             </View>
-            <Text 
-              style={[
-                styles.transactionAmount,
-                transaction.type === 'send' ? styles.amountNegative : styles.amountPositive
-              ]}
-            >
-              {transaction.type === 'send' ? '-' : '+'}
-              {formatCurrency(transaction.amount)}
-            </Text>
+            <View style={styles.transactionAmount}>
+              <Text 
+                style={[
+                  styles.amount,
+                  transaction.type === 'send' ? styles.amountSent : styles.amountReceived,
+                  isDark && styles.textDark
+                ]}
+              >
+                {transaction.type === 'send' ? '-' : '+'}
+                {formatCurrency(transaction.amount)}
+              </Text>
+            </View>
           </Animated.View>
         ))}
       </View>
@@ -421,20 +397,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    marginBottom: 24,
-    gap: 12,
+    marginBottom: 20,
   },
   actionButton: {
-    flex: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
     padding: 16,
+    borderRadius: 16,
     alignItems: 'center',
+    width: '23%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 8,
+    elevation: 3,
   },
   actionButtonDark: {
     backgroundColor: '#1E1E1E',
@@ -444,16 +419,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Inter-Medium',
     color: '#1F2937',
-    textAlign: 'center',
   },
   section: {
-    marginBottom: 24,
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
     marginBottom: 12,
   },
   sectionTitle: {
@@ -468,32 +442,32 @@ const styles = StyleSheet.create({
   },
   budgetCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
     padding: 16,
-    marginHorizontal: 20,
+    borderRadius: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 8,
+    elevation: 3,
   },
   cardDark: {
     backgroundColor: '#1E1E1E',
   },
   budgetInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     marginBottom: 12,
   },
   budgetText: {
     fontSize: 14,
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'Inter-Regular',
     color: '#6B7280',
+    marginBottom: 4,
   },
-  progressContainer: {
-    gap: 8,
+  budgetAmount: {
+    fontSize: 20,
+    fontFamily: 'Inter-SemiBold',
+    color: '#1F2937',
   },
-  progressBackground: {
+  progressBar: {
     height: 8,
     backgroundColor: '#E5E7EB',
     borderRadius: 4,
@@ -501,64 +475,52 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#4D9FFF',
+    backgroundColor: '#10B981',
     borderRadius: 4,
   },
-  progressWarning: {
-    backgroundColor: '#F59E0B',
-  },
-  progressText: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-    textAlign: 'right',
+  progressOverLimit: {
+    backgroundColor: '#EF4444',
   },
   transactionCard: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
     padding: 16,
-    marginHorizontal: 20,
-    marginBottom: 8,
+    borderRadius: 16,
+    marginBottom: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  transactionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
+    shadowRadius: 8,
+    elevation: 3,
   },
   transactionInfo: {
     flex: 1,
   },
-  transactionRecipient: {
+  transactionName: {
     fontSize: 16,
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'Inter-SemiBold',
     color: '#1F2937',
     marginBottom: 4,
   },
   transactionTime: {
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: 'Inter-Regular',
     color: '#6B7280',
   },
   transactionAmount: {
+    marginLeft: 16,
+  },
+  amount: {
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
   },
-  amountPositive: {
-    color: '#10B981',
+  amountSent: {
+    color: '#EF4444',
   },
-  amountNegative: {
-    color: '#FF4D4F',
+  amountReceived: {
+    color: '#10B981',
   },
   textDark: {
     color: '#FFFFFF',
