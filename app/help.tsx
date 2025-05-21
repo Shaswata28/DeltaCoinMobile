@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, Linking } from 'react-native';
-import { ChevronRight, Mail, Phone, MessageCircle, CircleHelp as HelpCircle, Shield, Wallet, Bell, Bug } from 'lucide-react-native';
+import { ChevronRight, Mail, Phone, MessageCircle, CircleHelp as HelpCircle, Shield, Wallet, Bell, Bug, ArrowLeft } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ChatBot } from '../components/help/chatbot';
 import { BugReport } from '../components/help/BugReport';
+import { useRouter } from 'expo-router';
 
 interface FAQItem {
   id: string;
@@ -19,6 +20,7 @@ interface SupportCategory {
 }
 
 export default function HelpScreen() {
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
@@ -83,7 +85,14 @@ export default function HelpScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.header}>
-        <Text style={[styles.title, isDark && styles.titleDark]}>Help & Support</Text>
+        <View style={styles.titleRow}>
+          <TouchableOpacity 
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+          </TouchableOpacity>
+          <Text style={[styles.title, isDark && styles.titleDark]}>Help & Support</Text>
+        </View>
         <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>
           How can we help you today?
         </Text>
@@ -197,12 +206,17 @@ const styles = StyleSheet.create({
   header: {
     padding: 20,
     paddingTop: 40,
+    gap: 12,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   title: {
     fontSize: 32,
     fontFamily: 'Inter-Bold',
     color: '#2C2C2C',
-    marginBottom: 8,
   },
   titleDark: {
     color: '#FFFFFF',
