@@ -48,6 +48,7 @@ export async function signUp(params: {
   fullName: string;
   studentId: string;
   contactNumber: string;
+  pin: string;
 }): Promise<{ data: any; error: AuthError | null }> {
   try {
     // Check if username is already taken
@@ -86,6 +87,7 @@ export async function signUp(params: {
         full_name: params.fullName,
         student_id: params.studentId,
         contact_number: params.contactNumber,
+        pin: params.pin,
       });
 
     if (userError) throw userError;
