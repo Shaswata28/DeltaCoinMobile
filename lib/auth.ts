@@ -1,6 +1,5 @@
 import { supabase } from './supabase';
 import { Database } from '@/types/supabase';
-import * as Crypto from 'expo-crypto';
 
 export type AuthError = {
   message: string;
@@ -15,7 +14,7 @@ export async function signIn(params: {
     // First get the email associated with the username
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('id')
+      .select('student_id')
       .eq('username', params.username)
       .single();
 
@@ -23,9 +22,9 @@ export async function signIn(params: {
       throw new Error('Invalid username or password');
     }
 
-    // Then sign in with the user's ID
+    // Then sign in with the student email
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: `${userData.id}@users.deltacoin.app`, // Using ID as email
+      email: `${userData.student_id}@eastdelta.edu.bd`,
       password: params.password,
     });
 
@@ -63,12 +62,9 @@ export async function signUp(params: {
       throw new Error('Username is already taken');
     }
 
-    // Generate a UUID using expo-crypto and format it without hyphens
-    const uuid = (await Crypto.randomUUID()).replace(/-/g, '');
-
-    // Create auth user with generated email
+    // Create auth user with student email
     const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: `${uuid}@users.deltacoin.app`,
+      email: `${params.studentId}@eastdelta.edu.bd`,
       password: params.password,
       options: {
         data: {
