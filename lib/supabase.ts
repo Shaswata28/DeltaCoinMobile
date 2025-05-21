@@ -6,21 +6,19 @@ import { Database } from '@/types/supabase';
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 
-// Create a single supabase client for interacting with your database
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: AsyncStorage,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
+    flowType: 'pkce', // More secure authentication flow
   },
-  // Disable realtime subscriptions for mobile
   realtime: {
     params: {
       eventsPerSecond: 0,
     },
   },
-  // Add custom headers for mobile
   global: {
     headers: {
       'X-Client-Info': 'deltacoin-mobile',
@@ -28,7 +26,14 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// Helper function for data fetching
+// Add session refresh handler
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'TOKEN_REFRESHED') {
+    // Session was refreshed, update storage
+    AsyncStorage.setItem('supabase.auth.token', JSON.stringify(session));
+  }
+});
+
 export async function fetchData<T>(
   promise: Promise<{ data: T | null; error: any }>
 ): Promise<T> {
