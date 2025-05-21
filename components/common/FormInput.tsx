@@ -17,7 +17,8 @@ type FormInputProps = {
   inputStyle?: TextStyle;
   autoComplete?: 'off' | 'email' | 'password' | 'name' | 'username';
   maxLength?: number;
-  showPasswordToggle?: boolean;
+  leftIcon?: React.ReactNode;
+  rightElement?: React.ReactNode;
 }
 
 export function FormInput({
@@ -34,10 +35,10 @@ export function FormInput({
   inputStyle,
   autoComplete,
   maxLength,
-  showPasswordToggle = false,
+  leftIcon,
+  rightElement,
 }: FormInputProps) {
   const [isFocused, setIsFocused] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   
@@ -53,10 +54,6 @@ export function FormInput({
       ),
     };
   });
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
   
   return (
     <View style={[styles.container, style]}>
@@ -72,13 +69,13 @@ export function FormInput({
             styles.input,
             isDark && styles.inputDark,
             inputStyle,
-            showPasswordToggle && styles.inputWithIcon
+            rightElement && styles.inputWithIcon
           ]}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
           placeholderTextColor={isDark ? '#A6A6A6' : '#6B6B6B'}
-          secureTextEntry={secureTextEntry && !showPassword}
+          secureTextEntry={secureTextEntry}
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
           editable={!disabled}
@@ -88,19 +85,7 @@ export function FormInput({
           maxLength={maxLength}
         />
         
-        {showPasswordToggle && (
-          <TouchableOpacity
-            onPress={togglePasswordVisibility}
-            style={styles.eyeButton}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            {showPassword ? (
-              <EyeOff size={20} color={isDark ? '#A6A6A6' : '#6B6B6B'} />
-            ) : (
-              <Eye size={20} color={isDark ? '#A6A6A6' : '#6B6B6B'} />
-            )}
-          </TouchableOpacity>
-        )}
+        {rightElement}
       </Animated.View>
       
       {error ? (
@@ -145,17 +130,14 @@ const styles = StyleSheet.create({
     color: '#2C2C2C',
     fontFamily: 'Inter-Regular',
     fontSize: 15,
-    ...Platform.select({
-      web: { 
-        outlineStyle: 'none',
-        paddingTop: 14,
-        paddingBottom: 14,
-      }
-    })
-  },
+    ...(Platform.OS === 'web' ? {
+      paddingTop: 14,
+      paddingBottom: 14,
+    } : {})
+  } as TextStyle,
   inputWithIcon: {
     paddingRight: 40,
-  },
+  } as TextStyle,
   inputDark: {
     color: '#FFFFFF',
   },
