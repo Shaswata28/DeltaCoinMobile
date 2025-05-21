@@ -1,4 +1,4 @@
-import { auth, db } from './supabase';
+import { supabase } from './supabase';
 import { Database } from '@/types/supabase';
 
 export type AuthError = {
@@ -12,7 +12,7 @@ export async function signIn(params: {
 }): Promise<{ data: any; error: AuthError | null }> {
   try {
     // First get the email associated with the username
-    const { data: userData, error: userError } = await db
+    const { data: userData, error: userError } = await supabase
       .from('users')
       .select('id')
       .eq('username', params.username)
@@ -23,7 +23,7 @@ export async function signIn(params: {
     }
 
     // Then sign in with the user's ID
-    const { data, error } = await auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: `${userData.id}@users.deltacoin.app`, // Using ID as email
       password: params.password,
     });
@@ -51,7 +51,7 @@ export async function signUp(params: {
 }): Promise<{ data: any; error: AuthError | null }> {
   try {
     // Check if username is already taken
-    const { data: existingUser, error: checkError } = await db
+    const { data: existingUser, error: checkError } = await supabase
       .from('users')
       .select('username')
       .eq('username', params.username)
@@ -62,7 +62,7 @@ export async function signUp(params: {
     }
 
     // Create auth user with generated email
-    const { data: authData, error: authError } = await auth.signUp({
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email: `${crypto.randomUUID()}@users.deltacoin.app`,
       password: params.password,
       options: {
@@ -91,7 +91,7 @@ export async function signUp(params: {
 
 export async function resetPassword(email: string): Promise<{ error: AuthError | null }> {
   try {
-    const { error } = await auth.resetPasswordForEmail(email, {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
 
@@ -110,7 +110,7 @@ export async function resetPassword(email: string): Promise<{ error: AuthError |
 
 export async function signOut(): Promise<{ error: AuthError | null }> {
   try {
-    const { error } = await auth.signOut();
+    const { error } = await supabase.auth.signOut();
     if (error) throw error;
     return { error: null };
   } catch (error: any) {
@@ -125,7 +125,7 @@ export async function signOut(): Promise<{ error: AuthError | null }> {
 
 export async function updatePassword(password: string): Promise<{ error: AuthError | null }> {
   try {
-    const { error } = await auth.updateUser({
+    const { error } = await supabase.auth.updateUser({
       password: password,
     });
 
