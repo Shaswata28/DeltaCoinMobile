@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Platform, ViewStyle, TextStyle, useColorScheme } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Platform, ViewStyle, TextStyle, useColorScheme, TouchableOpacity } from 'react-native';
 import Animated, { useAnimatedStyle, withTiming, interpolateColor } from 'react-native-reanimated';
+import { Eye, EyeOff } from 'lucide-react-native';
 
 type FormInputProps = {
   label: string;
@@ -12,10 +13,12 @@ type FormInputProps = {
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   error?: string;
   disabled?: boolean;
-  rightElement?: React.ReactNode;
   style?: ViewStyle;
   inputStyle?: TextStyle;
   autoComplete?: 'off' | 'email' | 'password' | 'name' | 'username';
+  maxLength?: number;
+  leftIcon?: React.ReactNode;
+  rightElement?: React.ReactNode;
 }
 
 export function FormInput({
@@ -28,10 +31,12 @@ export function FormInput({
   autoCapitalize = 'sentences',
   error,
   disabled = false,
-  rightElement,
   style,
   inputStyle,
   autoComplete,
+  maxLength,
+  leftIcon,
+  rightElement,
 }: FormInputProps) {
   const [isFocused, setIsFocused] = useState(false);
   const colorScheme = useColorScheme();
@@ -63,7 +68,8 @@ export function FormInput({
           style={[
             styles.input,
             isDark && styles.inputDark,
-            inputStyle
+            inputStyle,
+            rightElement && styles.inputWithIcon
           ]}
           value={value}
           onChangeText={onChangeText}
@@ -76,6 +82,7 @@ export function FormInput({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           autoComplete={autoComplete}
+          maxLength={maxLength}
         />
         
         {rightElement}
@@ -123,14 +130,14 @@ const styles = StyleSheet.create({
     color: '#2C2C2C',
     fontFamily: 'Inter-Regular',
     fontSize: 15,
-    ...Platform.select({
-      web: { 
-        outlineStyle: 'none',
-        paddingTop: 14,
-        paddingBottom: 14,
-      }
-    })
-  },
+    ...(Platform.OS === 'web' ? {
+      paddingTop: 14,
+      paddingBottom: 14,
+    } : {})
+  } as TextStyle,
+  inputWithIcon: {
+    paddingRight: 40,
+  } as TextStyle,
   inputDark: {
     color: '#FFFFFF',
   },
@@ -143,5 +150,12 @@ const styles = StyleSheet.create({
   },
   errorTextDark: {
     color: '#FF6B6B',
+  },
+  eyeButton: {
+    position: 'absolute',
+    right: 12,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   }
 });

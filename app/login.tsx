@@ -1,9 +1,9 @@
-import { useCallback, useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { View, StyleSheet, Platform, KeyboardAvoidingView, ScrollView, ImageBackground, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { StatusBar } from 'expo-status-bar';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 
 import { AppLogo } from '@/components/auth/AppLogo';
 import { LoginForm } from '@/components/auth/LoginForm';
@@ -11,31 +11,12 @@ import { SignUpLink } from '@/components/auth/SignUpLink';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const isMounted = useRef(true);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  useEffect(() => {
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (Platform.OS === 'ios') {
-        StatusBar.setStyle(isDark ? 'light' : 'dark');
-      }
-      return () => {
-        if (Platform.OS === 'ios') {
-          StatusBar.setStyle('auto');
-        }
-      };
-    }, [isDark])
-  );
-
   return (
     <View style={[styles.container, isDark && styles.containerDark]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <ImageBackground
         source={require('@/assets/images/background.png')}
         style={styles.background}

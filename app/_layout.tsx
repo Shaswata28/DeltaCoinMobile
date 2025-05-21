@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Stack } from 'expo-router';
+import React, { useEffect } from 'react';
+import { Stack, useSegments, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
@@ -8,6 +8,23 @@ import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
+
+function RootLayoutNav() {
+  const segments = useSegments();
+  const router = useRouter();
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="login" />
+      <Stack.Screen name="signup" />
+      <Stack.Screen name="forgot-password" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="account-settings" />
+      <Stack.Screen name="settings" />
+      <Stack.Screen name="+not-found" />
+    </Stack>
+  );
+}
 
 export default function RootLayout() {
   useFrameworkReady();
@@ -33,13 +50,7 @@ export default function RootLayout() {
 
   return (
     <>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="login" />
-        <Stack.Screen name="signup" />
-        <Stack.Screen name="forgot-password" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="+not-found" />
-      </Stack>
+      <RootLayoutNav />
       <StatusBar style="auto" />
     </>
   );

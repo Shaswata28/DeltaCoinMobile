@@ -9,7 +9,10 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to scan QR codes and barcodes."
+      }
     },
     "web": {
       "bundler": "metro",
@@ -19,13 +22,25 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-web-browser"
+      "expo-secure-store",
+      [
+        "expo-barcode-scanner",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access camera to scan QR codes and barcodes."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
     },
     "android": {
-      "package": "com.anonymous.boltexponativewind"
+      "package": "com.anonymous.boltexponativewind",
+      "permissions": ["CAMERA"]
+    },
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id"
+      }
     }
   }
 }

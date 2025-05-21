@@ -1,66 +1,112 @@
 /**
- * Validates an email address format
+ * Enhanced validation utilities for registration
  */
+
+// Password strength requirements
+const PASSWORD_MIN_LENGTH = 8;
+const PASSWORD_REQUIREMENTS = {
+  minLength: PASSWORD_MIN_LENGTH,
+  minUppercase: 1,
+  minLowercase: 1,
+  minNumbers: 1,
+  minSymbols: 0, // Made optional
+};
+
 export function validateEmail(email: string): boolean {
+  // Enhanced email validation with academic domain check
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+  const academicDomains = ['eastdelta.edu.bd']; // Add all valid domains
+  
+  if (!emailRegex.test(email)) return false;
+  
+  const domain = email.split('@')[1];
+  return academicDomains.includes(domain);
 }
 
-/**
- * Validates password requirements
- * At least 6 characters, 1 uppercase, 1 lowercase, 1 number
- */
-export function validatePassword(password: string): boolean {
-  const minLength = password.length >= 6;
-  const hasUppercase = /[A-Z]/.test(password);
-  const hasLowercase = /[a-z]/.test(password);
-  const hasNumber = /[0-9]/.test(password);
-  
-  return minLength && hasUppercase && hasLowercase && hasNumber;
-}
+export const validatePassword = (password: string): {
+  isValid: boolean;
+  strength: number;
+  criteria: {
+    length: boolean;
+    uppercase: boolean;
+    lowercase: boolean;
+    number: boolean;
+    symbol: boolean;
+  };
+} => {
+  const criteria = {
+    length: password.length >= PASSWORD_REQUIREMENTS.minLength,
+    uppercase: (password.match(/[A-Z]/g) || []).length >= PASSWORD_REQUIREMENTS.minUppercase,
+    lowercase: (password.match(/[a-z]/g) || []).length >= PASSWORD_REQUIREMENTS.minLowercase,
+    number: (password.match(/[0-9]/g) || []).length >= PASSWORD_REQUIREMENTS.minNumbers,
+    symbol: (password.match(/[^A-Za-z0-9]/g) || []).length >= PASSWORD_REQUIREMENTS.minSymbols,
+  };
 
-/**
- * Checks password strength and returns a score from 0-4
- * 0: No password
- * 1: Very weak
- * 2: Weak
- * 3: Medium
- * 4: Strong
- */
-export function getPasswordStrength(password: string): number {
-  if (!password) return 0;
+  // Calculate strength based on met criteria
+  const strength = Object.values(criteria).filter(Boolean).length;
   
-  let score = 0;
-  
-  // Length check
-  if (password.length >= 8) score += 1;
-  if (password.length >= 12) score += 1;
-  
-  // Complexity checks
-  if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score += 1;
-  if (/[0-9]/.test(password)) score += 1;
-  if (/[^A-Za-z0-9]/.test(password)) score += 1;
-  
-  // Cap at 4
-  return Math.min(4, score);
-}
+  // Password is valid if it meets minimum length and required character types
+  const isValid = criteria.length && criteria.uppercase && criteria.lowercase && criteria.number;
 
-/**
- * Gets feedback message based on password strength
- */
-export function getPasswordFeedback(strength: number): string {
+  return {
+    isValid,
+    strength,
+    criteria,
+  };
+};
+
+export const validateName = (name: string): boolean => {
+  // Enhanced name validation
+  const nameRegex = /^[a-zA-Z\s]{2,50}$/;
+  return nameRegex.test(name.trim());
+};
+
+export const validateStudentId = (id: string): boolean => {
+  // Format: YYYYNNNNN (Year + 5 digit number)
+  const studentIdRegex = /^\d{9}$/;
+  return studentIdRegex.test(id);
+};
+
+export const validatePhone = (phone: string): boolean => {
+  // Bangladesh phone number format
+  const phoneRegex = /^(\+8801|01)[3-9][0-9]{8}$/;
+  return phoneRegex.test(phone);
+};
+
+export const validateUsername = (username: string): boolean => {
+  // Enhanced username requirements
+  const usernameRegex = /^[a-zA-Z][a-zA-Z0-9_]{3,29}$/;
+  return usernameRegex.test(username);
+};
+
+export const validatePin = (pin: string): boolean => {
+  // 5-digit PIN validation
+  return /^\d{5}$/.test(pin);
+};
+
+export const validatePinMatch = (pin1: string, pin2: string): boolean => {
+  return pin1 === pin2 && validatePin(pin1);
+};
+
+export const validatePasswordMatch = (password: string, confirmPassword: string): boolean => {
+  return password === confirmPassword;
+};
+
+export const getPasswordStrengthText = (strength: number): string => {
   switch (strength) {
     case 0:
-      return 'Password is required';
+      return 'Very Weak';
     case 1:
-      return 'Very weak password';
+      return 'Weak';
     case 2:
-      return 'Weak password';
+      return 'Fair';
     case 3:
-      return 'Medium strength password';
+      return 'Good';
     case 4:
-      return 'Strong password';
+      return 'Strong';
+    case 5:
+      return 'Very Strong';
     default:
       return '';
   }
-}
+};

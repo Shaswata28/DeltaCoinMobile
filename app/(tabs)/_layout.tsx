@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
-import { Chrome as Home, User, Settings } from 'lucide-react-native';
-import { useColorScheme } from 'react-native';
+import { Home, ChartLine as LineChart, ArrowLeftRight, User, History } from 'lucide-react-native';
+import { Platform, useColorScheme } from 'react-native';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -8,37 +8,63 @@ export default function TabLayout() {
 
   return (
     <Tabs screenOptions={{
-      tabBarActiveTintColor: isDark ? '#82B1FF' : '#4D9FFF',
-      tabBarInactiveTintColor: isDark ? '#A6A6A6' : '#6B6B6B',
-      tabBarLabelStyle: {
-        fontFamily: 'Inter-Medium',
-        fontSize: 12,
-      },
+      tabBarShowLabel: false,
+      tabBarActiveTintColor: '#FFD700',
+      tabBarInactiveTintColor: isDark ? '#A6A6A6' : '#808080',
       tabBarStyle: {
-        borderTopColor: isDark ? '#2E2E2E' : '#E0E0E0',
         backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
-        height: 60,
-      }
+        height: Platform.OS === 'ios' ? '10%' : 80,
+        paddingBottom: Platform.OS === 'ios' ? 20 : 15,
+        borderTopWidth: 0,
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      headerShown: false,
+      tabBarIconStyle: {
+        marginTop: Platform.OS === 'ios' ? 15 : 10,
+      },
     }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+          tabBarIcon: ({ color }) => (
+            <Home size={24} color={color} strokeWidth={2} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="transactions"
+        options={{
+          tabBarIcon: ({ color }) => (
+            <ArrowLeftRight size={24} color={color} strokeWidth={2} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="history"
+        options={{
+          tabBarIcon: ({ color }) => (
+            <History size={24} color={color} strokeWidth={2} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="analytics"
+        options={{
+          tabBarIcon: ({ color }) => (
+            <LineChart size={24} color={color} strokeWidth={2} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Settings',
-          tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
+          tabBarIcon: ({ color }) => (
+            <User size={24} color={color} strokeWidth={2} />
+          ),
         }}
       />
     </Tabs>
