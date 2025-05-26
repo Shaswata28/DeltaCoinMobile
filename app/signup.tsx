@@ -1,17 +1,18 @@
 import { useState } from 'react';
-import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, useColorScheme, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, useColorScheme, TouchableOpacity, Text, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import { signUp } from '@/supabase/auth';
 
 import StudentInfoStep, { StudentInfo } from '@/components/signup/StudentInfoStep';
 import SecurityStep, { SecurityInfo } from '@/components/signup/SecurityStep';
 import PinStep, { PinInfo } from '@/components/signup/PinStep';
 
 interface FormData {
-  studentInfo: Partial<StudentInfo>;
-  securityInfo: Partial<SecurityInfo>;
-  pinInfo: Partial<PinInfo>;
+  studentInfo: StudentInfo | null;
+  securityInfo: SecurityInfo | null;
+  pinInfo: PinInfo | null;
 }
 
 export default function SignupScreen() {
@@ -20,9 +21,9 @@ export default function SignupScreen() {
   const isDark = colorScheme === 'dark';
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<FormData>({
-    studentInfo: {},
-    securityInfo: {},
-    pinInfo: {},
+    studentInfo: null,
+    securityInfo: null,
+    pinInfo: null,
   });
   const [error, setError] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,11 +48,50 @@ export default function SignupScreen() {
     setFormData(prev => ({ ...prev, pinInfo: data }));
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      router.replace('/(tabs)');
+      // Combine all form data
+      const { studentInfo, securityInfo } = formData;
+      
+      if (!studentInfo || !securityInfo) {
+        throw new Error('Missing required information');
+      }
+
+      // Validate all required fields
+      if (!studentInfo.email || !studentInfo.fullName || !studentInfo.studentId || 
+          !studentInfo.contactNumber || !securityInfo.username || !securityInfo.password || 
+          !data.pin) {
+        throw new Error('All fields are required');
+      }
+
+      // Create user account with Supabase
+      const { user, profile } = await signUp({
+        email: studentInfo.email,
+        password: securityInfo.password,
+        fullName: studentInfo.fullName,
+        studentId: studentInfo.studentId,
+        contactNumber: studentInfo.contactNumber,
+        username: securityInfo.username,
+        pin: data.pin,
+      });
+
+      if (!user || !profile) {
+        throw new Error('Failed to create account');
+      }
+
+      // Show success message
+      Alert.alert(
+        'Success',
+        'Account created successfully!',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.replace('/(tabs)')
+          }
+        ]
+      );
     } catch (err: any) {
+      console.error('Signup error:', err);
       setError(err.message || 'An unexpected error occurred');
+      Alert.alert('Error', err.message || 'Failed to create account');
     } finally {
       setIsLoading(false);
     }

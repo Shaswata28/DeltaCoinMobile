@@ -22,6 +22,8 @@ function RootLayoutNav() {
       <Stack.Screen name="account-settings" />
       <Stack.Screen name="settings" />
       <Stack.Screen name="+not-found" />
+      <Stack.Screen name="help" />
+      
     </Stack>
   );
 }

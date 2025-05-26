@@ -1,0 +1,105 @@
+-- Users Table
+create table users (
+  id uuid primary key references auth.users(id) on delete cascade,
+  full_name text not null,
+  student_id varchar(9) unique not null,
+  contact_number varchar not null,
+  username text unique not null,
+  pin varchar(5) not null,
+  profile_picture_url text,
+  created_at timestamp with time zone default current_timestamp,
+  constraint student_id_numeric_length_check check (student_id ~ '^\d{9}$'),
+  constraint pin_numeric_length_check check (pin ~ '^\d{5}$'),
+  constraint contact_number_numeric_check check (contact_number ~ '^\d+$')
+);
+
+-- Row Level Security Policies
+
+-- SELECT: Users can view their own profile
+create policy "Users can view their own profile"
+on users for select
+using (auth.uid() = id);
+
+-- INSERT: Users can create their profile
+create policy "Users can insert their profile"
+on users for insert
+with check (auth.uid() = id);
+
+-- UPDATE: Users can update their own profile
+create policy "Users can update their own profile"
+on users for update
+using (auth.uid() = id);
+
+-- DELETE: Users can delete their profile (optional)
+create policy "Users can delete their profile"
+on users for delete
+using (auth.uid() = id);
+
+-- Enable Row Level Security
+alter table users enable row level security;
+
+
+
+Wallet----------------------------------------------------------
+
+create table wallets (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete cascade,
+  balance numeric(10,2) not null default 0,
+  created_at timestamp with time zone default current_timestamp
+);
+
+create policy "Wallets belong to the user"
+on wallets for all
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+
+
+Transaction-----------------------------------------------------
+
+create type transaction_type as enum ('income', 'expense');
+
+create table transactions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete cascade,
+  amount numeric(10,2) not null,
+  type transaction_type not null,
+  category text not null,
+  description text default '',
+  date date not null default current_date,
+  created_at timestamp with time zone default current_timestamp
+);
+
+create policy "Users can access their own transactions"
+on transactions for all
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+
+Budget------------------------------------------------------------
+
+create table budgets (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete cascade,
+  month text not null, -- Format: YYYY-MM
+  canteen numeric default 0,
+  library numeric default 0,
+  lab numeric default 0,
+  club numeric default 0,
+  other numeric default 0,
+  created_at timestamp default now(),
+  unique (user_id, month)
+);
+
+create policy "Users can view their budgets"
+on budgets for select
+using (auth.uid() = user_id);
+
+create policy "Users can insert budgets"
+on budgets for insert
+with check (auth.uid() = user_id);
+
+create policy "Users can update budgets"
+on budgets for update
+using (auth.uid() = user_id);

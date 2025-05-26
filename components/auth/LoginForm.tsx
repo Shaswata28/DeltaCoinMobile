@@ -8,6 +8,7 @@ import { FormInput } from '@/components/common/FormInput';
 import { Button } from '@/components/common/Button';
 import { CheckBox } from '@/components/common/CheckBox';
 import { validateUsername } from '@/utils/validation';
+import { signIn } from '@/supabase/auth';
 
 export function LoginForm() {
   const router = useRouter();
@@ -55,13 +56,18 @@ export function LoginForm() {
     setIsLoading(true);
     
     try {
-      // Simulate login delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      router.replace('/(tabs)');
+      const { user } = await signIn({
+        username,
+        password
+      });
+
+      if (user) {
+        router.replace('/(tabs)');
+      }
     } catch (error: any) {
       setErrors({ 
         ...newErrors, 
-        general: 'An unexpected error occurred. Please try again.' 
+        general: error.message || 'Invalid username or password. Please try again.' 
       });
     } finally {
       setIsLoading(false);

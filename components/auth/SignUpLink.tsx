@@ -5,15 +5,16 @@ export function SignUpLink() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  
+
   return (
     <View style={styles.container}>
-      <Text style={[styles.text, isDark && styles.textDark]}>Don't have an account?</Text>
-      <TouchableOpacity 
-        onPress={() => router.push('signup' as any)}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-      >
-        <Text style={[styles.link, isDark && styles.linkDark]}>Sign Up</Text>
+      <Text style={[styles.text, isDark && styles.textDark]}>
+        Don't have an account?{' '}
+      </Text>
+      <TouchableOpacity onPress={() => router.push('/signup')}>
+        <Text style={[styles.link, isDark && styles.linkDark]}>
+          Sign Up
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -24,23 +25,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 24,
-    gap: 4,
+    marginTop: 16,
   },
   text: {
+    fontSize: 14,
     fontFamily: 'Inter-Regular',
-    fontSize: 17,
     color: '#6B6B6B',
   },
   textDark: {
-    color: '#FFFFFF',
+    color: '#A6A6A6',
   },
   link: {
-    fontFamily: 'Inter-SemiBold',
-    fontSize: 17,
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
     color: '#4D9FFF',
   },
   linkDark: {
     color: '#82B1FF',
-  }
+  },
 });

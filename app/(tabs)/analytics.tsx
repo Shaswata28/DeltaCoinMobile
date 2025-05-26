@@ -110,6 +110,16 @@ export default function AnalyticsScreen() {
       icon: <Users size={24} color="#10B981" />,
       color: '#10B981',
       notifications: false
+    },
+    {
+      id: '5',
+      name: 'Others',
+      amount: 75.00,
+      limit: 100,
+      percentage: 75,
+      icon: <MoreHorizontal size={24} color="#A78BFA" />,
+      color: '#A78BFA',
+      notifications: true
     }
   ]);
 
