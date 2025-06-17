@@ -135,31 +135,7 @@ export default function HelpScreen() {
       {showChat && <ChatBot onClose={() => setShowChat(false)} />}
       {showBugReport && <BugReport onClose={() => setShowBugReport(false)} />}
 
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>
-          Support Categories
-        </Text>
-        <View style={styles.categoriesGrid}>
-          {categories.map((category, index) => (
-            <Animated.View
-              key={category.id}
-              entering={FadeInDown.delay(index * 100).duration(400)}
-              style={[styles.categoryCard, isDark && styles.categoryCardDark]}
-            >
-              {category.icon}
-              <View style={styles.categoryContent}>
-                <Text style={[styles.categoryTitle, isDark && styles.categoryTitleDark]}>
-                  {category.title}
-                </Text>
-                <Text style={[styles.categoryDescription, isDark && styles.categoryDescriptionDark]}>
-                  {category.description}
-                </Text>
-              </View>
-              <ChevronRight size={20} color={isDark ? '#A6A6A6' : '#6B6B6B'} />
-            </Animated.View>
-          ))}
-        </View>
-      </View>
+      
 
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>

@@ -3,13 +3,17 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, u
 import { ArrowUpRight, ArrowDownRight, Send, Wallet, CirclePlus as PlusCircle, Clock, CircleHelp as HelpCircle } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import { getHomeWalletData } from '@/supabase/db';
+import { supabase } from '@/supabase/client';
 
 interface Transaction {
   id: string;
   type: 'send' | 'receive';
   amount: number;
   recipient: string;
+  category: string;
   timestamp: Date;
+  status: 'completed' | 'pending' | 'failed';
 }
 
 interface WalletData {
@@ -53,44 +57,52 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, []);
 
+  // Set up real-time subscription for wallet updates
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        fetchWalletData();
+      } else if (event === 'SIGNED_OUT') {
+        router.replace('/login');
+      }
+    });
+
+    // Set up real-time subscription for transactions
+    const channel = supabase.channel('public:transactions');
+    
+    channel
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'transactions',
+      }, () => {
+        fetchWalletData();
+      })
+      .subscribe();
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+      channel.unsubscribe();
+    };
+  }, [router]); // Add router to dependencies
+
   const fetchWalletData = async () => {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Mock data
-      const mockWalletData: WalletData = {
-        balance: 2500.75,
-        monthlySpent: 850.50,
-        monthlyLimit: 2000,
-        recentTransactions: [
-          {
-            id: '1',
-            type: 'send',
-            amount: 150.00,
-            recipient: 'John Doe',
-            timestamp: new Date(Date.now() - 3600000) // 1 hour ago
-          },
-          {
-            id: '2',
-            type: 'receive',
-            amount: 300.00,
-            recipient: 'Jane Smith',
-            timestamp: new Date(Date.now() - 7200000) // 2 hours ago
-          },
-          {
-            id: '3',
-            type: 'send',
-            amount: 75.50,
-            recipient: 'Coffee Shop',
-            timestamp: new Date(Date.now() - 86400000) // 1 day ago
-          }
-        ]
-      };
-
-      setWalletData(mockWalletData);
+      setLoading(true);
+      
+      // Get wallet data from Supabase
+      const homeData = await getHomeWalletData();
+      
+      setWalletData({
+        balance: homeData.balance,
+        monthlySpent: homeData.monthlySpent,
+        monthlyLimit: homeData.monthlyLimit || 2000, // Default limit if not set
+        recentTransactions: homeData.recentTransactions
+      });
+      
       setError(null);
     } catch (err: any) {
+      console.error('Error fetching wallet data:', err);
       setError('Failed to load wallet data. Please try again.');
     } finally {
       setLoading(false);
@@ -108,10 +120,7 @@ export default function HomeScreen() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
+    return `৳${amount.toFixed(2)}`;
   };
 
   const formatTime = (date: Date) => {
@@ -226,7 +235,7 @@ export default function HomeScreen() {
           <Text style={[styles.sectionTitle, isDark && styles.textDark]}>
             Monthly Budget
           </Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/analytics')}>
             <Text style={styles.seeAll}>See Details</Text>
           </TouchableOpacity>
         </View>
@@ -256,7 +265,7 @@ export default function HomeScreen() {
           <Text style={[styles.sectionTitle, isDark && styles.textDark]}>
             Recent Transactions
           </Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/history')}>
             <Text style={styles.seeAll}>See All</Text>
           </TouchableOpacity>
         </View>
@@ -278,8 +287,9 @@ export default function HomeScreen() {
               <Text 
                 style={[
                   styles.amount,
-                  transaction.type === 'send' ? styles.amountSent : styles.amountReceived,
-                  isDark && styles.textDark
+                  transaction.type === 'send' 
+                    ? (isDark ? styles.amountSentDark : styles.amountSent)
+                    : (isDark ? styles.amountReceivedDark : styles.amountReceived)
                 ]}
               >
                 {transaction.type === 'send' ? '-' : '+'}
@@ -521,6 +531,12 @@ const styles = StyleSheet.create({
   },
   amountReceived: {
     color: '#10B981',
+  },
+  amountSentDark: {
+    color: '#FF6B6B',
+  },
+  amountReceivedDark: {
+    color: '#34D399',
   },
   textDark: {
     color: '#FFFFFF',

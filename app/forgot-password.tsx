@@ -48,15 +48,15 @@ export default function ForgotPasswordScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
-        </TouchableOpacity>
-
         <View style={styles.content}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+          </TouchableOpacity>
+
           <View style={styles.header}>
             <ShieldCheck size={48} color={isDark ? '#82B1FF' : '#4D9FFF'} />
             <Text style={[styles.title, isDark && styles.titleDark]}>Forgot Password</Text>
@@ -121,19 +121,19 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 16,
+    top: 50,
     left: 16,
     zIndex: 1,
   },
   content: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 80,
+    paddingTop: 100,
     paddingBottom: 24,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 40,
   },
   title: {
     fontSize: 24,
@@ -157,6 +157,7 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 24,
+    color: '#2C2C2C',
   },
   successContainer: {
     alignItems: 'center',

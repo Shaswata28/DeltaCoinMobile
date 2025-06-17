@@ -184,156 +184,127 @@ export async function getTransactionsByDateRange(startDate: string, endDate: str
   }
 }
 
-export async function deleteTransaction(transactionId: string) {
+// ==================== HOMEPAGE FUNCTIONS ====================
+
+export interface HomeWalletData {
+  balance: number;
+  monthlySpent: number;
+  monthlyLimit: number;
+  recentTransactions: {
+    id: string;
+    type: 'send' | 'receive';
+    amount: number;
+    recipient: string;
+    category: string;
+    timestamp: Date;
+    status: 'completed' | 'pending' | 'failed';
+  }[];
+}
+
+export async function getHomeWalletData(): Promise<HomeWalletData> {
   try {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('No authenticated user')
 
-    // Get transaction details before deleting
-    const { data: transaction, error: getError } = await supabase
+    // Get wallet balance
+    const { data: wallet, error: walletError } = await supabase
+      .from('wallets')
+      .select('balance')
+      .eq('user_id', user.id)
+      .single()
+
+    if (walletError) throw walletError
+
+    // Get current month's budget
+    const currentDate = new Date()
+    const currentMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
+    
+    const { data: budget, error: budgetError } = await supabase
+      .from('budgets')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('month', currentMonth)
+      .single()
+
+    if (budgetError && budgetError.code !== 'PGRST116') throw budgetError
+
+    // Calculate total monthly limit from budget
+    const monthlyLimit = budget ? 
+      Number(budget.canteen) + 
+      Number(budget.library) + 
+      Number(budget.lab) + 
+      Number(budget.club) + 
+      Number(budget.other) : 0
+
+    // Get current month's transactions for monthly spending calculation
+    const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
+    const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
+
+    // Query for all transactions in the month to calculate monthly spent
+    const { data: monthlyTransactions, error: monthlyTransactionsError } = await supabase
       .from('transactions')
       .select('*')
-      .eq('id', transactionId)
       .eq('user_id', user.id)
-      .single()
+      .gte('date', firstDayOfMonth.toISOString().split('T')[0])
+      .lte('date', lastDayOfMonth.toISOString().split('T')[0])
+      .eq('type', 'expense')
 
-    if (getError) throw getError
-    if (!transaction) throw new Error('Transaction not found')
+    if (monthlyTransactionsError) throw monthlyTransactionsError
 
-    // Delete transaction
-    const { error: deleteError } = await supabase
+    // Calculate monthly spent from all transactions
+    const monthlySpent = monthlyTransactions
+      .reduce((sum, t) => sum + Number(t.amount), 0)
+
+    // Get recent transactions (limited to 5) for display
+    const { data: recentTransactionsData, error: recentTransactionsError } = await supabase
       .from('transactions')
-      .delete()
-      .eq('id', transactionId)
-      .eq('user_id', user.id)
-
-    if (deleteError) throw deleteError
-
-    // Reverse wallet balance change
-    const operation = transaction.type === 'income' ? 'subtract' : 'add'
-    await updateWalletBalance(transaction.amount, operation)
-
-    return true
-  } catch (error) {
-    console.error('Delete transaction error:', error)
-    throw error
-  }
-}
-
-// ==================== BUDGET FUNCTIONS ====================
-
-export interface CreateBudgetData {
-  month: string // Format: YYYY-MM
-  canteen?: number
-  library?: number
-  lab?: number
-  club?: number
-  other?: number
-}
-
-export async function createOrUpdateBudget(budgetData: CreateBudgetData) {
-  try {
-    if (!isValidMonth(budgetData.month)) {
-      throw new Error('Invalid month format: must be YYYY-MM')
-    }
-
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('No authenticated user')
-
-    // Round all budget amounts to 2 decimal places
-    const roundedBudget = {
-      user_id: user.id,
-      month: budgetData.month,
-      canteen: Math.round((budgetData.canteen || 0) * 100) / 100,
-      library: Math.round((budgetData.library || 0) * 100) / 100,
-      lab: Math.round((budgetData.lab || 0) * 100) / 100,
-      club: Math.round((budgetData.club || 0) * 100) / 100,
-      other: Math.round((budgetData.other || 0) * 100) / 100,
-    }
-
-    const { data, error } = await supabase
-      .from('budgets')
-      .upsert(roundedBudget)
-      .select()
-      .single()
-
-    if (error) throw error
-    return data
-  } catch (error) {
-    console.error('Create/update budget error:', error)
-    throw error
-  }
-}
-
-export async function getUserBudget(month: string): Promise<Budget | null> {
-  try {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('No authenticated user')
-
-    const { data, error } = await supabase
-      .from('budgets')
       .select('*')
       .eq('user_id', user.id)
-      .eq('month', month)
-      .single()
+      .order('date', { ascending: false })
+      .limit(5)
 
-    if (error && error.code !== 'PGRST116') throw error // PGRST116 is "not found" error
-    return data
+    if (recentTransactionsError) throw recentTransactionsError
+
+    // Transform recent transactions to match the interface
+    const recentTransactions = recentTransactionsData.map(t => ({
+      id: t.id,
+      type: t.type === 'income' ? 'receive' as const : 'send' as const,
+      amount: Number(t.amount),
+      recipient: t.description || 'Unknown',
+      category: t.category,
+      timestamp: new Date(t.date),
+      status: 'completed' as const // Default to completed since we don't have status in our schema
+    }))
+
+    return {
+      balance: Number(wallet.balance),
+      monthlySpent,
+      monthlyLimit,
+      recentTransactions
+    }
   } catch (error) {
-    console.error('Get budget error:', error)
+    console.error('Get home wallet data error:', error)
     throw error
   }
 }
 
-export async function getUserBudgets(): Promise<Budget[]> {
+// Helper function to get category-wise spending
+export async function getCategorySpending(month: string): Promise<Record<string, number>> {
   try {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('No authenticated user')
 
-    const { data, error } = await supabase
-      .from('budgets')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('month', { ascending: false })
-
-    if (error) throw error
-    return data || []
-  } catch (error) {
-    console.error('Get budgets error:', error)
-    throw error
-  }
-}
-
-export async function deleteBudget(budgetId: string) {
-  try {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('No authenticated user')
-
-    const { error } = await supabase
-      .from('budgets')
-      .delete()
-      .eq('id', budgetId)
-      .eq('user_id', user.id)
-
-    if (error) throw error
-    return true
-  } catch (error) {
-    console.error('Delete budget error:', error)
-    throw error
-  }
-}
-
-// ==================== ANALYTICS FUNCTIONS ====================
-
-export async function getMonthlyExpensesByCategory(month: string) {
-  try {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('No authenticated user')
-
+    // Parse the month string (format: 'YYYY-MM')
+    const [year, monthNum] = month.split('-').map(num => parseInt(num))
+    
+    // Calculate the last day of the month
+    // By setting day to 0 of next month, we get the last day of current month
+    const lastDay = new Date(year, monthNum, 0).getDate()
+    
     const startDate = `${month}-01`
-    const endDate = `${month}-31`
+    const endDate = `${month}-${String(lastDay).padStart(2, '0')}`
 
-    const { data, error } = await supabase
+    const { data: transactions, error } = await supabase
       .from('transactions')
       .select('category, amount')
       .eq('user_id', user.id)
@@ -345,53 +316,81 @@ export async function getMonthlyExpensesByCategory(month: string) {
 
     // Group by category and sum amounts
     const categoryTotals: Record<string, number> = {}
-    data?.forEach(transaction => {
+    transactions?.forEach(transaction => {
       const category = transaction.category
       categoryTotals[category] = (categoryTotals[category] || 0) + Number(transaction.amount)
     })
 
     return categoryTotals
   } catch (error) {
-    console.error('Get monthly expenses by category error:', error)
+    console.error('Get category spending error:', error)
     throw error
   }
 }
 
-export async function getIncomeVsExpenses(month: string) {
+// Helper function to get budget progress
+export async function getBudgetProgress(month: string): Promise<{
+  category: string;
+  spent: number;
+  limit: number;
+  percentage: number;
+}[]> {
   try {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('No authenticated user')
 
-    const startDate = `${month}-01`
-    const endDate = `${month}-31`
-
-    const { data, error } = await supabase
-      .from('transactions')
-      .select('type, amount')
+    // Get budget for the month
+    const { data: budget, error: budgetError } = await supabase
+      .from('budgets')
+      .select('*')
       .eq('user_id', user.id)
+      .eq('month', month)
+      .single()
+
+    if (budgetError && budgetError.code !== 'PGRST116') throw budgetError
+    if (!budget) return []
+
+    // Parse the month string (format: 'YYYY-MM')
+    const [year, monthNum] = month.split('-').map(num => parseInt(num))
+    const lastDay = new Date(year, monthNum, 0).getDate()
+    const startDate = `${month}-01`
+    const endDate = `${month}-${String(lastDay).padStart(2, '0')}`
+
+    // Get all expenses for the month
+    const { data: transactions, error: transactionsError } = await supabase
+      .from('transactions')
+      .select('category, amount')
+      .eq('user_id', user.id)
+      .eq('type', 'expense')
       .gte('date', startDate)
       .lte('date', endDate)
 
-    if (error) throw error
+    if (transactionsError) throw transactionsError
 
-    let totalIncome = 0
-    let totalExpenses = 0
-
-    data?.forEach(transaction => {
-      if (transaction.type === 'income') {
-        totalIncome += Number(transaction.amount)
-      } else {
-        totalExpenses += Number(transaction.amount)
-      }
+    // Calculate spending per category (case-insensitive)
+    const categorySpending: Record<string, number> = {}
+    transactions?.forEach(transaction => {
+      const category = transaction.category.toLowerCase()
+      categorySpending[category] = (categorySpending[category] || 0) + Number(transaction.amount)
     })
 
-    return {
-      income: totalIncome,
-      expenses: totalExpenses,
-      net: totalIncome - totalExpenses
+    // Map budget categories to their progress with proper casing
+    const budgetCategories = {
+      canteen: { name: 'Canteen', limit: Number(budget.canteen) },
+      library: { name: 'Library', limit: Number(budget.library) },
+      lab: { name: 'Lab', limit: Number(budget.lab) },
+      club: { name: 'Club', limit: Number(budget.club) },
+      other: { name: 'Other', limit: Number(budget.other) }
     }
+
+    return Object.entries(budgetCategories).map(([key, { name, limit }]) => ({
+      category: name,
+      spent: categorySpending[key] || 0,
+      limit,
+      percentage: limit > 0 ? (categorySpending[key] || 0) / limit * 100 : 0
+    }))
   } catch (error) {
-    console.error('Get income vs expenses error:', error)
+    console.error('Get budget progress error:', error)
     throw error
   }
 }

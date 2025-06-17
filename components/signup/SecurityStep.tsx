@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, useColorScheme, Platform } from 'react-native';
+import { View, Text, StyleSheet, useColorScheme, TouchableOpacity, } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { FormInput } from '@/components/common/FormInput';
 import { TextNavigation } from '@/components/common/TextNavigation';
 import { validateUsername, validatePassword, validatePasswordMatch, getPasswordStrengthText } from '@/utils/validation';
@@ -19,6 +20,7 @@ interface SecurityStepProps {
 
 export default function SecurityStep({ onNext, onBack, initialData }: SecurityStepProps) {
   const colorScheme = useColorScheme();
+  const [showPassword, setShowPassword] = useState(false);
   const isDark = colorScheme === 'dark';
   
   const [formData, setFormData] = useState<SecurityInfo>({
@@ -107,9 +109,20 @@ export default function SecurityStep({ onNext, onBack, initialData }: SecuritySt
               if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
             }}
             placeholder="Create a strong password"
-            secureTextEntry
+            secureTextEntry={!showPassword}
+            rightElement={
+              <TouchableOpacity 
+                onPress={() => setShowPassword(!showPassword)}
+                style={styles.eyeButton}
+              >
+                {showPassword ? 
+                  <Eye size={20} color={isDark ? '#A6A6A6' : '#6B6B6B'} /> : 
+                  <EyeOff size={20} color={isDark ? '#A6A6A6' : '#6B6B6B'} />
+                }
+              </TouchableOpacity>
+            }
             error={errors.password}
-            showPasswordToggle
+            
           />
 
           <View style={styles.strengthIndicator}>
@@ -135,9 +148,19 @@ export default function SecurityStep({ onNext, onBack, initialData }: SecuritySt
             if (errors.confirmPassword) setErrors(prev => ({ ...prev, confirmPassword: '' }));
           }}
           placeholder="Confirm your password"
-          secureTextEntry
+          secureTextEntry={!showPassword}
+            rightElement={
+              <TouchableOpacity 
+                onPress={() => setShowPassword(!showPassword)}
+                style={styles.eyeButton}
+              >
+                {showPassword ? 
+                  <Eye size={20} color={isDark ? '#A6A6A6' : '#6B6B6B'} /> : 
+                  <EyeOff size={20} color={isDark ? '#A6A6A6' : '#6B6B6B'} />
+                }
+              </TouchableOpacity>
+            }
           error={errors.confirmPassword}
-          showPasswordToggle
         />
 
         <TextNavigation 
@@ -204,5 +227,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Inter-Medium',
     marginTop: 4,
-  }
+  },
+  eyeButton: {
+    padding: 8,
+  },
 });

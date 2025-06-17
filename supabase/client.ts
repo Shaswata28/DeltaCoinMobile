@@ -49,16 +49,3 @@ export interface Budget {
   other: number // numeric
   created_at: string
 }
-
-interface Recipient {
-  full_name: string;
-  username: string;
-}
-
-interface TransactionWithRecipient {
-  id: string;
-  amount: number;
-  type: 'send' | 'receive';
-  recipient: Recipient;
-  created_at: string;
-}

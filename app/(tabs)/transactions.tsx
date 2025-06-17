@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useColorScheme, useWindowDimensions } from 'react-native';
-import { Building2, CreditCard, Smartphone, Book, Coffee, Beaker, Users, ArrowLeft, MoveHorizontal as MoreHorizontal } from 'lucide-react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useColorScheme, useWindowDimensions, Modal, TextInput } from 'react-native';
+import { Building2, CreditCard, Smartphone, Book, Coffee, Beaker, Users, ArrowLeft, MoveHorizontal as MoreHorizontal, X, Check } from 'lucide-react-native';
 import Animated, { 
   FadeInDown,
   useAnimatedStyle,
@@ -17,10 +17,11 @@ import {
 import { AmountInput } from '@/components/payment/AmountInput';
 import { PaymentSummary } from '@/components/payment/PaymentSummary';
 import { FormInput } from '@/components/common/FormInput';
-import { Button } from '@/components/common/Button';
+import { Button } from '../../components/common/Button';
+import { PinInput } from '../../components/common/PinInput';
 
 type PaymentMethod = 'bank' | 'card' | 'mobile';
-type PaymentDestination = 'canteen' | 'library' | 'lab' | 'club' | 'other';
+type PaymentDestination = 'Canteen' | 'Library' | 'Lab' | 'Club' | 'Other';
 type Club = 'photography' | 'tech' | 'art' | 'sports' | 'music';
 
 interface PaymentDetails {
@@ -31,6 +32,64 @@ interface PaymentDetails {
   details?: string;
 }
 
+import { getCurrentUserProfile } from '../../supabase/auth';
+import { updateWalletBalance, createTransaction } from '../../supabase/db';
+
+const verifyPin = async (pin: string): Promise<boolean> => {
+  try {
+    const userProfile = await getCurrentUserProfile();
+    if (!userProfile) {
+      console.error('User profile not found');
+      return false;
+    }
+    
+    // Ensure both PINs are strings and trim any whitespace
+    const userPin = String(userProfile.pin).trim();
+    const enteredPin = String(pin).trim();
+    
+    return userPin === enteredPin;
+  } catch (error) {
+    console.error('PIN verification error:', error);
+    return false;
+  }
+};
+
+const processPayment = async (details: PaymentDetails): Promise<void> => {
+  try {
+    // Create transaction record
+    await createTransaction({
+      amount: parseFloat(details.amount),
+      type: 'expense',
+      category: details.destination || 'other',
+      description: details.details || `Payment to ${details.destination}`,
+    });
+    
+    // Remove this line - wallet balance is already updated by createTransaction
+    // await updateWalletBalance(parseFloat(details.amount), 'subtract');
+  } catch (error) {
+    console.error('Payment processing error:', error);
+    throw error;
+  }
+};
+
+const processTopup = async (details: PaymentDetails): Promise<void> => {
+  try {
+    // Create transaction record
+    await createTransaction({
+      amount: parseFloat(details.amount),
+      type: 'income',
+      category: 'topup',
+      description: `Top-up via ${details.method}`,
+    });
+    
+    // Remove this line - wallet balance is already updated by createTransaction
+    // await updateWalletBalance(parseFloat(details.amount), 'add');
+  } catch (error) {
+    console.error('Top-up processing error:', error);
+    throw error;
+  }
+};
+
 export default function TransactionsScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -38,10 +97,15 @@ export default function TransactionsScreen() {
   const scrollRef = useRef<ScrollView>(null);
   
   const [activeTab, setActiveTab] = useState<'topup' | 'payment'>('topup');
-  const [step, setStep] = useState<'selection' | 'amount' | 'summary' | 'club'>('selection');
+  const [step, setStep] = useState<'selection' | 'amount' | 'summary' | 'club' | 'pin' | 'success' | 'error'>('selection');
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails>({
     amount: '',
   });
+  // Update these state variables at the top of your component
+  const [pinModalVisible, setPinModalVisible] = useState(false);
+  const [pin, setPin] = useState('');
+  const [pinError, setPinError] = useState(false);
+  const [pinLoading, setPinLoading] = useState(false);
 
   const translateX = useSharedValue(0);
   const context = useSharedValue(0);
@@ -85,7 +149,7 @@ export default function TransactionsScreen() {
 
   const handleDestinationSelect = (destination: PaymentDestination) => {
     setPaymentDetails(prev => ({ ...prev, destination }));
-    if (destination === 'club') {
+    if (destination === 'Club') {
       setStep('club');
     } else {
       setStep('amount');
@@ -109,7 +173,7 @@ export default function TransactionsScreen() {
         setStep('amount');
         break;
       case 'amount':
-        if (paymentDetails.destination === 'club') {
+        if (paymentDetails.destination === 'Club') {
           setStep('club');
         } else {
           setStep('selection');
@@ -121,6 +185,74 @@ export default function TransactionsScreen() {
       default:
         setStep('selection');
     }
+  };
+
+  const handleConfirmPayment = async () => {
+    if (activeTab === 'payment') {
+      // For payments, show PIN modal
+      setPinModalVisible(true);
+      setPin('');
+      setPinError(false);
+    } else {
+      // For top-up, proceed directly to success
+      try {
+        setPinLoading(true); // Show loading state
+        await processTopup(paymentDetails);
+        setStep('success');
+      } catch (error) {
+        console.error('Top-up processing failed:', error);
+        setStep('error');
+      } finally {
+        setPinLoading(false); // Hide loading state
+      }
+    }
+  };
+
+  const handlePinSubmit = async () => {
+    try {
+      setPinLoading(true);
+      const isValidPin = await verifyPin(pin);
+      console.log('PIN verification result:', { isValidPin });
+      
+      if (isValidPin) {
+        setPinModalVisible(false);
+        try {
+          await processPayment(paymentDetails);
+          setStep('success');
+        } catch (error) {
+          console.error('Payment processing failed:', error);
+          setStep('error');
+        }
+      } else {
+        setPinError(true);
+        setPin('');
+      }
+    } catch (error) {
+      console.error('PIN verification error:', error);
+      setPinError(true);
+      setPin('');
+    } finally {
+      setPinLoading(false);
+    }
+  };
+
+  const handlePinChange = (value: string) => {
+    console.log('PIN Input:', {
+      value: value,
+      length: value.length,
+      type: typeof value
+    });
+    setPin(value);
+    setPinError(false);
+    if (value.length === 6) {
+      handlePinSubmit();
+    }
+  };
+
+  const handleClosePinModal = () => {
+    setPinModalVisible(false);
+    setPin('');
+    setPinError(false);
   };
 
   const renderTopUpMethods = () => (
@@ -161,7 +293,7 @@ export default function TransactionsScreen() {
     >
       <TouchableOpacity
         style={[styles.methodCard, isDark && styles.methodCardDark]}
-        onPress={() => handleDestinationSelect('canteen')}
+        onPress={() => handleDestinationSelect('Canteen')}
       >
         <Coffee size={32} color={isDark ? '#4D9FFF' : '#0066CC'} />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Canteen</Text>
@@ -169,7 +301,7 @@ export default function TransactionsScreen() {
 
       <TouchableOpacity
         style={[styles.methodCard, isDark && styles.methodCardDark]}
-        onPress={() => handleDestinationSelect('library')}
+        onPress={() => handleDestinationSelect('Library')}
       >
         <Book size={32} color={isDark ? '#FF6B6B' : '#DC2626'} />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Library</Text>
@@ -177,7 +309,7 @@ export default function TransactionsScreen() {
 
       <TouchableOpacity
         style={[styles.methodCard, isDark && styles.methodCardDark]}
-        onPress={() => handleDestinationSelect('lab')}
+        onPress={() => handleDestinationSelect('Lab')}
       >
         <Beaker size={32} color={isDark ? '#10B981' : '#059669'} />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Lab</Text>
@@ -185,7 +317,7 @@ export default function TransactionsScreen() {
 
       <TouchableOpacity
         style={[styles.methodCard, isDark && styles.methodCardDark]}
-        onPress={() => handleDestinationSelect('club')}
+        onPress={() => handleDestinationSelect('Club')}
       >
         <Users size={32} color={isDark ? '#A78BFA' : '#7C3AED'} />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Club</Text>
@@ -193,7 +325,7 @@ export default function TransactionsScreen() {
 
       <TouchableOpacity
         style={[styles.methodCard, isDark && styles.methodCardDark]}
-        onPress={() => handleDestinationSelect('other')}
+        onPress={() => handleDestinationSelect('Other')}
       >
         <MoreHorizontal size={32} color={isDark ? '#6B7280' : '#4B5563'} />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Other</Text>
@@ -218,7 +350,7 @@ export default function TransactionsScreen() {
       </View>
 
       <View style={styles.clubOptions}>
-        {['Photography', 'Tech', 'Art', 'Sports', 'Music'].map((club) => (
+        {['Photography', 'Social', 'Computer', 'Sports', 'Women Empowerment','Film & Comedy'].map((club) => (
           <TouchableOpacity
             key={club}
             style={[styles.clubOption, isDark && styles.clubOptionDark]}
@@ -238,6 +370,124 @@ export default function TransactionsScreen() {
           style={styles.detailsInput}
         />
       </View>
+    </Animated.View>
+  );
+
+  // Replace the existing renderPinModal function with this improved version
+  const renderPinModal = () => (
+    <Modal
+      visible={pinModalVisible}
+      transparent
+      animationType="fade"
+      onRequestClose={handleClosePinModal}
+    >
+      <View style={styles.modalOverlay}>
+        <Animated.View 
+          entering={FadeInDown.duration(200)}
+          style={[styles.modalContent, isDark && styles.modalContentDark]}
+        >
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, isDark && styles.modalTitleDark]}>
+              Confirm Payment
+            </Text>
+            <TouchableOpacity
+              onPress={handleClosePinModal}
+              style={styles.closeButton}
+            >
+              <X size={24} color={isDark ? '#fff' : '#000'} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.pinContainer}>
+            <Text style={[styles.pinInstructions, isDark && styles.pinInstructionsDark]}>
+              Please enter your 5-digit PIN to authorize this payment
+            </Text>
+            
+            <PinInput
+              value={pin}
+              onChange={handlePinChange}
+              length={5}
+              disabled={pinLoading}
+            />
+            
+            {pinError && (
+              <Text style={styles.errorText}>
+                Incorrect PIN. Please try again.
+              </Text>
+            )}
+
+            <View style={[styles.pinAmountContainer, { backgroundColor: isDark ? '#2A2A2A' : '#F3F4F6' }]}>
+              <Text style={[styles.pinAmountLabel, isDark && styles.pinAmountLabelDark]}>Amount:</Text>
+              <Text style={[styles.pinAmount, isDark && styles.pinAmountDark]}>
+                ৳{parseFloat(paymentDetails.amount).toFixed(2)}
+              </Text>
+            </View>
+
+            <Button
+              title={pinLoading ? "Verifying..." : "Confirm"}
+              onPress={handlePinSubmit}
+              disabled={pin.length !== 5 || pinLoading}
+              style={styles.pinConfirmButton}
+              variant="secondary"
+            />
+          </View>
+        </Animated.View>
+      </View>
+    </Modal>
+  );
+
+  const renderSuccess = () => (
+    <Animated.View 
+      entering={FadeInDown.duration(300)} 
+      style={styles.successContainer}
+    >
+      <View style={styles.successIcon}>
+        <Check size={48} color="#10B981" />
+      </View>
+      <Text style={[styles.successTitle, isDark && styles.successTitleDark]}>
+        {activeTab === 'topup' ? 'Top-Up Successful' : 'Payment Successful'}
+      </Text>
+      <Text style={[styles.successMessage, isDark && styles.successMessageDark]}>
+        {activeTab === 'topup' 
+          ? 'Your account has been topped up successfully.'
+          : 'Your payment has been processed successfully.'}
+      </Text>
+      <Button
+        title="Done"
+        onPress={() => {
+          setStep('selection');
+          setPaymentDetails({ amount: '' });
+        }}
+        style={styles.doneButton}
+        variant="secondary"
+      />
+    </Animated.View>
+  );
+
+  const renderError = () => (
+    <Animated.View 
+      entering={FadeInDown.duration(300)} 
+      style={styles.errorContainer}
+    >
+      <View style={styles.errorIcon}>
+        <X size={48} color="#EF4444" />
+      </View>
+      <Text style={[styles.errorTitle, isDark && styles.errorTitleDark]}>
+        {activeTab === 'topup' ? 'Top-Up Failed' : 'Payment Failed'}
+      </Text>
+      <Text style={[styles.errorMessage, isDark && styles.errorMessageDark]}>
+        Please try again or contact support if the problem persists.
+      </Text>
+      <Button
+        title="Try Again"
+        onPress={() => {
+          setStep('summary');
+          setPinError(false);
+          setPin('');
+        }}
+        style={styles.retryButton}
+        variant="secondary"
+      />
     </Animated.View>
   );
 
@@ -279,6 +529,7 @@ export default function TransactionsScreen() {
               title="Continue"
               onPress={handleAmountSubmit}
               disabled={!paymentDetails.amount || parseFloat(paymentDetails.amount) <= 0}
+              variant="secondary"
             />
           </Animated.View>
         );
@@ -296,7 +547,7 @@ export default function TransactionsScreen() {
                 <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
               </TouchableOpacity>
               <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>
-                Payment Summary
+                {activeTab === 'topup' ? 'Top-Up Summary' : 'Payment Summary'}
               </Text>
               <View style={styles.backButton} />
             </View>
@@ -308,11 +559,20 @@ export default function TransactionsScreen() {
               details={paymentDetails.details}
             />
             <Button
-              title="Confirm Payment"
-              onPress={() => {}}
+              title={activeTab === 'topup' ? "Confirm Top-up" : "Confirm Payment"}
+              onPress={handleConfirmPayment}
+              variant="secondary"
             />
           </Animated.View>
         );
+      case 'pin':
+        return renderPinModal();
+      case 'success':
+        return renderSuccess();
+      case 'error':
+        return renderError();
+      default:
+        return null;
     }
   };
 
@@ -381,6 +641,7 @@ export default function TransactionsScreen() {
         </View>
 
         {renderContent()}
+        {renderPinModal()}
       </ScrollView>
     </GestureHandlerRootView>
   );
@@ -554,5 +815,177 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     flex: 2,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: 20, // Add padding to prevent edge touching
+  },
+  modalContent: {
+    width: '90%', // Increased from 85% for better proportion
+    maxWidth: 400, // Add max width to prevent it from being too wide on larger screens
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24, // Increased padding
+    // Add shadow for better visibility in light mode
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalContentDark: {
+    backgroundColor: '#1E1E1E',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter-SemiBold',
+    color: '#2C2C2C',
+  },
+  modalTitleDark: {
+    color: '#FFFFFF',
+  },
+  hiddenInput: {
+    position: 'absolute',
+    opacity: 0,
+  },
+  successContainer: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  successIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  successTitle: {
+    fontSize: 24,
+    fontFamily: 'Inter-SemiBold',
+    color: '#2C2C2C',
+    marginBottom: 8,
+  },
+  successTitleDark: {
+    color: '#FFFFFF',
+  },
+  successMessage: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  successMessageDark: {
+    color: '#A6A6A6',
+  },
+  errorContainer: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  errorTitle: {
+    fontSize: 24,
+    fontFamily: 'Inter-SemiBold',
+    color: '#2C2C2C',
+    marginBottom: 8,
+  },
+  errorTitleDark: {
+    color: '#FFFFFF',
+  },
+  errorMessage: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  errorMessageDark: {
+    color: '#A6A6A6',
+  },
+  doneButton: {
+    width: '100%',
+  },
+  retryButton: {
+    width: '100%',
+    backgroundColor: '#EF4444',
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 20,
+  },
+  pinContainer: {
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 24,
+  },
+  pinInstructions: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#4B5563',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  pinInstructionsDark: {
+    color: '#9CA3AF',
+  },
+  errorText: {
+    color: '#EF4444',
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  pinAmountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 16,
+    padding: 12,
+    borderRadius: 8,
+    width: '100%',
+    justifyContent: 'center',
+  },
+  pinAmountLabel: {
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
+    color: '#4B5563',
+    marginRight: 8,
+  },
+  pinAmountLabelDark: {
+    color: '#9CA3AF',
+  },
+  pinAmount: {
+    fontSize: 18,
+    fontFamily: 'Inter-Bold',
+    color: '#2C2C2C',
+  },
+  pinAmountDark: {
+    color: '#FFFFFF',
+  },
+  pinConfirmButton: {
+    width: '100%',
+    marginTop: 16,
   },
 });

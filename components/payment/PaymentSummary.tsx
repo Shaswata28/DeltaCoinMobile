@@ -20,10 +20,10 @@ export function PaymentSummary({
 
   const formatAmount = (value: string) => {
     const numericValue = parseFloat(value) || 0;
-    return numericValue.toLocaleString('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    });
+    return `৳${numericValue.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
   };
 
   return (
@@ -32,7 +32,7 @@ export function PaymentSummary({
       
       <View style={styles.row}>
         <Text style={[styles.label, isDark && styles.labelDark]}>Amount</Text>
-        <Text style={[styles.value, styles.amount, isDark && styles.valueDark]}>
+        <Text style={[styles.value, styles.amount]}>
           {formatAmount(amount)}
         </Text>
       </View>

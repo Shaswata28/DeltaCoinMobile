@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, useColorScheme, Switch } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Plus, CreditCard, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, Plus, CreditCard, Trash2, Wallet } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Button } from '@/components/common/Button';
 
@@ -37,6 +37,8 @@ export default function PaymentMethodsScreen() {
     },
   ]);
 
+  const [autoTopup, setAutoTopup] = useState(false);
+
   const handleAddPaymentMethod = () => {
     // Implement add payment method logic
     console.log('Add payment method');
@@ -50,6 +52,10 @@ export default function PaymentMethodsScreen() {
   const handleSetDefault = (id: string) => {
     // Implement set default payment method logic
     console.log('Set default payment method', id);
+  };
+
+  const handleAutoTopupToggle = (value: boolean) => {
+    setAutoTopup(value);
   };
 
   return (
@@ -120,6 +126,25 @@ export default function PaymentMethodsScreen() {
               </View>
             </Animated.View>
           ))}
+        </Animated.View>
+
+        <Animated.View 
+          entering={FadeInDown.delay(150).duration(400)}
+          style={[styles.paymentCard, isDark && styles.paymentCardDark]}
+        >
+          <View style={styles.paymentCardContent}>
+            <Wallet size={24} color="#A78BFA" />
+            <View style={styles.paymentInfo}>
+              <Text style={[styles.paymentName, isDark && styles.paymentNameDark]}>Auto Top-up</Text>
+              <Text style={[styles.paymentNumber, isDark && styles.paymentNumberDark]}>Automatically add funds when balance is low</Text>
+            </View>
+            <Switch
+              value={autoTopup}
+              onValueChange={handleAutoTopupToggle}
+              trackColor={{ false: '#767577', true: '#A78BFA' }}
+              thumbColor={isDark ? '#FFFFFF' : '#FFFFFF'}
+            />
+          </View>
         </Animated.View>
 
         <Button

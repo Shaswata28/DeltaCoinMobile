@@ -1,30 +1,28 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { AlertCircle } from 'lucide-react-native';
+import { Text, StyleSheet, useColorScheme } from 'react-native';
 
 interface ErrorMessageProps {
   message: string;
 }
 
-export function ErrorMessage({ message }: ErrorMessageProps) {
+export const ErrorMessage: React.FC<ErrorMessageProps> = ({ message }) => {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
   return (
-    <View style={styles.container}>
-      <AlertCircle size={16} color="#EF4444" />
-      <Text style={styles.text}>{message}</Text>
-    </View>
+    <Text style={[styles.errorText, isDark && styles.errorTextDark]}>
+      {message}
+    </Text>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  errorText: {
+    color: '#EF4444',
+    fontSize: 14,
     marginTop: 8,
   },
-  text: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
+  errorTextDark: {
     color: '#EF4444',
   },
 }); 

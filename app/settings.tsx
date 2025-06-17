@@ -8,7 +8,7 @@ interface SettingItem {
   id: string;
   title: string;
   description: string;
-  icon: JSX.Element;
+  icon: React.ReactNode;
   action?: () => void;
   toggle?: boolean;
   value?: boolean;
@@ -60,34 +60,11 @@ export default function SettingsScreen() {
       onToggle: handleSettingToggle('biometrics'),
     },
     {
-      id: 'autoTopup',
-      title: 'Auto Top-up',
-      description: 'Automatically add funds when balance is low',
-      icon: <Wallet size={24} color="#A78BFA" />,
-      toggle: true,
-      value: settings.autoTopup,
-      onToggle: handleSettingToggle('autoTopup'),
-    },
-    {
       id: 'language',
       title: 'Language',
       description: 'English (US)',
       icon: <Languages size={24} color="#F59E0B" />,
       action: () => console.log('Language settings'),
-    },
-    {
-      id: 'help',
-      title: 'Help Center',
-      description: 'FAQs and support',
-      icon: <HelpCircle size={24} color="#EC4899" />,
-      action: () => router.push('/help'),
-    },
-    {
-      id: 'about',
-      title: 'About DeltaCoin',
-      description: 'Version 1.0.0',
-      icon: <Info size={24} color="#6366F1" />,
-      action: () => console.log('About section'),
     },
   ];
 

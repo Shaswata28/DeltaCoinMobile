@@ -28,7 +28,7 @@ export function AmountInput({ value, onChange, error }: AmountInputProps) {
     <View style={styles.container}>
       <Text style={[styles.label, isDark && styles.labelDark]}>Amount</Text>
       <View style={[styles.inputContainer, isDark && styles.inputContainerDark]}>
-        <Text style={[styles.currency, isDark && styles.currencyDark]}>$</Text>
+        <Text style={[styles.currency, isDark && styles.currencyDark]}>৳</Text>
         <TextInput
           style={[styles.input, isDark && styles.inputDark]}
           value={formattedValue}

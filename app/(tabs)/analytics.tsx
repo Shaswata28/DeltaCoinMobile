@@ -1,9 +1,18 @@
-import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, useWindowDimensions, ActivityIndicator, Platform } from 'react-native';
-import { Wallet, TrendingUp, ArrowDownRight, ArrowUpRight, Filter, Calendar, Coffee, Book, Beaker, Users, MoveHorizontal as MoreHorizontal, Download, Bell } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, useWindowDimensions, ActivityIndicator, Platform, Modal, TextInput, Alert } from 'react-native';
+import { Wallet, TrendingUp, ArrowDownRight, ArrowUpRight, Filter, Calendar, Coffee, Book, Beaker, Users, X, MoveHorizontal as MoreHorizontal, Download, Bell, Plus, Edit } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import { 
+  getUserWallet, 
+  getUserTransactions, 
+  getCategorySpending, 
+  getBudgetProgress 
+} from '../../supabase/db';
+import { supabase } from '../../supabase/client';
+import MonthPicker from '../../components/common/MonthYearPicker';
+import { generateAnalyticsPDF } from '../../utils/pdfGenerator';
 
 interface CategoryData {
   id: string;
@@ -19,6 +28,12 @@ interface BudgetCategory extends CategoryData {
   notifications: boolean;
 }
 
+// Function to get the current month in YYYY-MM format
+const getCurrentMonth = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+};
+
 export default function AnalyticsScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -26,122 +41,220 @@ export default function AnalyticsScreen() {
   const [activeTab, setActiveTab] = useState<'analytics' | 'budget'>('analytics');
   const [selectedPeriod, setSelectedPeriod] = useState('This Month');
   const [isLoading, setIsLoading] = useState(true);
-
-  const [categories] = useState<CategoryData[]>([
-    {
-      id: '1',
-      name: 'Canteen',
-      amount: 250.50,
-      percentage: 35,
-      icon: <Coffee size={24} color="#FFD700" />,
-      color: '#FFD700'
-    },
-    {
-      id: '2',
-      name: 'Library',
-      amount: 100.00,
-      percentage: 15,
-      icon: <Book size={24} color="#4D9FFF" />,
-      color: '#4D9FFF'
-    },
-    {
-      id: '3',
-      name: 'Laboratory',
-      amount: 180.00,
-      percentage: 25,
-      icon: <Beaker size={24} color="#FF6B6B" />,
-      color: '#FF6B6B'
-    },
-    {
-      id: '4',
-      name: 'Clubs',
-      amount: 120.50,
-      percentage: 15,
-      icon: <Users size={24} color="#10B981" />,
-      color: '#10B981'
-    },
-    {
-      id: '5',
-      name: 'Others',
-      amount: 75.00,
-      percentage: 10,
-      icon: <MoreHorizontal size={24} color="#A78BFA" />,
-      color: '#A78BFA'
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [transactionCount, setTransactionCount] = useState(0);
+  const [lastUpdated, setLastUpdated] = useState('');
+  
+  // State for category data
+  const [categories, setCategories] = useState<CategoryData[]>([]);
+  
+  // State for budget data
+  const [budgets, setBudgets] = useState<BudgetCategory[]>([]);
+  
+  // Add new state variables for calendar and budget creation
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
+  const [showBudgetForm, setShowBudgetForm] = useState(false);
+  const [newBudget, setNewBudget] = useState({
+    canteen: '',
+    library: '',
+    lab: '',
+    club: '',
+    other: ''
+  });
+  
+  // Add new state for year selection
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  
+  // Function to handle month selection
+  const handleMonthSelect = (month: string) => {
+    try {
+      // The MonthYearPicker now sends "YYYY-MM" format directly
+      // Validate the format
+      const [year, monthNum] = month.split('-');
+      if (!year || !monthNum || monthNum.length !== 2) {
+        throw new Error('Invalid date format');
+      }
+      
+      const monthInt = parseInt(monthNum, 10);
+      if (monthInt < 1 || monthInt > 12) {
+        throw new Error('Invalid month');
+      }
+      
+      console.log('Selected month:', month);
+      setSelectedMonth(month);
+      setShowMonthPicker(false);
+      loadAnalyticsData(month);
+    } catch (error) {
+      console.error('Error handling month selection:', error);
+      // Keep the current selected month if there's an error
+      Alert.alert('Invalid Date', 'Please select a valid month and year');
     }
-  ]);
-
-  const [budgets, setBudgets] = useState<BudgetCategory[]>([
-    {
-      id: '1',
-      name: 'Canteen',
-      amount: 250.50,
-      limit: 300,
-      percentage: 83,
-      icon: <Coffee size={24} color="#FFD700" />,
-      color: '#FFD700',
-      notifications: true
-    },
-    {
-      id: '2',
-      name: 'Library',
-      amount: 100.00,
-      limit: 150,
-      percentage: 67,
-      icon: <Book size={24} color="#4D9FFF" />,
-      color: '#4D9FFF',
-      notifications: true
-    },
-    {
-      id: '3',
-      name: 'Laboratory',
-      amount: 180.00,
-      limit: 200,
-      percentage: 90,
-      icon: <Beaker size={24} color="#FF6B6B" />,
-      color: '#FF6B6B',
-      notifications: true
-    },
-    {
-      id: '4',
-      name: 'Clubs',
-      amount: 120.50,
-      limit: 150,
-      percentage: 80,
-      icon: <Users size={24} color="#10B981" />,
-      color: '#10B981',
-      notifications: false
-    },
-    {
-      id: '5',
-      name: 'Others',
-      amount: 75.00,
-      limit: 100,
-      percentage: 75,
-      icon: <MoreHorizontal size={24} color="#A78BFA" />,
-      color: '#A78BFA',
-      notifications: true
-    }
-  ]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  const totalSpent = categories.reduce((sum, cat) => sum + cat.amount, 0);
-  const highestCategory = categories.reduce((prev, current) => 
-    current.amount > prev.amount ? current : prev
-  );
-
-  const getProgressColor = (percentage: number) => {
-    if (percentage <= 70) return '#10B981';
-    if (percentage <= 90) return '#F59E0B';
-    return '#EF4444';
   };
-
+  
+  // Function to load analytics data
+  const loadAnalyticsData = async (month = selectedMonth) => {
+    try {
+      setIsLoading(true);
+      
+      // Get wallet balance
+      const wallet = await getUserWallet();
+      if (wallet) {
+        setWalletBalance(Number(wallet.balance));
+      }
+      
+      // Get transactions count for the selected month
+      const transactions = await getUserTransactions();
+      const filteredTransactions = transactions.filter(tx => {
+        const txDate = new Date(tx.created_at);
+        const txMonth = `${txDate.getFullYear()}-${String(txDate.getMonth() + 1).padStart(2, '0')}`;
+        return txMonth === month;
+      });
+      setTransactionCount(filteredTransactions.length);
+      
+      if (filteredTransactions.length > 0) {
+        // Format last updated time
+        const lastTxDate = new Date(filteredTransactions[0].created_at);
+        const hours = Math.floor((Date.now() - lastTxDate.getTime()) / (1000 * 60 * 60));
+        setLastUpdated(`${hours}h ago`);
+      }
+      
+      // Get category spending for the selected month
+      const categorySpending = await getCategorySpending(month);
+      
+      // Calculate total spent
+      const totalSpent = Object.values(categorySpending).reduce((sum, amount) => sum + amount, 0);
+      
+      // Create category data with icons and colors
+      const categoryData: CategoryData[] = [];
+      
+      // Define category icons and colors
+      const categoryIcons: Record<string, { icon: React.ReactNode, color: string }> = {
+        Canteen: { icon: <Coffee size={24} color="#FFD700" />, color: '#FFD700' },
+        Library: { icon: <Book size={24} color="#4D9FFF" />, color: '#4D9FFF' },
+        Lab: { icon: <Beaker size={24} color="#FF6B6B" />, color: '#FF6B6B' },
+        Club: { icon: <Users size={24} color="#10B981" />, color: '#10B981' },
+        Other: { icon: <MoreHorizontal size={24} color="#A78BFA" />, color: '#A78BFA' }
+      };
+      
+      // Convert spending data to category data format
+      Object.entries(categorySpending).forEach(([category, amount], index) => {
+        const percentage = totalSpent > 0 ? Math.round((amount / totalSpent) * 100) : 0;
+        const iconData = categoryIcons[category.charAt(0).toUpperCase() + category.slice(1)] || 
+                        { icon: <MoreHorizontal size={24} color="#A78BFA" />, color: '#A78BFA' };
+        
+        categoryData.push({
+          id: String(index + 1),
+          name: category.charAt(0).toUpperCase() + category.slice(1),
+          amount,
+          percentage,
+          icon: iconData.icon,
+          color: iconData.color
+        });
+      });
+      
+      // Sort categories by amount (highest first)
+      categoryData.sort((a, b) => b.amount - a.amount);
+      setCategories(categoryData);
+      
+      // Load budget data for the selected month
+      const budgetProgress = await getBudgetProgress(month);
+      const budgetData: BudgetCategory[] = [];
+      
+      // Get existing budget notifications settings or set defaults
+      const existingBudgetSettings = budgets.reduce((acc, budget) => {
+        acc[budget.name.toLowerCase()] = budget.notifications;
+        return acc;
+      }, {} as Record<string, boolean>);
+      
+      // Convert budget progress to budget category format
+      budgetProgress.forEach((item, index) => {
+        const categoryName = item.category; // Already properly cased from getBudgetProgress
+        const iconData = categoryIcons[categoryName] || 
+                        { icon: <MoreHorizontal size={24} color="#A78BFA" />, color: '#A78BFA' };
+        
+        budgetData.push({
+          id: String(index + 1),
+          name: categoryName,
+          amount: item.spent,
+          limit: item.limit,
+          percentage: Math.round(item.percentage),
+          icon: iconData.icon,
+          color: iconData.color,
+          notifications: existingBudgetSettings[categoryName.toLowerCase()] ?? true
+        });
+      });
+      
+      setBudgets(budgetData);
+    } catch (error) {
+      console.error('Error loading analytics data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Function to create a new budget
+  const createNewBudget = async () => {
+    try {
+      setIsLoading(true);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No authenticated user');
+      
+      // Convert empty strings to 0 and ensure proper casing for category names
+      const budgetValues = {
+        canteen: Number(newBudget.canteen) || 0,
+        library: Number(newBudget.library) || 0,
+        lab: Number(newBudget.lab) || 0,
+        club: Number(newBudget.club) || 0,
+        other: Number(newBudget.other) || 0
+      };
+      
+      // Check if a budget already exists for this month
+      const { data: existingBudget } = await supabase
+        .from('budgets')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('month', selectedMonth)
+        .single();
+      
+      if (existingBudget) {
+        // Update existing budget
+        await supabase
+          .from('budgets')
+          .update(budgetValues)
+          .eq('id', existingBudget.id);
+      } else {
+        // Create new budget
+        await supabase
+          .from('budgets')
+          .insert({
+            user_id: user.id,
+            month: selectedMonth,
+            ...budgetValues
+          });
+      }
+      
+      // Reset form and reload data with the current selected month
+      setShowBudgetForm(false);
+      setNewBudget({ canteen: '', library: '', lab: '', club: '', other: '' });
+      
+      // Force a reload with the current selected month
+      console.log('Reloading data after budget update for month:', selectedMonth);
+      await loadAnalyticsData(selectedMonth);
+    } catch (error) {
+      console.error('Error creating budget:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Load data on component mount and when selected period changes
+  useEffect(() => {
+    loadAnalyticsData();
+  }, [selectedPeriod]);
+  
+  // Toggle budget notifications and save to state
   const toggleNotifications = (budgetId: string) => {
     setBudgets(prev => prev.map(budget => 
       budget.id === budgetId 
@@ -149,91 +262,152 @@ export default function AnalyticsScreen() {
         : budget
     ));
   };
+  
+  // Calculate total spent
+  const totalSpent = categories.reduce((sum, cat) => sum + cat.amount, 0);
+  
+  // Find highest spending category
+  const highestCategory = categories.length > 0 ? 
+    categories.reduce((prev, current) => current.amount > prev.amount ? current : prev, categories[0]) : 
+    { name: 'None', amount: 0 };
 
-  const generatePDFReport = async () => {
-    try {
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
-            <style>
-              body { font-family: 'Helvetica', sans-serif; padding: 20px; }
-              h1 { color: #2C2C2C; font-size: 24px; margin-bottom: 20px; }
-              .section { margin-bottom: 30px; }
-              .section-title { color: #4D9FFF; font-size: 18px; margin-bottom: 15px; }
-              .data-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
-              .category { color: #6B7280; }
-              .amount { font-weight: bold; }
-              .chart { width: 100%; height: 200px; margin: 20px 0; }
-              .footer { margin-top: 40px; color: #6B7280; font-size: 12px; }
-            </style>
-          </head>
-          <body>
-            <h1>DeltaCoin Analytics Report</h1>
-            <div class="section">
-              <div class="section-title">Overview</div>
-              <div class="data-row">
-                <span class="category">Total Spent:</span>
-                <span class="amount">$${totalSpent.toFixed(2)}</span>
-              </div>
-              <div class="data-row">
-                <span class="category">Highest Spending:</span>
-                <span class="amount">${highestCategory.name}</span>
-              </div>
-            </div>
+  const getProgressColor = (percentage: number) => {
+    if (percentage <= 70) return '#10B981';
+    if (percentage <= 90) return '#F59E0B';
+    return '#EF4444';
+  };
 
-            <div class="section">
-              <div class="section-title">Spending by Category</div>
-              ${categories.map(cat => `
-                <div class="data-row">
-                  <span class="category">${cat.name}</span>
-                  <span class="amount">$${cat.amount.toFixed(2)} (${cat.percentage}%)</span>
-                </div>
-              `).join('')}
-            </div>
+  // Month picker is now imported as a component
+  
+  // Function to render budget form
+  const renderBudgetForm = () => (
+    <Modal
+      visible={showBudgetForm}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={() => setShowBudgetForm(false)}
+    >
+      <TouchableOpacity 
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={() => setShowBudgetForm(false)}
+      >
+        <View 
+          style={[styles.budgetFormContainer, isDark && styles.cardDark]}
+          onStartShouldSetResponder={() => true}
+        >
+          <Text style={[styles.budgetFormTitle, isDark && styles.textDark]}>Create Budget</Text>
+          <Text style={[styles.budgetFormSubtitle, isDark && styles.textLightDark]}>
+            {new Date(selectedMonth + '-01').toLocaleString('default', { month: 'long', year: 'numeric' })}
+          </Text>
+          
+          {/* Only show budget form for current month */}
+          {selectedMonth === getCurrentMonth() ? (
+            <>
+              <View style={styles.budgetFormField}>
+                <View style={styles.budgetFormLabel}>
+                  <Coffee size={20} color="#FFD700" />
+                  <Text style={[styles.budgetFormLabelText, isDark && styles.textDark]}>Canteen</Text>
+                </View>
+                <TextInput
+                  style={[styles.budgetFormInput, isDark && styles.budgetFormInputDark]}
+                  keyboardType="numeric"
+                  value={newBudget.canteen}
+                  onChangeText={(text) => setNewBudget({...newBudget, canteen: text})}
+                  placeholder="Enter amount"
+                  placeholderTextColor={isDark ? '#A6A6A6' : '#6B7280'}
+                />
+              </View>
+              
+              <View style={styles.budgetFormField}>
+                <View style={styles.budgetFormLabel}>
+                  <Book size={20} color="#4D9FFF" />
+                  <Text style={[styles.budgetFormLabelText, isDark && styles.textDark]}>Library</Text>
+                </View>
+                <TextInput
+                  style={[styles.budgetFormInput, isDark && styles.budgetFormInputDark]}
+                  keyboardType="numeric"
+                  value={newBudget.library}
+                  onChangeText={(text) => setNewBudget({...newBudget, library: text})}
+                  placeholder="Enter amount"
+                  placeholderTextColor={isDark ? '#A6A6A6' : '#6B7280'}
+                />
+              </View>
+              
+              <View style={styles.budgetFormField}>
+                <View style={styles.budgetFormLabel}>
+                  <Beaker size={20} color="#FF6B6B" />
+                  <Text style={[styles.budgetFormLabelText, isDark && styles.textDark]}>Lab</Text>
+                </View>
+                <TextInput
+                  style={[styles.budgetFormInput, isDark && styles.budgetFormInputDark]}
+                  keyboardType="numeric"
+                  value={newBudget.lab}
+                  onChangeText={(text) => setNewBudget({...newBudget, lab: text})}
+                  placeholder="Enter amount"
+                  placeholderTextColor={isDark ? '#A6A6A6' : '#6B7280'}
+                />
+              </View>
+              
+              <View style={styles.budgetFormField}>
+                <View style={styles.budgetFormLabel}>
+                  <Users size={20} color="#10B981" />
+                  <Text style={[styles.budgetFormLabelText, isDark && styles.textDark]}>Club</Text>
+                </View>
+                <TextInput
+                  style={[styles.budgetFormInput, isDark && styles.budgetFormInputDark]}
+                  keyboardType="numeric"
+                  value={newBudget.club}
+                  onChangeText={(text) => setNewBudget({...newBudget, club: text})}
+                  placeholder="Enter amount"
+                  placeholderTextColor={isDark ? '#A6A6A6' : '#6B7280'}
+                />
+              </View>
+              
+              <View style={styles.budgetFormField}>
+                <View style={styles.budgetFormLabel}>
+                  <MoreHorizontal size={20} color="#A78BFA" />
+                  <Text style={[styles.budgetFormLabelText, isDark && styles.textDark]}>Other</Text>
+                </View>
+                <TextInput
+                  style={[styles.budgetFormInput, isDark && styles.budgetFormInputDark]}
+                  keyboardType="numeric"
+                  value={newBudget.other}
+                  onChangeText={(text) => setNewBudget({...newBudget, other: text})}
+                  placeholder="Enter amount"
+                  placeholderTextColor={isDark ? '#A6A6A6' : '#6B7280'}
+                />
+              </View>
+              
+              <View style={styles.budgetFormActions}>
+                <TouchableOpacity 
+                  style={[styles.budgetFormButton, styles.budgetFormCancelButton]}
+                  onPress={() => setShowBudgetForm(false)}
+                >
+                  <Text style={styles.budgetFormButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.budgetFormButton, styles.budgetFormSaveButton]}
+                  onPress={createNewBudget}
+                >
+                  <Text style={styles.budgetFormButtonText}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <View style={styles.budgetFormMessage}>
+              <Text style={[styles.budgetFormMessageText, isDark && styles.textDark]}>
+                Budgets can only be created for the current month
+              </Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
 
-            <div class="section">
-              <div class="section-title">Budget Status</div>
-              ${budgets.map(budget => `
-                <div class="data-row">
-                  <span class="category">${budget.name}</span>
-                  <span class="amount">$${budget.amount.toFixed(2)}/$${budget.limit.toFixed(2)} (${budget.percentage}% used)</span>
-                </div>
-              `).join('')}
-            </div>
-
-            <div class="footer">
-              Generated on ${new Date().toLocaleString()}
-              <br>
-              DeltaCoin Analytics Report
-            </div>
-          </body>
-        </html>
-      `;
-
-      const { uri } = await Print.printToFileAsync({
-        html: htmlContent,
-        base64: false
-      });
-
-      if (Platform.OS === 'web') {
-        const link = document.createElement('a');
-        link.href = uri;
-        link.download = 'deltacoin-report.pdf';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } else {
-        await Sharing.shareAsync(uri, {
-          mimeType: 'application/pdf',
-          dialogTitle: 'Download Analytics Report',
-          UTI: 'com.adobe.pdf'
-        });
-      }
-    } catch (error) {
-      console.error('Error generating PDF report:', error);
-    }
+  const handleGeneratePDF = async () => {
+    await generateAnalyticsPDF(categories, budgets, setIsLoading);
   };
 
   const renderDonutChart = () => {
@@ -279,7 +453,7 @@ export default function AnalyticsScreen() {
         })}
         <View style={styles.chartCenter}>
           <Text style={[styles.chartCenterAmount, isDark && styles.textDark]}>
-            ${totalSpent.toFixed(2)}
+            ৳{totalSpent.toFixed(2)}
           </Text>
           <Text style={[styles.chartCenterLabel, isDark && styles.textLightDark]}>
             Total Spent
@@ -289,6 +463,7 @@ export default function AnalyticsScreen() {
     );
   };
 
+  // Update the renderSummaryPanel function to use real data
   const renderSummaryPanel = () => (
     <View style={[styles.summaryPanel, isDark && styles.panelDark]}>
       <View style={styles.summaryRow}>
@@ -296,7 +471,7 @@ export default function AnalyticsScreen() {
           <Wallet size={24} color="#FFD700" />
           <View>
             <Text style={[styles.summaryLabel, isDark && styles.textLightDark]}>Balance</Text>
-            <Text style={[styles.summaryValue, isDark && styles.textDark]}>$1,245.50</Text>
+            <Text style={[styles.summaryValue, isDark && styles.textDark]}>৳{walletBalance.toFixed(2)}</Text>
           </View>
         </View>
         
@@ -304,7 +479,7 @@ export default function AnalyticsScreen() {
           <TrendingUp size={24} color="#10B981" />
           <View>
             <Text style={[styles.summaryLabel, isDark && styles.textLightDark]}>Transactions</Text>
-            <Text style={[styles.summaryValue, isDark && styles.textDark]}>24</Text>
+            <Text style={[styles.summaryValue, isDark && styles.textDark]}>{transactionCount}</Text>
           </View>
         </View>
       </View>
@@ -322,13 +497,23 @@ export default function AnalyticsScreen() {
           <ArrowDownRight size={24} color="#10B981" />
           <View>
             <Text style={[styles.summaryLabel, isDark && styles.textLightDark]}>Last Updated</Text>
-            <Text style={[styles.summaryValue, isDark && styles.textDark]}>2h ago</Text>
+            <Text style={[styles.summaryValue, isDark && styles.textDark]}>{lastUpdated}</Text>
           </View>
         </View>
       </View>
     </View>
   );
 
+  // Add function to handle budget editing
+  const handleEditBudget = (category: string, currentLimit: number) => {
+    setNewBudget(prev => ({
+      ...prev,
+      [category.toLowerCase()]: currentLimit.toString()
+    }));
+    setShowBudgetForm(true);
+  };
+
+  // Update the renderBudgetCard function to use icon instead of text
   const renderBudgetCard = (budget: BudgetCategory) => (
     <Animated.View 
       key={budget.id}
@@ -340,15 +525,25 @@ export default function AnalyticsScreen() {
         <View style={styles.budgetInfo}>
           <Text style={[styles.budgetName, isDark && styles.textDark]}>{budget.name}</Text>
           <Text style={[styles.budgetAmount, isDark && styles.textLightDark]}>
-            ${budget.amount.toFixed(2)} / ${budget.limit.toFixed(2)}
+            ৳{budget.amount.toFixed(2)} / ৳{budget.limit.toFixed(2)}
           </Text>
         </View>
-        <TouchableOpacity onPress={() => toggleNotifications(budget.id)}>
-          <Bell 
-            size={20} 
-            color={budget.notifications ? '#FFD700' : (isDark ? '#A6A6A6' : '#6B6B6B')}
-          />
-        </TouchableOpacity>
+        <View style={styles.budgetActions}>
+          <TouchableOpacity 
+            onPress={() => handleEditBudget(budget.name, budget.limit)}
+          >
+            <Edit 
+              size={20} 
+              color="#FFD700"
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => toggleNotifications(budget.id)}>
+            <Bell 
+              size={20} 
+              color={budget.notifications ? '#FFD700' : (isDark ? '#A6A6A6' : '#6B6B6B')}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.progressContainer}>
@@ -370,113 +565,131 @@ export default function AnalyticsScreen() {
 
       <View style={styles.budgetFooter}>
         <Text style={[styles.remainingText, isDark && styles.textLightDark]}>
-          Remaining: ${(budget.limit - budget.amount).toFixed(2)}
+          Remaining: ৳{(budget.limit - budget.amount).toFixed(2)}
         </Text>
       </View>
     </Animated.View>
   );
 
   return (
-    <ScrollView 
-      style={[styles.container, isDark && styles.containerDark]}
-      showsVerticalScrollIndicator={false}
-    >
+    <View style={[styles.container, isDark && styles.containerDark]}>
+      {/* Month Picker Modal */}
+      <MonthPicker
+        visible={showMonthPicker}
+        onClose={() => setShowMonthPicker(false)}
+        onSelect={handleMonthSelect}
+        selectedValue={selectedMonth ? new Date(selectedMonth + '-01').toLocaleString('default', { month: 'long', year: 'numeric' }) : null}
+      />
+
       <View style={styles.header}>
         <View style={styles.titleRow}>
           <Text style={[styles.title, isDark && styles.textDark]}>Analytics</Text>
-          <View style={styles.actions}>
-            <TouchableOpacity 
-              style={[styles.actionButton, isDark && styles.actionButtonDark]}
-              onPress={generatePDFReport}
-            >
-              <Download size={20} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.actionButton, isDark && styles.actionButtonDark]}>
-              <Filter size={20} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.actionButton, isDark && styles.actionButtonDark]}>
-              <Calendar size={20} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
-            </TouchableOpacity>
-          </View>
         </View>
 
         <View style={[styles.tabs, isDark && styles.tabsDark]}>
           <TouchableOpacity
-            style={[
-              styles.tab,
-              activeTab === 'analytics' && styles.activeTab,
-              isDark && styles.tabDark,
-              activeTab === 'analytics' && isDark && styles.activeTabDark
-            ]}
+            style={[styles.tab, activeTab === 'analytics' && styles.activeTab, isDark && styles.tabDark, activeTab === 'analytics' && isDark && styles.activeTabDark]}
             onPress={() => setActiveTab('analytics')}
           >
-            <Text style={[
-              styles.tabText,
-              activeTab === 'analytics' && styles.activeTabText,
-              isDark && styles.tabTextDark,
-              activeTab === 'analytics' && isDark && styles.activeTabTextDark
-            ]}>
+            <Text style={[styles.tabText, activeTab === 'analytics' && styles.activeTabText, isDark && styles.tabTextDark, activeTab === 'analytics' && isDark && styles.activeTabTextDark]}>
               Analytics
             </Text>
           </TouchableOpacity>
           
           <TouchableOpacity
-            style={[
-              styles.tab,
-              activeTab === 'budget' && styles.activeTab,
-              isDark && styles.tabDark,
-              activeTab === 'budget' && isDark && styles.activeTabDark
-            ]}
+            style={[styles.tab, activeTab === 'budget' && styles.activeTab, isDark && styles.tabDark, activeTab === 'budget' && isDark && styles.activeTabDark]}
             onPress={() => setActiveTab('budget')}
           >
-            <Text style={[
-              styles.tabText,
-              activeTab === 'budget' && styles.activeTabText,
-              isDark && styles.tabTextDark,
-              activeTab === 'budget' && isDark && styles.activeTabTextDark
-            ]}>
+            <Text style={[styles.tabText, activeTab === 'budget' && styles.activeTabText, isDark && styles.tabTextDark, activeTab === 'budget' && isDark && styles.activeTabTextDark]}>
               Budget
             </Text>
           </TouchableOpacity>
         </View>
+        
+        <View style={styles.actions}>
+          <TouchableOpacity 
+            style={[styles.actionButton, isDark && styles.actionButtonDark]}
+            onPress={handleGeneratePDF}
+          >
+            <Download size={20} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.actionButton, isDark && styles.actionButtonDark]}
+            onPress={() => setShowMonthPicker(true)}
+          >
+            <Calendar size={20} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+          </TouchableOpacity>
+          
+          {activeTab === 'budget' && (
+            <TouchableOpacity 
+              style={[styles.actionButton, isDark && styles.actionButtonDark]}
+              onPress={() => setShowBudgetForm(true)}
+            >
+              <Plus size={20} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+            </TouchableOpacity>
+          )}
+        </View>
+        {(selectedMonth) && (
+          <View style={styles.activeFilters}>
+            {selectedMonth && (
+              <View style={styles.filterBadge}>
+                <Text style={styles.filterBadgeText}>{selectedMonth}</Text>
+                <TouchableOpacity onPress={() => setSelectedMonth(null)}>
+                  <X size={14} color="#2C2C2C" />
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        )}
       </View>
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#FFD700" />
         </View>
-      ) : activeTab === 'analytics' ? (
-        <View style={styles.content}>
-          {renderSummaryPanel()}
-          
-          <View style={styles.chartSection}>
-            {renderDonutChart()}
-            <View style={styles.legend}>
-              {categories.map((category) => (
-                <View key={category.id} style={styles.legendItem}>
-                  {category.icon}
-                  <View style={styles.legendTextContainer}>
-                    <Text style={[styles.legendText, isDark && styles.textDark]}>
-                      {category.name}
-                    </Text>
-                    <Text style={[styles.legendPercentage, isDark && styles.textLightDark]}>
-                      {category.percentage}%
-                    </Text>
-                  </View>
-                  <Text style={[styles.legendAmount, isDark && styles.textDark]}>
-                    ${category.amount.toFixed(2)}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        </View>
       ) : (
-        <View style={styles.content}>
-          {budgets.map(renderBudgetCard)}
-        </View>
+        <ScrollView 
+          style={styles.content}
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+        >
+          {activeTab === 'analytics' ? (
+            <>
+              {renderSummaryPanel()}
+              
+              <View style={styles.chartSection}>
+                {renderDonutChart()}
+                <View style={styles.legend}>
+                  {categories.map((category) => (
+                    <View key={category.id} style={styles.legendItem}>
+                      {category.icon}
+                      <View style={styles.legendTextContainer}>
+                        <Text style={[styles.legendText, isDark && styles.textDark]}>
+                          {category.name}
+                        </Text>
+                        <Text style={[styles.legendPercentage, isDark && styles.textLightDark]}>
+                          {category.percentage}%
+                        </Text>
+                      </View>
+                      <Text style={[styles.legendAmount, isDark && styles.textDark]}>
+                        ৳{category.amount.toFixed(2)}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </>
+          ) : (
+            <View>
+              {budgets.map(renderBudgetCard)}
+            </View>
+          )}
+        </ScrollView>
       )}
-    </ScrollView>
+
+      {renderBudgetForm()}
+    </View>
   );
 }
 
@@ -506,11 +719,13 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     gap: 12,
+    
   },
   actionButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
+    marginBottom : 15,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
@@ -528,6 +743,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 6,
+    marginBottom: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -569,7 +785,11 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-SemiBold',
   },
   content: {
+    flex: 1,
+  },
+  contentContainer: {
     padding: 20,
+    paddingBottom: 40,
   },
   summaryPanel: {
     backgroundColor: '#FFFFFF',
@@ -750,5 +970,176 @@ const styles = StyleSheet.create({
   },
   textLightDark: {
     color: '#A6A6A6',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  monthPickerContainer: {
+    width: '80%',
+    maxHeight: '70%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  monthPickerTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter-SemiBold',
+    color: '#2C2C2C',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  pickerWrapper: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  scrollColumn: {
+    width: '48%',
+    maxHeight: 250,
+  },
+  pickerItem: {
+    paddingVertical: 12,
+    
+    alignItems: 'center',
+  },
+  pickerItemText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#2C2C2C',
+  },
+  
+  selectedItemText: {
+    fontFamily: 'Inter-SemiBold',
+    color: '#FFD700',
+  },
+  budgetFormContainer: {
+    width: '90%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  budgetFormTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter-SemiBold',
+    color: '#2C2C2C',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  budgetFormSubtitle: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#6B7280',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  budgetFormField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  budgetFormLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  budgetFormLabelText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
+    color: '#2C2C2C',
+  },
+  budgetFormInput: {
+    width: 120,
+    height: 40,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#2C2C2C',
+    textAlign: 'right',
+  },
+  budgetFormInputDark: {
+    borderColor: '#333333',
+    color: '#FFFFFF',
+    backgroundColor: '#1E1E1E',
+  },
+  budgetFormActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 24,
+    gap: 12,
+  },
+  budgetFormButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  budgetFormCancelButton: {
+    backgroundColor: '#E5E7EB',
+  },
+  budgetFormSaveButton: {
+    backgroundColor: '#FFD700',
+  },
+  budgetFormButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: '#2C2C2C',
+  },
+  budgetFormMessage: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  budgetFormMessageText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
+    color: '#2C2C2C',
+    textAlign: 'center',
+  },
+  budgetActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  activeFilters: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 10,
+  },
+  filterBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  filterBadgeText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#2C2C2C',
   },
 });
