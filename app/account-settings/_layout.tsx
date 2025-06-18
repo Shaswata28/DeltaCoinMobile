@@ -6,6 +6,7 @@ export default function SettingsLayout() {
       <Stack.Screen name="security" />
       <Stack.Screen name="notifications" />
       <Stack.Screen name="payment-methods" />
+      <Stack.Screen name="edit-profile" />
     </Stack>
   );
 }

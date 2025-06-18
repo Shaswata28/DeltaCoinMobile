@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, useColorScheme, ActivityIndicator } from 'react-native';
-import { User, Shield, Bell, Wallet, ChevronRight, LogOut, CreditCard, Menu, CircleHelp as HelpCircle, Info } from 'lucide-react-native';
+import { User, Shield, Bell, Wallet, ChevronRight, LogOut, CreditCard, Menu, CircleHelp as HelpCircle, Info, Edit } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { signOut, getCurrentUser, getCurrentUserProfile } from '@/supabase/auth';
@@ -8,14 +8,16 @@ import { getUserTransactionCount, getCategorySpending } from '@/supabase/db';
 import type { User as UserType } from '@/supabase/client';
 import { PROFILE_IMAGES } from '../../components/constants/images';
 
-type SettingsRoute = '/account-settings/security' | '/account-settings/notifications' | '/account-settings/payment-methods';
+type SettingsRoute = {
+  pathname: '/account-settings/security' | '/account-settings/notifications' | '/account-settings/payment-methods' | '/account-settings/edit-profile' | '/help';
+};
 
 interface MenuItem {
   id: string;
   title: string;
   description: string;
   icon: React.ReactNode;
-  route: SettingsRoute;
+  route: string;
 }
 
 interface ProfileData {
@@ -40,25 +42,26 @@ export default function ProfileScreen() {
   });
 
   const menuItems: MenuItem[] = [
+    
     {
       id: '1',
       title: 'Security',
       description: 'Password, biometrics, and 2FA',
-      icon: <Shield size={24} color="#FFD700" />,
+      icon: <Shield size={24} color="#4D9FFF" />,
       route: '/account-settings/security',
     },
     {
       id: '2',
       title: 'Notifications',
       description: 'Push, email, and SMS alerts',
-      icon: <Bell size={24} color="#4D9FFF" />,
+      icon: <Bell size={24} color="#10B981" />,
       route: '/account-settings/notifications',
     },
     {
       id: '3',
       title: 'Payment Methods',
       description: 'Cards and bank accounts',
-      icon: <CreditCard size={24} color="#10B981" />,
+      icon: <CreditCard size={24} color="#A78BFA" />,
       route: '/account-settings/payment-methods',
     },
   ];
@@ -156,9 +159,9 @@ export default function ProfileScreen() {
             />
             <TouchableOpacity 
               style={[styles.editButton, isDark && styles.editButtonDark]}
-              onPress={() => setIsEditing(true)}
+              onPress={() => router.push('/account-settings/edit-profile' as any)}
             >
-              <User size={16} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+              <Edit size={16} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
             </TouchableOpacity>
           </View>
 
@@ -202,7 +205,7 @@ export default function ProfileScreen() {
           >
             <TouchableOpacity
               style={[styles.menuItem, isDark && styles.menuItemDark]}
-              onPress={() => router.push(item.route)}
+              onPress={() => router.push(item.route as any)}
             >
               {item.icon}
               <View style={styles.menuItemContent}>
