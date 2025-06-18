@@ -226,3 +226,14 @@ export async function updateUserProfile(updates: Partial<Omit<User, 'id' | 'crea
     throw error
   }
 }
+
+// Check if user is authenticated
+export async function isAuthenticated(): Promise<boolean> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    return !!session
+  } catch (error) {
+    console.error('Check authentication error:', error)
+    return false
+  }
+}
