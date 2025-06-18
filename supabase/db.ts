@@ -143,6 +143,24 @@ export async function getUserTransactions(limit?: number, offset?: number): Prom
   }
 }
 
+export async function getUserTransactionCount(): Promise<number> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('No authenticated user')
+
+    const { count, error } = await supabase
+      .from('transactions')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+
+    if (error) throw error
+    return count || 0
+  } catch (error) {
+    console.error('Get transaction count error:', error)
+    throw error
+  }
+}
+
 export async function getTransactionsByCategory(category: string): Promise<Transaction[]> {
   try {
     const { data: { user } } = await supabase.auth.getUser()

@@ -52,9 +52,6 @@ export default function HistoryScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   // State variables for pagination
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const ITEMS_PER_PAGE = 10;
 
   // New state variables for filter and date modals
   const [filterModalVisible, setFilterModalVisible] = useState(false);
@@ -132,10 +129,7 @@ export default function HistoryScreen() {
       setLoading(true);
       setError(null);
 
-      if (refresh) {
-        setPage(0);
-        setHasMore(true);
-      }
+      
 
       let data: TransactionType[] = [];
 
@@ -174,7 +168,7 @@ export default function HistoryScreen() {
         data = await getTransactionsByDateRange(startDate, endDate);
       } else {
         // Get paginated transactions
-        data = await getUserTransactions(ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+        data = await getUserTransactions();
       }
 
       // Map the data to include UI-specific fields
@@ -187,14 +181,10 @@ export default function HistoryScreen() {
         ),
       }));
 
-      if (refresh || page === 0) {
-        setTransactions(mappedData);
-      } else {
-        setTransactions((prev) => [...prev, ...mappedData]);
-      }
+     
 
       // Check if we have more data to load
-      setHasMore(data.length === ITEMS_PER_PAGE);
+      setTransactions(mappedData);
     } catch (err) {
       setError('Failed to load transactions');
       console.error('Error loading transactions:', err);
@@ -233,13 +223,7 @@ export default function HistoryScreen() {
     loadTransactions(true);
   };
 
-  // Function to load more data when scrolling
-  const loadMore = () => {
-    if (!loading && hasMore) {
-      setPage((prev) => prev + 1);
-      loadTransactions();
-    }
-  };
+  
 
   // Get categories based on selected filter
   const getCategories = () => {
@@ -368,7 +352,7 @@ export default function HistoryScreen() {
       </View>
 
       {/* Loading indicator */}
-      {loading && page === 0 && (
+      {loading &&  (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#FFD700" />
         </View>
@@ -396,19 +380,9 @@ export default function HistoryScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.transactionList}
           showsVerticalScrollIndicator={false}
-          onEndReached={loadMore}
-          onEndReachedThreshold={0.5}
+        
           refreshing={refreshing && !loading}
           onRefresh={handleRefresh}
-          ListFooterComponent={
-            loading && hasMore ? (
-              <ActivityIndicator
-                size="small"
-                color="#FFD700"
-                style={{ marginVertical: 20 }}
-              />
-            ) : null
-          }
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <Text
