@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useColorScheme, useWindowDimensions, Modal, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useColorScheme, useWindowDimensions, Modal, TextInput, Alert } from 'react-native';
 import { Building2, CreditCard, Smartphone, Book, Coffee, Beaker, Users, ArrowLeft, MoveHorizontal as MoreHorizontal, X, Check } from 'lucide-react-native';
 import Animated, { 
   FadeInDown,
@@ -16,6 +16,7 @@ import {
 } from 'react-native-gesture-handler';
 import { AmountInput } from '@/components/payment/AmountInput';
 import { PaymentSummary } from '@/components/payment/PaymentSummary';
+import { StripePayment } from '@/components/payment/StripePayment';
 import { FormInput } from '@/components/common/FormInput';
 import { Button } from '../../components/common/Button';
 import { PinInput } from '../../components/common/PinInput';
@@ -97,7 +98,7 @@ export default function TransactionsScreen() {
   const scrollRef = useRef<ScrollView>(null);
   
   const [activeTab, setActiveTab] = useState<'topup' | 'payment'>('topup');
-  const [step, setStep] = useState<'selection' | 'amount' | 'summary' | 'club' | 'pin' | 'success' | 'error'>('selection');
+  const [step, setStep] = useState<'selection' | 'amount' | 'summary' | 'club' | 'pin' | 'stripe' | 'success' | 'error'>('selection');
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails>({
     amount: '',
   });
@@ -169,6 +170,9 @@ export default function TransactionsScreen() {
 
   const handleBack = () => {
     switch (step) {
+      case 'stripe':
+        setStep('summary');
+        break;
       case 'summary':
         setStep('amount');
         break;
@@ -194,18 +198,37 @@ export default function TransactionsScreen() {
       setPin('');
       setPinError(false);
     } else {
-      // For top-up, proceed directly to success
-      try {
-        setPinLoading(true); // Show loading state
-        await processTopup(paymentDetails);
-        setStep('success');
-      } catch (error) {
-        console.error('Top-up processing failed:', error);
-        setStep('error');
-      } finally {
-        setPinLoading(false); // Hide loading state
+      // For top-up, check if it's bank or card (use Stripe), otherwise proceed directly
+      if (paymentDetails.method === 'bank' || paymentDetails.method === 'card') {
+        setStep('stripe');
+      } else {
+        // For mobile banking, proceed directly to success
+        try {
+          setPinLoading(true);
+          await processTopup(paymentDetails);
+          setStep('success');
+        } catch (error) {
+          console.error('Top-up processing failed:', error);
+          setStep('error');
+        } finally {
+          setPinLoading(false);
+        }
       }
     }
+  };
+
+  const handleStripeSuccess = async () => {
+    try {
+      await processTopup(paymentDetails);
+      setStep('success');
+    } catch (error) {
+      console.error('Top-up processing failed:', error);
+      setStep('error');
+    }
+  };
+
+  const handleStripeCancel = () => {
+    setStep('summary');
   };
 
   const handlePinSubmit = async () => {
@@ -266,6 +289,7 @@ export default function TransactionsScreen() {
       >
         <Building2 size={32} color={isDark ? '#FFD700' : '#FFB800'} />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Bank Transfer</Text>
+        <Text style={[styles.methodSubtext, isDark && styles.methodSubtextDark]}>via Stripe</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -274,6 +298,7 @@ export default function TransactionsScreen() {
       >
         <CreditCard size={32} color={isDark ? '#4D9FFF' : '#0066CC'} />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Credit/Debit Card</Text>
+        <Text style={[styles.methodSubtext, isDark && styles.methodSubtextDark]}>via Stripe</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -282,6 +307,7 @@ export default function TransactionsScreen() {
       >
         <Smartphone size={32} color={isDark ? '#10B981' : '#059669'} />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Mobile Banking</Text>
+        <Text style={[styles.methodSubtext, isDark && styles.methodSubtextDark]}>bKash, Nagad, Rocket</Text>
       </TouchableOpacity>
     </Animated.View>
   );
@@ -436,6 +462,31 @@ export default function TransactionsScreen() {
     </Modal>
   );
 
+  const renderStripePayment = () => (
+    <Animated.View 
+      entering={FadeInDown.duration(300)} 
+      style={styles.stripeContainer}
+    >
+      <View style={styles.headerRow}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={handleBack}
+        >
+          <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+        </TouchableOpacity>
+        <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>Payment Details</Text>
+        <View style={styles.backButton} />
+      </View>
+
+      <StripePayment
+        amount={paymentDetails.amount}
+        method={paymentDetails.method as 'bank' | 'card'}
+        onSuccess={handleStripeSuccess}
+        onCancel={handleStripeCancel}
+      />
+    </Animated.View>
+  );
+
   const renderSuccess = () => (
     <Animated.View 
       entering={FadeInDown.duration(300)} 
@@ -565,6 +616,8 @@ export default function TransactionsScreen() {
             />
           </Animated.View>
         );
+      case 'stripe':
+        return renderStripePayment();
       case 'pin':
         return renderPinModal();
       case 'success':
@@ -750,9 +803,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter-Medium',
     color: '#2C2C2C',
+    flex: 1,
   },
   methodTextDark: {
     color: '#FFFFFF',
+  },
+  methodSubtext: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    color: '#6B7280',
+    marginLeft: 'auto',
+  },
+  methodSubtextDark: {
+    color: '#A6A6A6',
   },
   clubContainer: {
     gap: 16,
@@ -800,6 +863,9 @@ const styles = StyleSheet.create({
     gap: 24,
   },
   summaryContainer: {
+    gap: 24,
+  },
+  stripeContainer: {
     gap: 24,
   },
   buttonContainer: {

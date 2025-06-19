@@ -24,11 +24,12 @@
       "expo-font",
       "expo-secure-store",
       [
-        "expo-barcode-scanner",
+        "@stripe/stripe-react-native",
         {
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access camera to scan QR codes and barcodes."
+          "enableGooglePay": true,
+          "merchantIdentifier": "merchant.com.deltacoin.app"
         }
-      ]
+      ]  
     ],
     "experiments": {
       "typedRoutes": true
