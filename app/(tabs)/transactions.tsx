@@ -73,18 +73,16 @@ const processPayment = async (details: PaymentDetails): Promise<void> => {
   }
 };
 
-const processTopup = async (details: PaymentDetails): Promise<void> => {
+const processTopup = async (details: PaymentDetails, paymentIntentId?: string): Promise<void> => {
   try {
-    // Create transaction record
+    // Create transaction record with Stripe payment intent ID if provided
     await createTransaction({
       amount: parseFloat(details.amount),
       type: 'income',
       category: 'topup',
       description: `Top-up via ${details.method}`,
+      stripe_payment_intent_id: paymentIntentId,
     });
-    
-    // Remove this line - wallet balance is already updated by createTransaction
-    // await updateWalletBalance(parseFloat(details.amount), 'add');
   } catch (error) {
     console.error('Top-up processing error:', error);
     throw error;
@@ -198,11 +196,11 @@ export default function TransactionsScreen() {
       setPin('');
       setPinError(false);
     } else {
-      // For top-up, check if it's bank or card (use Stripe), otherwise proceed directly
-      if (paymentDetails.method === 'bank' || paymentDetails.method === 'card') {
+      // For top-up, only use Stripe for card payments
+      if (paymentDetails.method === 'card') {
         setStep('stripe');
       } else {
-        // For mobile banking, proceed directly to success
+        // For bank and mobile banking, proceed directly to success
         try {
           setPinLoading(true);
           await processTopup(paymentDetails);
@@ -217,9 +215,9 @@ export default function TransactionsScreen() {
     }
   };
 
-  const handleStripeSuccess = async () => {
+  const handleStripeSuccess = async (paymentIntentId: string) => {
     try {
-      await processTopup(paymentDetails);
+      await processTopup(paymentDetails, paymentIntentId);
       setStep('success');
     } catch (error) {
       console.error('Top-up processing failed:', error);
@@ -289,9 +287,7 @@ export default function TransactionsScreen() {
       >
         <Building2 size={32} color={isDark ? '#FFD700' : '#FFB800'} />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Bank Transfer</Text>
-        <Text style={[styles.methodSubtext, isDark && styles.methodSubtextDark]}>via Stripe</Text>
       </TouchableOpacity>
-
       <TouchableOpacity
         style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleMethodSelect('card')}
@@ -300,14 +296,13 @@ export default function TransactionsScreen() {
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Credit/Debit Card</Text>
         <Text style={[styles.methodSubtext, isDark && styles.methodSubtextDark]}>via Stripe</Text>
       </TouchableOpacity>
-
       <TouchableOpacity
         style={[styles.methodCard, isDark && styles.methodCardDark]}
         onPress={() => handleMethodSelect('mobile')}
       >
         <Smartphone size={32} color={isDark ? '#10B981' : '#059669'} />
         <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Mobile Banking</Text>
-        <Text style={[styles.methodSubtext, isDark && styles.methodSubtextDark]}>bKash, Nagad, Rocket</Text>
+        
       </TouchableOpacity>
     </Animated.View>
   );
@@ -477,10 +472,9 @@ export default function TransactionsScreen() {
         <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>Payment Details</Text>
         <View style={styles.backButton} />
       </View>
-
       <StripePayment
         amount={paymentDetails.amount}
-        method={paymentDetails.method as 'bank' | 'card'}
+        method={'card'}
         onSuccess={handleStripeSuccess}
         onCancel={handleStripeCancel}
       />
@@ -711,6 +705,7 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
     paddingTop: 40,
+    paddingBottom: 85,
   },
   header: {
     marginBottom: 32,

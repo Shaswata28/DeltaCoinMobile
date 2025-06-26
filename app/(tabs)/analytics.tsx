@@ -652,6 +652,7 @@ export default function AnalyticsScreen() {
         <ScrollView 
           style={styles.content}
           contentContainerStyle={styles.contentContainer}
+          
           showsVerticalScrollIndicator={false}
         >
           {activeTab === 'analytics' ? (
@@ -789,7 +790,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 85,
   },
   summaryPanel: {
     backgroundColor: '#FFFFFF',

@@ -80,7 +80,7 @@ export interface CreateTransactionData {
   date?: string
 }
 
-export async function createTransaction(transactionData: CreateTransactionData) {
+export async function createTransaction(transactionData: CreateTransactionData & { stripe_payment_intent_id?: string }) {
   try {
     if (!isValidAmount(transactionData.amount)) {
       throw new Error('Invalid amount: must be a positive number')
@@ -92,7 +92,7 @@ export async function createTransaction(transactionData: CreateTransactionData) 
     // Round amount to 2 decimal places
     const roundedAmount = Math.round(transactionData.amount * 100) / 100
 
-    // Create transaction
+    // Create transaction with Stripe payment intent ID if provided
     const { data: transaction, error: transactionError } = await supabase
       .from('transactions')
       .insert({
@@ -102,6 +102,8 @@ export async function createTransaction(transactionData: CreateTransactionData) 
         category: transactionData.category,
         description: transactionData.description || '',
         date: transactionData.date || new Date().toISOString().split('T')[0],
+        stripe_payment_intent_id: transactionData.stripe_payment_intent_id,
+        status: transactionData.stripe_payment_intent_id ? 'pending' : 'completed',
       })
       .select()
       .single()

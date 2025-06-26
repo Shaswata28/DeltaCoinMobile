@@ -273,7 +273,11 @@ export default function HistoryScreen() {
   };
 
   return (
-    <View style={[styles.container, isDark && styles.containerDark]}>
+    <ScrollView
+      style={[styles.container, isDark && styles.containerDark]}
+      contentContainerStyle={{ paddingBottom: 85 }}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.header}>
         <Text style={[styles.title, isDark && styles.titleDark]}>
           Transaction History
@@ -508,7 +512,7 @@ export default function HistoryScreen() {
           selectedMonth ? selectedMonth.split(' ').reverse().join('-') : null
         }
       />
-    </View>
+    </ScrollView>
   );
 }
 

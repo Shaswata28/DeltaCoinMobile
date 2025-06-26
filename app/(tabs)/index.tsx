@@ -156,6 +156,7 @@ export default function HomeScreen() {
   return (
     <ScrollView 
       style={[styles.container, isDark && styles.containerDark]}
+      contentContainerStyle={{ paddingBottom: 85 }}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

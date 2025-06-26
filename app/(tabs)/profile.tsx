@@ -148,6 +148,7 @@ export default function ProfileScreen() {
   return (
     <ScrollView 
       style={[styles.container, isDark && styles.containerDark]}
+      contentContainerStyle={{ paddingBottom: 85 }}
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.header}>
@@ -267,6 +268,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
+    paddingBottom: 85,
   },
   containerDark: {
     backgroundColor: '#121212',
