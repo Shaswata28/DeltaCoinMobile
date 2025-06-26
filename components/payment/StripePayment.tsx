@@ -59,7 +59,7 @@ export function StripePayment({ amount, method, onSuccess, onCancel }: StripePay
 
   if (loading) {
     return (
-      <View style={[styles.container, isDark && styles.containerDark]}>
+      <View style={[styles.container]}>
         <View style={styles.loadingContainer}>
           <View style={[styles.stripeHeader, isDark && styles.stripeHeaderDark]}>
             <View style={styles.stripeLogo}>
@@ -87,14 +87,14 @@ export function StripePayment({ amount, method, onSuccess, onCancel }: StripePay
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, isDark && styles.containerDark]}
+      style={[styles.container]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <ScrollView
           style={styles.scrollContainer}
-          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingBottom: 32 }}
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
@@ -131,7 +131,7 @@ export function StripePayment({ amount, method, onSuccess, onCancel }: StripePay
                 postalCodeEnabled={false}
                 placeholders={{ number: '4242 4242 4242 4242' }}
                 cardStyle={{
-                  backgroundColor: isDark ? '#1F2937' : '#FFFFFF',
+                  backgroundColor: 'isDark ? '#121212' : '#FFFFFF',
                   textColor: isDark ? '#FFFFFF' : '#000000',
                 }}
                 style={{ width: '100%', height: 50, marginVertical: 30 }}
@@ -145,7 +145,7 @@ export function StripePayment({ amount, method, onSuccess, onCancel }: StripePay
                   Your payment information is encrypted and secure
                 </Text>
               </View>
-              {error && <Text style={{ color: 'red', marginTop: 8 }}>{error}</Text>}
+              {error && <Text style={styles.errorText}>{error}</Text>}
             </View>
 
             {/* Action Buttons */}
@@ -197,18 +197,22 @@ export function StripePayment({ amount, method, onSuccess, onCancel }: StripePay
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    padding: 16,
+    
   },
-  containerDark: {
-    backgroundColor: '#1E1E1E',
-  },
+  
   scrollContainer: {
     flex: 1,
   },
+  scrollContent: {
+    flexGrow: 1,
+   paddingHorizontal: 0,
+    paddingVertical: 0,
+    paddingBottom: 40,
+  },
   loadingContainer: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
     justifyContent: 'center',
   },
   loadingContent: {
@@ -226,17 +230,17 @@ const styles = StyleSheet.create({
   },
   paymentContainer: {
     flex: 1,
-    
+    minHeight: 600,
+    justifyContent: 'space-between',
   },
   stripeHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    padding: 20,
+    borderColor: '#374151',
     backgroundColor: '#FAFBFC',
-    borderRadius: 12,
-    marginBottom: 24,
+    borderRadius: 16,
+    marginBottom: 32,
   },
   stripeHeaderDark: {
     borderBottomColor: '#374151',
@@ -244,14 +248,14 @@ const styles = StyleSheet.create({
   },
   stripeLogo: {
     backgroundColor: '#635BFF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    marginRight: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginRight: 20,
   },
   stripeLogoText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: 'Inter-Bold',
     letterSpacing: -0.5,
   },
@@ -259,15 +263,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   merchantName: {
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: 'Inter-SemiBold',
     color: '#1F2937',
+    marginBottom: 4,
   },
   merchantNameDark: {
     color: '#FFFFFF',
   },
   paymentAmount: {
-    fontSize: 24,
+    fontSize: 28,
     fontFamily: 'Inter-Bold',
     color: '#635BFF',
   },
@@ -276,80 +281,47 @@ const styles = StyleSheet.create({
   },
   paymentForm: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 20,
+    padding: 20,
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    marginBottom: 24,
+    marginBottom: 32,
+    flex: 1,
   },
   paymentFormDark: {
-    backgroundColor: '#1F2937',
+    backgroundColor: '#121212',
     borderColor: '#374151',
   },
   methodHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 32,
   },
   methodIcon: {
-    marginRight: 12,
+    marginRight: 16,
   },
   methodTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontFamily: 'Inter-Bold',
     color: '#1F2937',
   },
   methodTitleDark: {
     color: '#FFFFFF',
   },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  halfInput: {
-    flex: 1,
-  },
-  rowInputs: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  inputLabelDark: {
-    color: '#D1D5DB',
-  },
-  textInput: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: '#1F2937',
-    padding: 16,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-  },
-  textInputDark: {
-    color: '#FFFFFF',
-    backgroundColor: '#374151',
-    borderColor: '#4B5563',
-  },
   securityInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    padding: 16,
+    gap: 12,
+    padding: 20,
     backgroundColor: '#F0FDF4',
-    borderRadius: 8,
-    marginTop: 8,
+    borderRadius: 12,
+    marginTop: 16,
   },
   securityInfoDark: {
     backgroundColor: '#064E3B',
   },
   securityText: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: 'Inter-Medium',
     color: '#10B981',
     flex: 1,
@@ -357,16 +329,23 @@ const styles = StyleSheet.create({
   securityTextDark: {
     color: '#34D399',
   },
+  errorText: {
+    color: '#EF4444',
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    marginTop: 16,
+    textAlign: 'center',
+  },
   actionButtons: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
+    gap: 16,
+    marginBottom: 24,
   },
   cancelButton: {
     flex: 1,
-    paddingVertical: 16,
-    borderRadius: 12,
-    borderWidth: 1,
+    paddingVertical: 18,
+    borderRadius: 16,
+    borderWidth: 2,
     borderColor: '#D1D5DB',
     alignItems: 'center',
   },
@@ -383,8 +362,8 @@ const styles = StyleSheet.create({
   },
   payButton: {
     flex: 2,
-    paddingVertical: 16,
-    borderRadius: 12,
+    paddingVertical: 18,
+    borderRadius: 16,
     backgroundColor: '#635BFF',
     alignItems: 'center',
     justifyContent: 'center',
@@ -403,14 +382,14 @@ const styles = StyleSheet.create({
   processingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
   },
   footer: {
     alignItems: 'center',
     paddingBottom: 20,
   },
   footerText: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: 'Inter-Regular',
     color: '#9CA3AF',
   },
