@@ -26,7 +26,6 @@ export default function SignupScreen() {
     pinInfo: null,
   });
   const [error, setError] = useState<string | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleStudentInfoNext = (data: StudentInfo) => {
     setFormData(prev => ({ ...prev, studentInfo: data }));
@@ -43,26 +42,22 @@ export default function SignupScreen() {
   };
 
   const handlePinSubmit = async (data: PinInfo) => {
-    setIsLoading(true);
     setError(undefined);
     setFormData(prev => ({ ...prev, pinInfo: data }));
     
     try {
-      // Combine all form data
       const { studentInfo, securityInfo } = formData;
       
       if (!studentInfo || !securityInfo) {
         throw new Error('Missing required information');
       }
 
-      // Validate all required fields
       if (!studentInfo.email || !studentInfo.fullName || !studentInfo.studentId || 
           !studentInfo.contactNumber || !securityInfo.username || !securityInfo.password || 
           !data.pin) {
         throw new Error('All fields are required');
       }
 
-      // Create user account with Supabase
       const { user, profile } = await signUp({
         email: studentInfo.email,
         password: securityInfo.password,
@@ -77,23 +72,19 @@ export default function SignupScreen() {
         throw new Error('Failed to create account');
       }
 
-      // Show success message
       Alert.alert(
         'Success',
         'Account created successfully!',
         [
           {
             text: 'OK',
-            onPress: () => router.replace('/(tabs)')
+            onPress: () => router.replace('/login')
           }
         ]
       );
     } catch (err: any) {
-      console.error('Signup error:', err);
       setError(err.message || 'An unexpected error occurred');
       Alert.alert('Error', err.message || 'Failed to create account');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -126,7 +117,6 @@ export default function SignupScreen() {
             onBack={handlePinBack}
             initialData={formData.pinInfo as PinInfo}
             error={error}
-            isLoading={isLoading}
           />
         );
       default:

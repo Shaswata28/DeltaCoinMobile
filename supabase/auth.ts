@@ -1,4 +1,3 @@
-// supabase/auth.ts
 import { supabase } from './client'
 import type { User } from './client'
 
@@ -6,10 +5,10 @@ export interface SignUpData {
   email: string
   password: string
   fullName: string
-  studentId: string // Must be 9 digits
-  contactNumber: string // Must be numeric
+  studentId: string
+  contactNumber: string
   username: string
-  pin: string // Must be 5 digits
+  pin: string
   profilePictureUrl?: string
 }
 
@@ -18,7 +17,6 @@ export interface SignInData {
   password: string
 }
 
-// Validation functions
 function isValidStudentId(studentId: string): boolean {
   return /^\d{9}$/.test(studentId)
 }
@@ -31,10 +29,8 @@ function isValidContactNumber(contactNumber: string): boolean {
   return /^\d+$/.test(contactNumber)
 }
 
-// Sign up with email and create user profile
 export async function signUp(userData: SignUpData) {
   try {
-    // Validate input
     if (!isValidStudentId(userData.studentId)) {
       throw new Error('Student ID must be exactly 9 digits')
     }
@@ -53,7 +49,6 @@ export async function signUp(userData: SignUpData) {
     if (authError) throw authError
 
     if (authData.user) {
-      // Create user profile
       const { data: profileData, error: profileError } = await supabase
         .from('users')
         .insert({
@@ -71,7 +66,6 @@ export async function signUp(userData: SignUpData) {
 
       if (profileError) throw profileError
 
-      // Create wallet for the user
       const { error: walletError } = await supabase
         .from('wallets')
         .insert({
@@ -86,12 +80,10 @@ export async function signUp(userData: SignUpData) {
 
     return { user: null, profile: null }
   } catch (error) {
-    console.error('Sign up error:', error)
     throw error
   }
 }
 
-// Sign in with email and password
 export async function signIn(credentials: SignInData) {
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -102,15 +94,6 @@ export async function signIn(credentials: SignInData) {
     if (error) throw error
 
     if (data.user) {
-      // Log successful sign in
-      console.log('User signed in successfully:', {
-        userId: data.user.id,
-        email: data.user.email,
-        sessionId: data.session?.access_token,
-        timestamp: new Date().toISOString()
-      })
-
-      // Get user profile
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
@@ -124,69 +107,39 @@ export async function signIn(credentials: SignInData) {
 
     throw new Error('Invalid email or password')
   } catch (error) {
-    console.error('Sign in error:', error)
     throw error
   }
 }
 
-// Sign out
 export async function signOut() {
   try {
-    // Get current session before signing out
-    const { data: { session } } = await supabase.auth.getSession()
-    
     const { error } = await supabase.auth.signOut()
     if (error) throw error
-
-    // Log successful sign out
-    if (session) {
-      console.log('User signed out successfully:', {
-        userId: session.user.id,
-        sessionId: session.access_token,
-        timestamp: new Date().toISOString()
-      })
-    }
   } catch (error) {
-    console.error('Sign out error:', error)
     throw error
   }
 }
 
-// Get current session
 export async function getCurrentSession() {
   try {
     const { data: { session }, error } = await supabase.auth.getSession()
     if (error) throw error
-
-    if (session) {
-      console.log('Current session:', {
-        userId: session.user.id,
-        sessionId: session.access_token,
-        expiresAt: session.expires_at,
-        timestamp: new Date().toISOString()
-      })
-    }
-
     return session
   } catch (error) {
-    console.error('Get session error:', error)
     throw error
   }
 }
 
-// Get current user
 export async function getCurrentUser() {
   try {
     const { data: { user }, error } = await supabase.auth.getUser()
     if (error) throw error
     return user
   } catch (error) {
-    console.error('Get current user error:', error)
     throw error
   }
 }
 
-// Get current user profile
 export async function getCurrentUserProfile(): Promise<User | null> {
   try {
     const user = await getCurrentUser()
@@ -201,12 +154,10 @@ export async function getCurrentUserProfile(): Promise<User | null> {
     if (error) throw error
     return data
   } catch (error) {
-    console.error('Get user profile error:', error)
     throw error
   }
 }
 
-// Update user profile
 export async function updateUserProfile(updates: Partial<Omit<User, 'id' | 'created_at'>>) {
   try {
     const user = await getCurrentUser()
@@ -222,18 +173,15 @@ export async function updateUserProfile(updates: Partial<Omit<User, 'id' | 'crea
     if (error) throw error
     return data
   } catch (error) {
-    console.error('Update profile error:', error)
     throw error
   }
 }
 
-// Check if user is authenticated
 export async function isAuthenticated(): Promise<boolean> {
   try {
     const { data: { session } } = await supabase.auth.getSession()
     return !!session
   } catch (error) {
-    console.error('Check authentication error:', error)
     return false
   }
 }

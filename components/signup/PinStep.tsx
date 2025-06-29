@@ -13,15 +13,13 @@ interface PinStepProps {
   onBack: () => void;
   initialData?: PinInfo;
   error?: string;
-  isLoading?: boolean;
 }
 
 export default function PinStep({ 
   onSubmit, 
   onBack, 
   initialData, 
-  error,
-  isLoading = false 
+  error
 }: PinStepProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -78,7 +76,6 @@ export default function PinStep({
             value={pin}
             onChange={handlePinChange}
             length={5}
-            disabled={isLoading}
           />
           {pinError && <ErrorMessage message={pinError} />}
         </View>
@@ -91,8 +88,8 @@ export default function PinStep({
         />
         <TextNavigation 
           onNext={handleSubmit}
-          nextText={isLoading ? "Creating Account..." : "Complete →"}
-          disabled={isLoading || pin.length !== 5}
+          nextText="Complete →"
+          disabled={pin.length !== 5}
         />
       </View>
     </View>

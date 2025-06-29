@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, useWindowDimensions, ActivityIndicator, Platform, Modal, TextInput, Alert } from 'react-native';
-import { Wallet, TrendingUp, ArrowDownRight, ArrowUpRight, Filter, Calendar, Coffee, Book, Beaker, Users, X, MoveHorizontal as MoreHorizontal, Download, Bell, Plus, Edit } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, useWindowDimensions, Modal, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { Wallet, TrendingUp, ArrowDownRight, ArrowUpRight, Filter, Calendar, Coffee, Book, Beaker,  X, MoveHorizontal as MoreHorizontal, Download, Bell, Plus, CreditCard as Edit, Handshake } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
@@ -12,7 +12,6 @@ import {
 } from '../../supabase/db';
 import { supabase } from '../../supabase/client';
 import MonthPicker from '../../components/common/MonthYearPicker';
-import { generateAnalyticsPDF } from '../../utils/pdfGenerator';
 
 interface CategoryData {
   id: string;
@@ -28,10 +27,22 @@ interface BudgetCategory extends CategoryData {
   notifications: boolean;
 }
 
-// Function to get the current month in YYYY-MM format
 const getCurrentMonth = () => {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+};
+
+const formatMonthDisplay = (monthString: string | null): string | null => {
+  if (!monthString) return null;
+  
+  try {
+    const [year, month] = monthString.split('-');
+    const monthIndex = parseInt(month) - 1;
+    const monthName = new Date(parseInt(year), monthIndex).toLocaleString('default', { month: 'long' });
+    return `${monthName} ${year}`;
+  } catch (error) {
+    return monthString;
+  }
 };
 
 export default function AnalyticsScreen() {
@@ -40,20 +51,16 @@ export default function AnalyticsScreen() {
   const { width: windowWidth } = useWindowDimensions();
   const [activeTab, setActiveTab] = useState<'analytics' | 'budget'>('analytics');
   const [selectedPeriod, setSelectedPeriod] = useState('This Month');
-  const [isLoading, setIsLoading] = useState(true);
   const [walletBalance, setWalletBalance] = useState(0);
   const [transactionCount, setTransactionCount] = useState(0);
   const [lastUpdated, setLastUpdated] = useState('');
+  const [loading, setLoading] = useState(false);
   
-  // State for category data
   const [categories, setCategories] = useState<CategoryData[]>([]);
-  
-  // State for budget data
   const [budgets, setBudgets] = useState<BudgetCategory[]>([]);
   
-  // Add new state variables for calendar and budget creation
   const [showMonthPicker, setShowMonthPicker] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(getCurrentMonth());
   const [showBudgetForm, setShowBudgetForm] = useState(false);
   const [newBudget, setNewBudget] = useState({
     canteen: '',
@@ -63,14 +70,10 @@ export default function AnalyticsScreen() {
     other: ''
   });
   
-  // Add new state for year selection
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   
-  // Function to handle month selection
   const handleMonthSelect = (month: string) => {
     try {
-      // The MonthYearPicker now sends "YYYY-MM" format directly
-      // Validate the format
       const [year, monthNum] = month.split('-');
       if (!year || !monthNum || monthNum.length !== 2) {
         throw new Error('Invalid date format');
@@ -81,29 +84,23 @@ export default function AnalyticsScreen() {
         throw new Error('Invalid month');
       }
       
-      console.log('Selected month:', month);
       setSelectedMonth(month);
       setShowMonthPicker(false);
       loadAnalyticsData(month);
     } catch (error) {
-      console.error('Error handling month selection:', error);
-      // Keep the current selected month if there's an error
       Alert.alert('Invalid Date', 'Please select a valid month and year');
     }
   };
   
-  // Function to load analytics data
   const loadAnalyticsData = async (month = selectedMonth) => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       
-      // Get wallet balance
       const wallet = await getUserWallet();
       if (wallet) {
         setWalletBalance(Number(wallet.balance));
       }
       
-      // Get transactions count for the selected month
       const transactions = await getUserTransactions();
       const filteredTransactions = transactions.filter(tx => {
         const txDate = new Date(tx.created_at);
@@ -113,31 +110,25 @@ export default function AnalyticsScreen() {
       setTransactionCount(filteredTransactions.length);
       
       if (filteredTransactions.length > 0) {
-        // Format last updated time
         const lastTxDate = new Date(filteredTransactions[0].created_at);
         const hours = Math.floor((Date.now() - lastTxDate.getTime()) / (1000 * 60 * 60));
         setLastUpdated(`${hours}h ago`);
       }
       
-      // Get category spending for the selected month
       const categorySpending = await getCategorySpending(month);
       
-      // Calculate total spent
       const totalSpent = Object.values(categorySpending).reduce((sum, amount) => sum + amount, 0);
       
-      // Create category data with icons and colors
       const categoryData: CategoryData[] = [];
       
-      // Define category icons and colors
       const categoryIcons: Record<string, { icon: React.ReactNode, color: string }> = {
         Canteen: { icon: <Coffee size={24} color="#FFD700" />, color: '#FFD700' },
         Library: { icon: <Book size={24} color="#4D9FFF" />, color: '#4D9FFF' },
         Lab: { icon: <Beaker size={24} color="#FF6B6B" />, color: '#FF6B6B' },
-        Club: { icon: <Users size={24} color="#10B981" />, color: '#10B981' },
+        Club: { icon: <Handshake size={24} color="#10B981" />, color: '#10B981' },
         Other: { icon: <MoreHorizontal size={24} color="#A78BFA" />, color: '#A78BFA' }
       };
       
-      // Convert spending data to category data format
       Object.entries(categorySpending).forEach(([category, amount], index) => {
         const percentage = totalSpent > 0 ? Math.round((amount / totalSpent) * 100) : 0;
         const iconData = categoryIcons[category.charAt(0).toUpperCase() + category.slice(1)] || 
@@ -153,23 +144,19 @@ export default function AnalyticsScreen() {
         });
       });
       
-      // Sort categories by amount (highest first)
       categoryData.sort((a, b) => b.amount - a.amount);
       setCategories(categoryData);
       
-      // Load budget data for the selected month
       const budgetProgress = await getBudgetProgress(month);
       const budgetData: BudgetCategory[] = [];
       
-      // Get existing budget notifications settings or set defaults
       const existingBudgetSettings = budgets.reduce((acc, budget) => {
         acc[budget.name.toLowerCase()] = budget.notifications;
         return acc;
       }, {} as Record<string, boolean>);
       
-      // Convert budget progress to budget category format
       budgetProgress.forEach((item, index) => {
-        const categoryName = item.category; // Already properly cased from getBudgetProgress
+        const categoryName = item.category;
         const iconData = categoryIcons[categoryName] || 
                         { icon: <MoreHorizontal size={24} color="#A78BFA" />, color: '#A78BFA' };
         
@@ -189,19 +176,17 @@ export default function AnalyticsScreen() {
     } catch (error) {
       console.error('Error loading analytics data:', error);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
   
-  // Function to create a new budget
   const createNewBudget = async () => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No authenticated user');
       
-      // Convert empty strings to 0 and ensure proper casing for category names
       const budgetValues = {
         canteen: Number(newBudget.canteen) || 0,
         library: Number(newBudget.library) || 0,
@@ -210,7 +195,6 @@ export default function AnalyticsScreen() {
         other: Number(newBudget.other) || 0
       };
       
-      // Check if a budget already exists for this month
       const { data: existingBudget } = await supabase
         .from('budgets')
         .select('id')
@@ -219,13 +203,11 @@ export default function AnalyticsScreen() {
         .single();
       
       if (existingBudget) {
-        // Update existing budget
         await supabase
           .from('budgets')
           .update(budgetValues)
           .eq('id', existingBudget.id);
       } else {
-        // Create new budget
         await supabase
           .from('budgets')
           .insert({
@@ -235,26 +217,21 @@ export default function AnalyticsScreen() {
           });
       }
       
-      // Reset form and reload data with the current selected month
       setShowBudgetForm(false);
       setNewBudget({ canteen: '', library: '', lab: '', club: '', other: '' });
       
-      // Force a reload with the current selected month
-      console.log('Reloading data after budget update for month:', selectedMonth);
       await loadAnalyticsData(selectedMonth);
     } catch (error) {
       console.error('Error creating budget:', error);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
   
-  // Load data on component mount and when selected period changes
   useEffect(() => {
     loadAnalyticsData();
   }, [selectedPeriod]);
   
-  // Toggle budget notifications and save to state
   const toggleNotifications = (budgetId: string) => {
     setBudgets(prev => prev.map(budget => 
       budget.id === budgetId 
@@ -263,10 +240,8 @@ export default function AnalyticsScreen() {
     ));
   };
   
-  // Calculate total spent
   const totalSpent = categories.reduce((sum, cat) => sum + cat.amount, 0);
   
-  // Find highest spending category
   const highestCategory = categories.length > 0 ? 
     categories.reduce((prev, current) => current.amount > prev.amount ? current : prev, categories[0]) : 
     { name: 'None', amount: 0 };
@@ -276,10 +251,7 @@ export default function AnalyticsScreen() {
     if (percentage <= 90) return '#F59E0B';
     return '#EF4444';
   };
-
-  // Month picker is now imported as a component
   
-  // Function to render budget form
   const renderBudgetForm = () => (
     <Modal
       visible={showBudgetForm}
@@ -298,10 +270,9 @@ export default function AnalyticsScreen() {
         >
           <Text style={[styles.budgetFormTitle, isDark && styles.textDark]}>Create Budget</Text>
           <Text style={[styles.budgetFormSubtitle, isDark && styles.textLightDark]}>
-            {new Date(selectedMonth + '-01').toLocaleString('default', { month: 'long', year: 'numeric' })}
+            {formatMonthDisplay(selectedMonth)}
           </Text>
           
-          {/* Only show budget form for current month */}
           {selectedMonth === getCurrentMonth() ? (
             <>
               <View style={styles.budgetFormField}>
@@ -351,7 +322,7 @@ export default function AnalyticsScreen() {
               
               <View style={styles.budgetFormField}>
                 <View style={styles.budgetFormLabel}>
-                  <Users size={20} color="#10B981" />
+                  <Handshake size={20} color="#10B981" />
                   <Text style={[styles.budgetFormLabelText, isDark && styles.textDark]}>Club</Text>
                 </View>
                 <TextInput
@@ -389,8 +360,13 @@ export default function AnalyticsScreen() {
                 <TouchableOpacity 
                   style={[styles.budgetFormButton, styles.budgetFormSaveButton]}
                   onPress={createNewBudget}
+                  disabled={loading}
                 >
-                  <Text style={styles.budgetFormButtonText}>Save</Text>
+                  {loading ? (
+                    <ActivityIndicator size="small" color="#2C2C2C" />
+                  ) : (
+                    <Text style={styles.budgetFormButtonText}>Save</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </>
@@ -407,7 +383,140 @@ export default function AnalyticsScreen() {
   );
 
   const handleGeneratePDF = async () => {
-    await generateAnalyticsPDF(categories, budgets, setIsLoading);
+    try {
+      if (!categories || categories.length === 0) {
+        Alert.alert(
+          'No Data Available',
+          'There is no spending data available to generate a report.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      const totalSpent = categories.reduce((sum, cat) => sum + cat.amount, 0);
+      const highestCategory = categories.reduce((highest, current) => 
+        current.amount > highest.amount ? current : highest
+      , categories[0]) || { name: 'No Data', amount: 0 };
+
+      const htmlContent = `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        font-family: 'Helvetica Neue', Helvetica, sans-serif;
+        padding: 24px;
+        background-color: #f9fafb;
+        color: #1f2937;
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 32px;
+      }
+      .title {
+        font-size: 28px;
+        font-weight: bold;
+        color: #1e3a8a;
+      }
+      .subtitle {
+        font-size: 16px;
+        color: #6b7280;
+        margin-top: 8px;
+      }
+      .section {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        margin-bottom: 24px;
+      }
+      .section-title {
+        color: #2563eb;
+        font-size: 20px;
+        margin-bottom: 16px;
+        border-bottom: 2px solid #e5e7eb;
+        padding-bottom: 4px;
+      }
+      .data-grid {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        row-gap: 10px;
+        font-size: 16px;
+      }
+      .category {
+        color: #4b5563;
+      }
+      .amount {
+        font-weight: 600;
+        color: #111827;
+      }
+      .footer {
+        margin-top: 40px;
+        text-align: center;
+        font-size: 12px;
+        color: #9ca3af;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <span class="title">DeltaCoin</span>
+      <div class="subtitle">Analytics Report</div>
+    </div>
+    <div class="section">
+      <div class="section-title">Overview</div>
+      <div class="data-grid">
+        <div class="category">Total Spent:</div>
+        <div class="amount">৳${totalSpent.toFixed(2)}</div>
+        <div class="category">Highest Spending:</div>
+        <div class="amount">${highestCategory.name}</div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">Spending by Category</div>
+      <div class="data-grid">
+        ${categories.map(cat => `
+          <div class="category">${cat.name}</div>
+          <div class="amount">৳${cat.amount.toFixed(2)} (${cat.percentage}%)</div>
+        `).join('')}
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">Budget Status</div>
+      <div class="data-grid">
+        ${budgets.map(budget => `
+          <div class="category">${budget.name}</div>
+          <div class="amount">৳${budget.amount.toFixed(2)} / ৳${budget.limit.toFixed(2)} (${budget.percentage}% used)</div>
+        `).join('')}
+      </div>
+    </div>
+    <div class="footer">
+      Generated on ${new Date().toLocaleString()}<br />
+      DeltaCoin © 2025
+    </div>
+  </body>
+</html>
+`;
+
+      const { uri } = await Print.printToFileAsync({
+        html: htmlContent,
+        width: 612,
+        height: 792,
+      });
+
+      await Sharing.shareAsync(uri, {
+        mimeType: 'application/pdf',
+        dialogTitle: 'Analytics Report',
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      Alert.alert(
+        'Error',
+        'Failed to generate PDF report. Please try again.',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   const renderDonutChart = () => {
@@ -463,7 +572,6 @@ export default function AnalyticsScreen() {
     );
   };
 
-  // Update the renderSummaryPanel function to use real data
   const renderSummaryPanel = () => (
     <View style={[styles.summaryPanel, isDark && styles.panelDark]}>
       <View style={styles.summaryRow}>
@@ -504,7 +612,6 @@ export default function AnalyticsScreen() {
     </View>
   );
 
-  // Add function to handle budget editing
   const handleEditBudget = (category: string, currentLimit: number) => {
     setNewBudget(prev => ({
       ...prev,
@@ -513,7 +620,6 @@ export default function AnalyticsScreen() {
     setShowBudgetForm(true);
   };
 
-  // Update the renderBudgetCard function to use icon instead of text
   const renderBudgetCard = (budget: BudgetCategory) => (
     <Animated.View 
       key={budget.id}
@@ -571,9 +677,19 @@ export default function AnalyticsScreen() {
     </Animated.View>
   );
 
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer, isDark && styles.containerDark]}>
+        <ActivityIndicator size="large" color="#FFD700" />
+        <Text style={[styles.loadingText, isDark && styles.loadingTextDark]}>
+          Loading analytics...
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, isDark && styles.containerDark]}>
-      {/* Month Picker Modal */}
       <MonthPicker
         visible={showMonthPicker}
         onClose={() => setShowMonthPicker(false)}
@@ -630,64 +746,61 @@ export default function AnalyticsScreen() {
             </TouchableOpacity>
           )}
         </View>
-        {(selectedMonth) && (
+        
+        {selectedMonth && selectedMonth !== getCurrentMonth() && (
           <View style={styles.activeFilters}>
-            {selectedMonth && (
-              <View style={styles.filterBadge}>
-                <Text style={styles.filterBadgeText}>{selectedMonth}</Text>
-                <TouchableOpacity onPress={() => setSelectedMonth(null)}>
-                  <X size={14} color="#2C2C2C" />
-                </TouchableOpacity>
-              </View>
-            )}
+            <View style={[styles.filterBadge, isDark && styles.filterBadgeDark]}>
+              <Text style={[styles.filterBadgeText, isDark && styles.filterBadgeTextDark]}>
+                {formatMonthDisplay(selectedMonth)}
+              </Text>
+              <TouchableOpacity onPress={() => {
+                setSelectedMonth(getCurrentMonth());
+                loadAnalyticsData(getCurrentMonth());
+              }}>
+                <X size={14} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </View>
 
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#FFD700" />
-        </View>
-      ) : (
-        <ScrollView 
-          style={styles.content}
-          contentContainerStyle={styles.contentContainer}
-          
-          showsVerticalScrollIndicator={false}
-        >
-          {activeTab === 'analytics' ? (
-            <>
-              {renderSummaryPanel()}
-              
-              <View style={styles.chartSection}>
-                {renderDonutChart()}
-                <View style={styles.legend}>
-                  {categories.map((category) => (
-                    <View key={category.id} style={styles.legendItem}>
-                      {category.icon}
-                      <View style={styles.legendTextContainer}>
-                        <Text style={[styles.legendText, isDark && styles.textDark]}>
-                          {category.name}
-                        </Text>
-                        <Text style={[styles.legendPercentage, isDark && styles.textLightDark]}>
-                          {category.percentage}%
-                        </Text>
-                      </View>
-                      <Text style={[styles.legendAmount, isDark && styles.textDark]}>
-                        ৳{category.amount.toFixed(2)}
+      <ScrollView 
+        style={styles.content}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {activeTab === 'analytics' ? (
+          <>
+            {renderSummaryPanel()}
+            
+            <View style={styles.chartSection}>
+              {renderDonutChart()}
+              <View style={styles.legend}>
+                {categories.map((category) => (
+                  <View key={category.id} style={styles.legendItem}>
+                    {category.icon}
+                    <View style={styles.legendTextContainer}>
+                      <Text style={[styles.legendText, isDark && styles.textDark]}>
+                        {category.name}
+                      </Text>
+                      <Text style={[styles.legendPercentage, isDark && styles.textLightDark]}>
+                        {category.percentage}%
                       </Text>
                     </View>
-                  ))}
-                </View>
+                    <Text style={[styles.legendAmount, isDark && styles.textDark]}>
+                      ৳{category.amount.toFixed(2)}
+                    </Text>
+                  </View>
+                ))}
               </View>
-            </>
-          ) : (
-            <View>
-              {budgets.map(renderBudgetCard)}
             </View>
-          )}
-        </ScrollView>
-      )}
+          </>
+        ) : (
+          <View>
+            {budgets.map(renderBudgetCard)}
+          </View>
+        )}
+      </ScrollView>
 
       {renderBudgetForm()}
     </View>
@@ -701,6 +814,19 @@ const styles = StyleSheet.create({
   },
   containerDark: {
     backgroundColor: '#121212',
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
+    color: '#6B7280',
+    marginTop: 16,
+  },
+  loadingTextDark: {
+    color: '#A6A6A6',
   },
   header: {
     padding: 20,
@@ -720,7 +846,6 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     gap: 12,
-    
   },
   actionButton: {
     width: 40,
@@ -960,12 +1085,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
     color: '#6B7280',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: 400,
-  },
   textDark: {
     color: '#FFFFFF',
   },
@@ -977,48 +1096,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  monthPickerContainer: {
-    width: '80%',
-    maxHeight: '70%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  monthPickerTitle: {
-    fontSize: 20,
-    fontFamily: 'Inter-SemiBold',
-    color: '#2C2C2C',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  pickerWrapper: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  scrollColumn: {
-    width: '48%',
-    maxHeight: 250,
-  },
-  pickerItem: {
-    paddingVertical: 12,
-    
-    alignItems: 'center',
-  },
-  pickerItemText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: '#2C2C2C',
-  },
-  
-  selectedItemText: {
-    fontFamily: 'Inter-SemiBold',
-    color: '#FFD700',
   },
   budgetFormContainer: {
     width: '90%',
@@ -1127,20 +1204,29 @@ const styles = StyleSheet.create({
   filterBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 8,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 1,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  filterBadgeDark: {
+    backgroundColor: '#1E1E1E',
+    borderColor: '#2E2E2E',
   },
   filterBadgeText: {
     fontSize: 14,
     fontFamily: 'Inter-Medium',
     color: '#2C2C2C',
+  },
+  filterBadgeTextDark: {
+    color: '#FFFFFF',
   },
 });

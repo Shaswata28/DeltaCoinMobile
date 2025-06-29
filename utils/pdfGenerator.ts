@@ -24,12 +24,9 @@ interface BudgetCategory {
 
 export const generateAnalyticsPDF = async (
   categories: CategoryData[],
-  budgets: BudgetCategory[],
-  onLoadingChange: (loading: boolean) => void
+  budgets: BudgetCategory[]
 ) => {
   try {
-    onLoadingChange(true);
-
     // Check if categories array is empty
     if (!categories || categories.length === 0) {
       Alert.alert(
@@ -37,7 +34,6 @@ export const generateAnalyticsPDF = async (
         'There is no spending data available to generate a report.',
         [{ text: 'OK' }]
       );
-      onLoadingChange(false);
       return;
     }
 
@@ -142,7 +138,6 @@ export const generateAnalyticsPDF = async (
   </head>
   <body>
     <div class="header">
-      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAClUlEQVR4AbSUz2oTURTGvwlGfQpJQRFtu3ZX262PEBc2YBF0qegycanUpYJUiBvzCG5t3blurYhCi0+hRhx/35m5kxkS6gh2ON89955/37lnMunolJ85gvyjLuSHepJ/0j74WWI/bPj+tZ8GAUVuq6OvyvSQQiugW2IlbPgiBmNbqQgiMdMOiS46Ua7rOqPzAe+liaQuRDsRy6GNdBzksZD4wnvwILuim9lVvc8u6UfAe2z2ATk2cvT3JwhIuEdoF0wo/gwtZv8O5GDss1H60k2cY/OJSAQ3IirXy9DF0iuUNlV/UkymIqfuW7AvCKTL4evqQ2gWul1CzcsspsiZj2hYEkHD+D8PieBzFJ3qWuiTlllMkUMs72kdNEeJ3VIQ5HrrAy/7TujZcsx2F8wkUxGTcgrPEDWG5Aikd4dJSgTPOU1Bn4D76BC/B7ARB5bS12c7VS7nsA0ZsLoZF/evr7pNEGTL+kbCXYIs2xR6w8e0ln/RucCh1mzDuQ3k2MjhgL1HEy7uRkaYTDJEhwSBd3xYr0jcYh83YVx7+qXvgUx72PvAnW9FLIdSPJaxScBjbB5pD+K4RUWAQ5H4Wxchesr5AJjMOAgbvojBYaHIujXYrO1NgklxiwaBrb46RR7RzSo4W2I1bMuM0kGAgvVRHBPnzvHI41J65giSo4X2X4hv4OKLPsogakVAtx6BZ+2C/p+yNhYVt73qrxVBGe2RuGsf3d2AsSzq/JYDQIysLYGDDf86hhR2568p0hBu6gZ8g11i4mW3IiA4Oi6rjSjkcXlsJkw4wh8/TXQUR6sVgQNrJCZL43LRBNvs2yDWt3VaewJHk+ix+IsdcHaROkb4l4BtuAtpfYMiXKJAzB/tTuuoxqLa8wcAAP//NEC89gAAAAZJREFUAwDKIegxUWQwBQAAAABJRU5ErkJggg==" class="logo" />
       <span class="title">DeltaCoin</span>
       <div class="subtitle">Analytics Report</div>
     </div>
@@ -185,9 +180,7 @@ export const generateAnalyticsPDF = async (
 </html>
 `;
 
-
     const { uri } = await Print.printToFileAsync({
-        
       html: htmlContent,
       width: 612, // US Letter width in points
       height: 792, // US Letter height in points
@@ -204,7 +197,5 @@ export const generateAnalyticsPDF = async (
       'Failed to generate PDF report. Please try again.',
       [{ text: 'OK' }]
     );
-  } finally {
-    onLoadingChange(false);
   }
-}; 
+};

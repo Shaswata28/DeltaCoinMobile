@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, useColorScheme, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -15,8 +15,6 @@ export default function EditProfileScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  const [loading, setLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [profileData, setProfileData] = useState<User | null>(null);
   const [formData, setFormData] = useState({
@@ -31,7 +29,6 @@ export default function EditProfileScreen() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        setLoading(true);
         const profile = await getCurrentUserProfile();
         if (profile) {
           setProfileData(profile);
@@ -43,8 +40,6 @@ export default function EditProfileScreen() {
       } catch (err: any) {
         console.error('Error fetching profile:', err);
         setError('Failed to load profile data.');
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -83,7 +78,6 @@ export default function EditProfileScreen() {
       return;
     }
 
-    setIsSaving(true);
     try {
       await updateUserProfile({
         full_name: formData.full_name,
@@ -95,8 +89,6 @@ export default function EditProfileScreen() {
     } catch (err: any) {
       console.error('Error updating profile:', err);
       Alert.alert('Error', err.message || 'Failed to update profile.');
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -107,15 +99,6 @@ export default function EditProfileScreen() {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
-
-  if (loading) {
-    return (
-      <View style={[styles.container, styles.loadingContainer, isDark && styles.containerDark]}>
-        <ActivityIndicator size="large" color="#FFD700" />
-        <Text style={[styles.loadingText, isDark && styles.textDark]}>Loading profile...</Text>
-      </View>
-    );
-  }
 
   if (error) {
     return (
@@ -197,9 +180,8 @@ export default function EditProfileScreen() {
         </View>
 
         <Button
-          title={isSaving ? 'Saving...' : 'Save Changes'}
+          title='Save Changes'
           onPress={handleSave}
-          disabled={isSaving}
           style={styles.saveButton}
           variant="secondary"
         />
@@ -215,16 +197,6 @@ const styles = StyleSheet.create({
   },
   containerDark: {
     backgroundColor: '#121212',
-  },
-  loadingContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#2C2C2C',
-    marginTop: 16,
   },
   errorContainer: {
     justifyContent: 'center',
@@ -336,8 +308,5 @@ const styles = StyleSheet.create({
   saveButton: {
     marginTop: 16,
     marginBottom: 20,
-  },
-  textDark: {
-    color: '#FFFFFF',
   },
 });

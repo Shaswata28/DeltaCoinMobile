@@ -3,14 +3,12 @@ import { View, StyleSheet, Platform, KeyboardAvoidingView, ScrollView, ImageBack
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { StatusBar } from 'expo-status-bar';
-import { useRouter } from 'expo-router';
 
 import { AppLogo } from '@/components/auth/AppLogo';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { SignUpLink } from '@/components/auth/SignUpLink';
 
 export default function LoginScreen() {
-  const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -18,7 +16,7 @@ export default function LoginScreen() {
     <View style={[styles.container, isDark && styles.containerDark]}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <ImageBackground
-        source={require('@/assets/images/background.png')}
+        source={require('@/assets/images/dark1.png')}
         style={styles.background}
         resizeMode="cover"
       >
@@ -104,7 +102,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 32,
     marginBottom: 24,
-    backdropFilter: 'blur(10px)',
   },
   formContainerDark: {
     backgroundColor: '#1E1E1E',

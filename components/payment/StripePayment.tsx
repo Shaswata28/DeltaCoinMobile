@@ -102,7 +102,6 @@ export function StripePayment({ amount, method, onSuccess, onCancel }: StripePay
             entering={FadeInDown.duration(400)}
             style={styles.paymentContainer}
           >
-            {/* Stripe Header */}
             <View style={[styles.stripeHeader, isDark && styles.stripeHeaderDark]}>
               <View style={styles.stripeLogo}>
                 <Text style={styles.stripeLogoText}>stripe</Text>
@@ -117,7 +116,6 @@ export function StripePayment({ amount, method, onSuccess, onCancel }: StripePay
               </View>
             </View>
 
-            {/* Card Payment Form */}
             <View style={[styles.paymentForm, isDark && styles.paymentFormDark]}>
               <View style={styles.methodHeader}>
                 <View style={styles.methodIcon}>
@@ -131,14 +129,13 @@ export function StripePayment({ amount, method, onSuccess, onCancel }: StripePay
                 postalCodeEnabled={false}
                 placeholders={{ number: '4242 4242 4242 4242' }}
                 cardStyle={{
-                  backgroundColor: 'isDark ? '#121212' : '#FFFFFF',
+                  backgroundColor: isDark ? '#333333' : '#F0F0F0',
                   textColor: isDark ? '#FFFFFF' : '#000000',
                 }}
                 style={{ width: '100%', height: 50, marginVertical: 30 }}
                 onCardChange={setCardDetails}
               />
               
-              {/* Security Info */}
               <View style={[styles.securityInfo, isDark && styles.securityInfoDark]}>
                 <Lock size={16} color="#10B981" />
                 <Text style={[styles.securityText, isDark && styles.securityTextDark]}>
@@ -148,7 +145,6 @@ export function StripePayment({ amount, method, onSuccess, onCancel }: StripePay
               {error && <Text style={styles.errorText}>{error}</Text>}
             </View>
 
-            {/* Action Buttons */}
             <View style={styles.actionButtons}>
               <TouchableOpacity
                 style={[styles.cancelButton, isDark && styles.cancelButtonDark]}
@@ -181,7 +177,6 @@ export function StripePayment({ amount, method, onSuccess, onCancel }: StripePay
               </TouchableOpacity>
             </View>
 
-            {/* Footer */}
             <View style={styles.footer}>
               <Text style={[styles.footerText, isDark && styles.footerTextDark]}>
                 Powered by Stripe
@@ -197,15 +192,13 @@ export function StripePayment({ amount, method, onSuccess, onCancel }: StripePay
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    
   },
-  
   scrollContainer: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-   paddingHorizontal: 0,
+    paddingHorizontal: 0,
     paddingVertical: 0,
     paddingBottom: 40,
   },

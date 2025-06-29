@@ -8,22 +8,10 @@ import {
   useColorScheme,
   Modal,
   FlatList,
-  ActivityIndicator,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
-import {
-  ArrowUpRight,
-  ArrowDownRight,
-  Filter,
-  Calendar,
-  X,
-  Check,
-  Coffee,
-  Book,
-  Beaker,
-  Users,
-  MoreHorizontal,
-} from 'lucide-react-native';
+import { ArrowUpRight, ArrowDownRight, Filter, Calendar, X, Check, Coffee, Book, Beaker, Users, MoveHorizontal as MoreHorizontal } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
   getUserTransactions,
@@ -33,10 +21,24 @@ import {
 import { Transaction as TransactionType } from '../../supabase/client';
 import MonthYearPicker from '../../components/common/MonthYearPicker';
 import { CategoryFilterModal } from '../../components/common/FilterModal';
+
 interface Transaction extends TransactionType {
   status: 'completed' | 'pending' | 'failed';
   recipient: string;
 }
+
+const formatMonthDisplay = (monthString: string | null): string | null => {
+  if (!monthString) return null;
+  
+  try {
+    const [year, month] = monthString.split('-');
+    const monthIndex = parseInt(month) - 1;
+    const monthName = new Date(parseInt(year), monthIndex).toLocaleString('default', { month: 'long' });
+    return `${monthName} ${year}`;
+  } catch (error) {
+    return monthString;
+  }
+};
 
 export default function HistoryScreen() {
   const colorScheme = useColorScheme();
@@ -45,24 +47,16 @@ export default function HistoryScreen() {
     'all' | 'sent' | 'received'
   >('all');
 
-  // State variables for data
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // State variables for pagination
-
-  // New state variables for filter and date modals
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [dateModalVisible, setDateModalVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
 
-  // Add new state for year/month selection in the modal
-  const [selectedYear, setSelectedYear] = useState<number | null>(null);
-
-  // Categories for filter - updated based on transaction type
   const sentCategories = [
     'All Categories',
     'Canteen',
@@ -74,70 +68,20 @@ export default function HistoryScreen() {
 
   const receivedCategories = ['All Categories', 'topup'];
 
-  // Update years array to show last 10 years
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
-
-  // Update months array to include value and label
-  const months = Array.from({ length: 12 }, (_, i) => ({
-    value: i + 1,
-    label: new Date(currentYear, i).toLocaleString('default', {
-      month: 'long',
-    }),
-  }));
-
-  // Generate months and years for scrollable date picker
-  const generateMonthsAndYears = () => {
-    const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-    const currentYear = new Date().getFullYear();
-    const years = [
-      currentYear - 2,
-      currentYear - 1,
-      currentYear,
-      currentYear + 1,
-    ];
-
-    const monthYearOptions = ['All Time'];
-
-    years.forEach((year) => {
-      months.forEach((month) => {
-        monthYearOptions.push(`${month} ${year}`);
-      });
-    });
-
-    return monthYearOptions;
-  };
-
-  const monthYearOptions = generateMonthsAndYears();
-
-  // Function to load transactions from Supabase
   const loadTransactions = async (refresh = false) => {
     try {
-      setLoading(true);
+      if (refresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       setError(null);
-
-      
 
       let data: TransactionType[] = [];
 
-      // Determine which API to call based on filters
       if (selectedCategory && selectedCategory !== 'All Categories') {
         data = await getTransactionsByCategory(selectedCategory);
       } else if (selectedMonth && selectedMonth !== 'All Time') {
-        // Convert month name and year to date range
         const [monthName, year] = selectedMonth.split(' ');
         const monthIndex = [
           'January',
@@ -154,7 +98,6 @@ export default function HistoryScreen() {
           'December',
         ].indexOf(monthName);
 
-        // Create start and end dates for the month
         const startDate = `${year}-${String(monthIndex + 1).padStart(
           2,
           '0'
@@ -167,34 +110,27 @@ export default function HistoryScreen() {
 
         data = await getTransactionsByDateRange(startDate, endDate);
       } else {
-        // Get paginated transactions
         data = await getUserTransactions();
       }
 
-      // Map the data to include UI-specific fields
       const mappedData: Transaction[] = data.map((transaction) => ({
         ...transaction,
-        status: 'completed', // Default status
+        status: 'completed',
         recipient: getRecipientFromCategory(
           transaction.category,
           transaction.type
         ),
       }));
 
-     
-
-      // Check if we have more data to load
       setTransactions(mappedData);
     } catch (err) {
       setError('Failed to load transactions');
-      console.error('Error loading transactions:', err);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
-  // Helper function to get recipient name from category
   const getRecipientFromCategory = (category: string, type: string): string => {
     if (type === 'income') return 'Account Top-up';
 
@@ -212,27 +148,20 @@ export default function HistoryScreen() {
     }
   };
 
-  // Load transactions on mount and when filters change
   useEffect(() => {
-    loadTransactions(true);
+    loadTransactions(false);
   }, [selectedCategory, selectedMonth]);
 
-  // Function to handle refresh
   const handleRefresh = () => {
-    setRefreshing(true);
     loadTransactions(true);
   };
 
-  
-
-  // Get categories based on selected filter
   const getCategories = () => {
     if (selectedFilter === 'sent') return sentCategories;
     if (selectedFilter === 'received') return receivedCategories;
     return [...new Set([...sentCategories, ...receivedCategories])];
   };
 
-  // Filter transactions based on type (all, sent, received)
   const filteredTransactions = transactions.filter((transaction) => {
     if (selectedFilter === 'sent' && transaction.type !== 'expense')
       return false;
@@ -272,6 +201,17 @@ export default function HistoryScreen() {
     }
   };
 
+  if (loading && !refreshing) {
+    return (
+      <View style={[styles.container, styles.loadingContainer, isDark && styles.containerDark]}>
+        <ActivityIndicator size="large" color="#FFD700" />
+        <Text style={[styles.loadingText, isDark && styles.loadingTextDark]}>
+          Loading transactions...
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView
       style={[styles.container, isDark && styles.containerDark]}
@@ -283,7 +223,6 @@ export default function HistoryScreen() {
           Transaction History
         </Text>
 
-        {/* Tabs */}
         <View style={[styles.tabs, isDark && styles.tabsDark]}>
           {(['all', 'sent', 'received'] as const).map((filter) => (
             <TouchableOpacity
@@ -315,7 +254,6 @@ export default function HistoryScreen() {
           ))}
         </View>
 
-        {/* Filter buttons below tabs */}
         <View style={styles.filterContainer}>
           <TouchableOpacity
             style={[styles.filterButton, isDark && styles.filterButtonDark]}
@@ -332,22 +270,25 @@ export default function HistoryScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Active filters display */}
         {(selectedCategory || selectedMonth) && (
           <View style={styles.activeFilters}>
-            {selectedCategory && (
-              <View style={styles.filterBadge}>
-                <Text style={styles.filterBadgeText}>{selectedCategory}</Text>
+            {selectedCategory && selectedCategory !== 'All Categories' && (
+              <View style={[styles.filterBadge, isDark && styles.filterBadgeDark]}>
+                <Text style={[styles.filterBadgeText, isDark && styles.filterBadgeTextDark]}>
+                  {selectedCategory}
+                </Text>
                 <TouchableOpacity onPress={() => setSelectedCategory(null)}>
-                  <X size={14} color="#2C2C2C" />
+                  <X size={14} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
                 </TouchableOpacity>
               </View>
             )}
-            {selectedMonth && (
-              <View style={styles.filterBadge}>
-                <Text style={styles.filterBadgeText}>{selectedMonth}</Text>
+            {selectedMonth && selectedMonth !== 'All Time' && (
+              <View style={[styles.filterBadge, isDark && styles.filterBadgeDark]}>
+                <Text style={[styles.filterBadgeText, isDark && styles.filterBadgeTextDark]}>
+                  {selectedMonth}
+                </Text>
                 <TouchableOpacity onPress={() => setSelectedMonth(null)}>
-                  <X size={14} color="#2C2C2C" />
+                  <X size={14} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
                 </TouchableOpacity>
               </View>
             )}
@@ -355,14 +296,6 @@ export default function HistoryScreen() {
         )}
       </View>
 
-      {/* Loading indicator */}
-      {loading &&  (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#FFD700" />
-        </View>
-      )}
-
-      {/* Error message */}
       {error && (
         <View style={styles.errorContainer}>
           <Text style={[styles.errorText, isDark && styles.errorTextDark]}>
@@ -370,135 +303,126 @@ export default function HistoryScreen() {
           </Text>
           <TouchableOpacity
             style={styles.retryButton}
-            onPress={() => loadTransactions(true)}
+            onPress={() => loadTransactions(false)}
           >
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Transaction list */}
-      {!loading && !error && (
-        <FlatList
-          data={filteredTransactions}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.transactionList}
-          showsVerticalScrollIndicator={false}
-        
-          refreshing={refreshing && !loading}
-          onRefresh={handleRefresh}
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Text
-                style={[
-                  styles.emptyStateText,
-                  isDark && styles.emptyStateTextDark,
-                ]}
-              >
-                No transactions found
-              </Text>
-            </View>
-          }
-          renderItem={({ item, index }) => (
-            <Animated.View
-              entering={FadeInDown.delay(index * 100).duration(400)}
+      <FlatList
+        data={filteredTransactions}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.transactionList}
+        showsVerticalScrollIndicator={false}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Text
               style={[
-                styles.transactionCard,
-                isDark && styles.transactionCardDark,
+                styles.emptyStateText,
+                isDark && styles.emptyStateTextDark,
               ]}
             >
-              <View style={styles.transactionHeader}>
-                <View style={styles.transactionIcon}>
-                  {item.type === 'expense' ? (
-                    <ArrowUpRight size={20} color="#FF4D4F" />
-                  ) : (
-                    <ArrowDownRight size={20} color="#52C41A" />
-                  )}
-                </View>
-                <View style={styles.transactionInfo}>
-                  <Text
-                    style={[
-                      styles.recipientText,
-                      isDark && styles.recipientTextDark,
-                    ]}
-                  >
-                    {item.recipient}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.categoryText,
-                      isDark && styles.categoryTextDark,
-                    ]}
-                  >
-                    {item.category}
-                  </Text>
-                </View>
+              No transactions found
+            </Text>
+          </View>
+        }
+        renderItem={({ item, index }) => (
+          <Animated.View
+            entering={FadeInDown.delay(index * 100).duration(400)}
+            style={[
+              styles.transactionCard,
+              isDark && styles.transactionCardDark,
+            ]}
+          >
+            <View style={styles.transactionHeader}>
+              <View style={styles.transactionIcon}>
+                {item.type === 'expense' ? (
+                  <ArrowUpRight size={20} color="#FF4D4F" />
+                ) : (
+                  <ArrowDownRight size={20} color="#52C41A" />
+                )}
+              </View>
+              <View style={styles.transactionInfo}>
                 <Text
                   style={[
-                    styles.amountText,
-                    item.type === 'expense'
-                      ? styles.amountNegative
-                      : styles.amountPositive,
+                    styles.recipientText,
+                    isDark && styles.recipientTextDark,
                   ]}
                 >
-                  {item.type === 'expense' ? '-' : '+'}৳
-                  {parseFloat(item.amount.toString()).toFixed(2)}
+                  {item.recipient}
                 </Text>
-              </View>
-
-              <View style={styles.transactionFooter}>
                 <Text
                   style={[
-                    styles.timestampText,
-                    isDark && styles.timestampTextDark,
+                    styles.categoryText,
+                    isDark && styles.categoryTextDark,
                   ]}
                 >
-                  {formatDate(item.date)} at {formatTime(item.created_at)}
+                  {item.category}
                 </Text>
-                <View
+              </View>
+              <Text
+                style={[
+                  styles.amountText,
+                  item.type === 'expense'
+                    ? styles.amountNegative
+                    : styles.amountPositive,
+                ]}
+              >
+                {item.type === 'expense' ? '-' : '+'}৳
+                {parseFloat(item.amount.toString()).toFixed(2)}
+              </Text>
+            </View>
+
+            <View style={styles.transactionFooter}>
+              <Text
+                style={[
+                  styles.timestampText,
+                  isDark && styles.timestampTextDark,
+                ]}
+              >
+                {formatDate(item.date)} at {formatTime(item.created_at)}
+              </Text>
+              <View
+                style={[
+                  styles.statusBadge,
+                  { backgroundColor: `${getStatusColor(item.status)}20` },
+                ]}
+              >
+                <Text
                   style={[
-                    styles.statusBadge,
-                    { backgroundColor: `${getStatusColor(item.status)}20` },
+                    styles.statusText,
+                    { color: getStatusColor(item.status) },
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.statusText,
-                      { color: getStatusColor(item.status) },
-                    ]}
-                  >
-                    {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-                  </Text>
-                </View>
+                  {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                </Text>
               </View>
-            </Animated.View>
-          )}
-        />
-      )}
+            </View>
+          </Animated.View>
+        )}
+      />
 
-      {/* Filter Modal */}
       <CategoryFilterModal
         visible={filterModalVisible}
         onClose={() => setFilterModalVisible(false)}
         selected={selectedCategory}
         onSelect={setSelectedCategory}
-        categories={getCategories()} // Example: ['Canteen', 'Library', ...]
+        categories={getCategories()}
         isDark={isDark}
       />
 
-      {/* Date Modal */}
       <MonthYearPicker
         visible={dateModalVisible}
         onClose={() => {
           setDateModalVisible(false);
-          setSelectedYear(null);
         }}
         onSelect={(value: string) => {
-          // The MonthYearPicker now sends "YYYY-MM" format
           if (value === 'All Time') {
             setSelectedMonth(null);
           } else {
-            // Parse the YYYY-MM format to display format
             const [year, month] = value.split('-');
             const monthName = new Date(
               parseInt(year),
@@ -523,6 +447,19 @@ const styles = StyleSheet.create({
   },
   containerDark: {
     backgroundColor: '#121212',
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
+    color: '#6B7280',
+    marginTop: 16,
+  },
+  loadingTextDark: {
+    color: '#A6A6A6',
   },
   header: {
     padding: 20,
@@ -604,7 +541,6 @@ const styles = StyleSheet.create({
   filterButtonDark: {
     backgroundColor: '#1E1E1E',
   },
-
   activeFilters: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -614,21 +550,30 @@ const styles = StyleSheet.create({
   filterBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 8,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 1,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  filterBadgeDark: {
+    backgroundColor: '#1E1E1E',
+    borderColor: '#2E2E2E',
   },
   filterBadgeText: {
     fontSize: 14,
     fontFamily: 'Inter-Medium',
     color: '#2C2C2C',
+  },
+  filterBadgeTextDark: {
+    color: '#FFFFFF',
   },
   transactionList: {
     padding: 20,
@@ -730,11 +675,6 @@ const styles = StyleSheet.create({
   emptyStateTextDark: {
     color: '#A6A6A6',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -761,80 +701,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter-SemiBold',
     color: '#2C2C2C',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    width: '80%',
-    maxHeight: '50%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  modalContentDark: {
-    backgroundColor: '#1E1E1E',
-  },
-  modalScrollContent: {
-    paddingVertical: 8,
-  },
-  modalItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    marginVertical: 4,
-  },
-  modalItemDark: {
-    backgroundColor: 'transparent',
-  },
-  modalItemText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: '#2C2C2C',
-  },
-  modalItemTextDark: {
-    color: '#FFFFFF',
-  },
-  selectedItem: {
-    backgroundColor: '#FFD700',
-  },
-  monthPickerContainer: {
-    width: '80%',
-    maxHeight: '70%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  monthPickerTitle: {
-    fontSize: 20,
-    fontFamily: 'Inter-SemiBold',
-    color: '#2C2C2C',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  cardDark: {
-    backgroundColor: '#1E1E1E',
-  },
-  textDark: {
-    color: '#FFFFFF',
   },
 });

@@ -6,6 +6,8 @@ import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } f
 import { SplashScreen } from 'expo-router';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { isAuthenticated } from '@/supabase/auth';
+import { LoadingProvider, setGlobalLoadingFunctions, useLoading } from '@/components/common/LoadingContext';
+import { SimpleLoadingIndicator } from '@/components/common/SimpleLoadingIndicator';
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -45,6 +47,22 @@ function RootLayoutNav() {
   );
 }
 
+function AppContent() {
+  const { showLoading, hideLoading } = useLoading();
+
+  useEffect(() => {
+    // Set global loading functions for use in non-component files
+    setGlobalLoadingFunctions(showLoading, hideLoading);
+  }, [showLoading, hideLoading]);
+
+  return (
+    <>
+      <RootLayoutNav />
+      <SimpleLoadingIndicator />
+    </>
+  );
+}
+
 export default function RootLayout() {
   useFrameworkReady();
 
@@ -68,9 +86,9 @@ export default function RootLayout() {
   }
 
   return (
-    <>
-      <RootLayoutNav />
+    <LoadingProvider>
+      <AppContent />
       <StatusBar style="auto" />
-    </>
+    </LoadingProvider>
   );
 }

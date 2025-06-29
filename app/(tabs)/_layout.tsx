@@ -85,6 +85,12 @@ export default function TabLayout() {
             ),
           }}
         />
+        <Tabs.Screen
+          name="notifications"
+          options={{
+            href: null, // This makes the screen routable but not visible in tabs
+          }}
+        />
       </Tabs>
     </View>
   );

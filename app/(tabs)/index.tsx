@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, useColorScheme, ActivityIndicator } from 'react-native';
-import { ArrowUpRight, ArrowDownRight, Send, Wallet, CirclePlus as PlusCircle, Clock, CircleHelp as HelpCircle } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, useColorScheme } from 'react-native';
+import { ArrowUpRight, ArrowDownRight, Send, Wallet, CirclePlus as PlusCircle, Clock, CircleHelp as HelpCircle, Bell } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { getHomeWalletData } from '@/supabase/db';
+import { getHomeWalletData, getUnreadNotificationsCount } from '@/supabase/db';
 import { supabase } from '@/supabase/client';
 
 interface Transaction {
@@ -31,8 +31,8 @@ export default function HomeScreen() {
   const [greeting, setGreeting] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [walletData, setWalletData] = useState<WalletData>({
     balance: 0,
     monthlySpent: 0,
@@ -57,17 +57,16 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, []);
 
-  // Set up real-time subscription for wallet updates
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         fetchWalletData();
+        fetchUnreadCount();
       } else if (event === 'SIGNED_OUT') {
         router.replace('/login');
       }
     });
 
-    // Set up real-time subscription for transactions
     const channel = supabase.channel('public:transactions');
     
     channel
@@ -80,42 +79,60 @@ export default function HomeScreen() {
       })
       .subscribe();
 
+    // Listen for notification changes
+    const notificationChannel = supabase.channel('public:notifications');
+    
+    notificationChannel
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'notifications',
+      }, () => {
+        fetchUnreadCount();
+      })
+      .subscribe();
+
     return () => {
       authListener?.subscription.unsubscribe();
       channel.unsubscribe();
+      notificationChannel.unsubscribe();
     };
-  }, [router]); // Add router to dependencies
+  }, [router]);
 
   const fetchWalletData = async () => {
     try {
-      setLoading(true);
-      
-      // Get wallet data from Supabase
       const homeData = await getHomeWalletData();
       
       setWalletData({
         balance: homeData.balance,
         monthlySpent: homeData.monthlySpent,
-        monthlyLimit: homeData.monthlyLimit || 2000, // Default limit if not set
+        monthlyLimit: homeData.monthlyLimit || 2000,
         recentTransactions: homeData.recentTransactions
       });
       
       setError(null);
     } catch (err: any) {
-      console.error('Error fetching wallet data:', err);
       setError('Failed to load wallet data. Please try again.');
-    } finally {
-      setLoading(false);
+    }
+  };
+
+  const fetchUnreadCount = async () => {
+    try {
+      const count = await getUnreadNotificationsCount();
+      setUnreadCount(count);
+    } catch (err: any) {
+      console.error('Failed to fetch unread notifications count:', err);
     }
   };
 
   useEffect(() => {
     fetchWalletData();
+    fetchUnreadCount();
   }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchWalletData();
+    await Promise.all([fetchWalletData(), fetchUnreadCount()]);
     setRefreshing(false);
   };
 
@@ -130,15 +147,6 @@ export default function HomeScreen() {
       hour12: true,
     });
   };
-
-  if (loading) {
-    return (
-      <View style={[styles.container, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color="#FFD700" />
-        <Text style={styles.loadingText}>Loading your wallet...</Text>
-      </View>
-    );
-  }
 
   if (error) {
     return (
@@ -163,7 +171,7 @@ export default function HomeScreen() {
       }
     >
       <View style={styles.header}>
-        <Animated.View entering={FadeInDown.duration(600).springify()}>
+        <Animated.View entering={FadeInDown.duration(600).springify()} style={styles.greetingContainer}>
           <Text style={[styles.greeting, isDark && styles.textDark]}>
             {greeting}
           </Text>
@@ -175,6 +183,21 @@ export default function HomeScreen() {
             })}
           </Text>
         </Animated.View>
+
+        <TouchableOpacity 
+          style={styles.notificationButton}
+          onPress={() => router.push('/notifications')}
+          activeOpacity={0.7}
+        >
+          <Bell size={24} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+          {unreadCount > 0 && (
+            <View style={styles.notificationBadge}>
+              <Text style={styles.notificationBadgeText}>
+                {unreadCount > 99 ? '99+' : unreadCount.toString()}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
       <Animated.View 
@@ -312,15 +335,6 @@ const styles = StyleSheet.create({
   containerDark: {
     backgroundColor: '#121212',
   },
-  loadingContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#2C2C2C',
-  },
   errorContainer: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -345,8 +359,35 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 20,
     paddingTop: 40,
+  },
+  greetingContainer: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  notificationButton: {
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#FF4D4F',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+  },
+  notificationBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontFamily: 'Inter-Bold',
   },
   greeting: {
     fontSize: 28,
