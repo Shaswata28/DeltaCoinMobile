@@ -1,3 +1,4 @@
+require('react-native-get-random-values');
 import React, { useEffect } from 'react';
 import { Stack, useSegments, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -8,6 +9,7 @@ import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { isAuthenticated } from '@/supabase/auth';
 import { LoadingProvider, setGlobalLoadingFunctions, useLoading } from '@/components/common/LoadingContext';
 import { SimpleLoadingIndicator } from '@/components/common/SimpleLoadingIndicator';
+
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();

@@ -1,9 +1,11 @@
+import 'react-native-get-random-values';
 import { supabase } from './client'
 import type { User } from './client'
 import { decode as atob } from 'base-64';
 import { encode as btoa } from 'base-64';
 import { v4 as uuidv4 } from 'uuid';
 import 'react-native-url-polyfill/auto';
+
 export interface SignUpData {
   email: string
   password: string
@@ -12,7 +14,6 @@ export interface SignUpData {
   contactNumber: string
   username: string
   pin: string
-  profilePictureUrl?: string
 }
 
 export interface SignInData {
@@ -87,7 +88,7 @@ export async function generateAvatarsForExistingUsers(): Promise<{ success: numb
     // Get all users without profile pictures
     const { data: usersWithoutAvatars, error: fetchError } = await supabase
       .from('users')
-      .select('id, student_id, full_name')
+      .select('id, username, full_name')
       .or('profile_picture_url.is.null,profile_picture_url.eq.""');
     
     if (fetchError) {
@@ -110,9 +111,11 @@ export async function generateAvatarsForExistingUsers(): Promise<{ success: numb
       try {
         console.log(`Generating avatar for user ${user.id} (${user.full_name})`);
         
-        const avatarUrl = await generateAndStoreAvatar(user.id, user.student_id);
+        const avatarUrl = await generateAndStoreAvatar(user.username);
         
         if (avatarUrl) {
+          // Update user profile with the generated avatar URL
+          await updateUserProfile({ profile_picture_url: avatarUrl }, user.id);
           successCount++;
           console.log(`✓ Avatar generated for ${user.full_name}: ${avatarUrl}`);
         } else {
@@ -173,7 +176,6 @@ export async function signUp(userData: SignUpData) {
           username: userData.username,
           pin: userData.pin,
           password: userData.password,
-          profile_picture_url: userData.profilePictureUrl,
         })
         .select()
         .single()
@@ -272,15 +274,20 @@ export async function getCurrentUserProfile(): Promise<User | null> {
   }
 }
 
-export async function updateUserProfile(updates: Partial<Omit<User, 'id' | 'created_at'>>) {
+export async function updateUserProfile(updates: Partial<Omit<User, 'id' | 'created_at'>>, userId?: string) {
   try {
-    const user = await getCurrentUser()
-    if (!user) throw new Error('No authenticated user')
+    let targetUserId = userId;
+    
+    if (!targetUserId) {
+      const user = await getCurrentUser()
+      if (!user) throw new Error('No authenticated user')
+      targetUserId = user.id;
+    }
 
     const { data, error } = await supabase
       .from('users')
       .update(updates)
-      .eq('id', user.id)
+      .eq('id', targetUserId)
       .select()
       .single()
 

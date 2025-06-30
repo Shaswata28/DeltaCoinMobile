@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, useColorScheme, ImageBackground, Dimensions } from 'react-native';
-import { User, Shield, Bell, ChevronRight, LogOut, CircleHelp as HelpCircle, Info, Pencil, TrendingUp, Award } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, useColorScheme, ImageBackground, Dimensions, Alert } from 'react-native';
+import { User, Shield, Bell, ChevronRight, LogOut, CircleHelp as HelpCircle, Info, Pencil, TrendingUp, Award, RefreshCw } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { signOut, getCurrentUser, getCurrentUserProfile } from '@/supabase/auth';
+import { signOut, getCurrentUser, getCurrentUserProfile, generateAvatarsForExistingUsers } from '@/supabase/auth';
 import { getUserTransactionCount, getCategorySpending } from '@/supabase/db';
 import type { User as UserType } from '@/supabase/client';
 import { PROFILE_IMAGES } from '../../components/constants/images';
@@ -32,6 +32,7 @@ export default function ProfileScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [error, setError] = useState<string | null>(null);
+  const [isGeneratingAvatar, setIsGeneratingAvatar] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData>({
     user: null,
     profile: null,
@@ -104,6 +105,46 @@ export default function ProfileScreen() {
       });
     } catch (err: any) {
       setError(err.message || 'Failed to load profile data');
+    }
+  };
+
+  const handleGenerateAvatar = async () => {
+    try {
+      setIsGeneratingAvatar(true);
+      
+      const result = await generateAvatarsForExistingUsers();
+      
+      if (result.success > 0) {
+        Alert.alert(
+          'Avatar Generated!',
+          `Successfully generated ${result.success} avatar(s). Your profile picture has been updated.`,
+          [{ text: 'OK' }]
+        );
+        
+        // Refresh profile data to show the new avatar
+        await fetchProfileData();
+      } else if (result.total === 0) {
+        Alert.alert(
+          'Avatar Already Exists',
+          'You already have a profile picture. No new avatar was generated.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert(
+          'Generation Failed',
+          'Failed to generate avatar. Please try again later.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error: any) {
+      console.error('Error generating avatar:', error);
+      Alert.alert(
+        'Error',
+        error.message || 'Failed to generate avatar. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsGeneratingAvatar(false);
     }
   };
 
@@ -264,6 +305,25 @@ export default function ProfileScreen() {
         entering={FadeInDown.delay(700).duration(400)}
         style={styles.logoutSection}
       >
+        {/* Generate Avatar Button */}
+        <TouchableOpacity
+          style={[styles.generateAvatarButton, isDark && styles.generateAvatarButtonDark]}
+          onPress={handleGenerateAvatar}
+          disabled={isGeneratingAvatar}
+          activeOpacity={0.8}
+        >
+          <View style={styles.generateAvatarIconContainer}>
+            <RefreshCw 
+              size={18} 
+              color="#4D9FFF" 
+              style={isGeneratingAvatar ? { transform: [{ rotate: '180deg' }] } : {}}
+            />
+          </View>
+          <Text style={[styles.generateAvatarText, isGeneratingAvatar && styles.generateAvatarTextDisabled]}>
+            {isGeneratingAvatar ? 'Generating Avatar...' : 'Generate Avatar'}
+          </Text>
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={[styles.logoutButton, isDark && styles.logoutButtonDark]}
           onPress={handleLogout}
@@ -518,6 +578,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     alignItems: 'center',
     marginBottom: 20,
+  },
+  generateAvatarButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F0F7FF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E0F2FE',
+    width: '100%',
+  },
+  generateAvatarButtonDark: {
+    backgroundColor: '#1E3A8A',
+    borderColor: '#1E40AF',
+  },
+  generateAvatarIconContainer: {
+    marginRight: 8,
+  },
+  generateAvatarText: {
+    fontSize: 14,
+    fontFamily: 'Inter-SemiBold',
+    color: '#4D9FFF',
+  },
+  generateAvatarTextDisabled: {
+    opacity: 0.6,
   },
   logoutButton: {
     flexDirection: 'row',
