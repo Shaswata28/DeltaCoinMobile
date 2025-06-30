@@ -12,11 +12,20 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Bell, Trash2, Clock, CreditCard, Handshake, TriangleAlert as AlertTriangle, Info } from 'lucide-react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { 
+  FadeInDown, 
+  FadeOutRight, 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withTiming, 
+  withSequence,
+  withDelay,
+  runOnJS
+} from 'react-native-reanimated';
 import {
   getUserNotifications,
   markNotificationAsRead,
-  markAllNotificationsAsRead,
+  deleteAllNotifications,
 } from '../../supabase/db';
 import type { Notification } from '../../supabase/client';
 
@@ -66,6 +75,12 @@ export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+
+  // Animation values
+  const clearButtonScale = useSharedValue(1);
+  const clearButtonOpacity = useSharedValue(1);
+  const headerOpacity = useSharedValue(1);
 
   const fetchNotifications = async () => {
     try {
@@ -99,24 +114,69 @@ export default function NotificationsScreen() {
     }
   };
 
+  const animateClearButton = () => {
+    clearButtonScale.value = withSequence(
+      withTiming(0.95, { duration: 100 }),
+      withTiming(1.05, { duration: 100 }),
+      withTiming(1, { duration: 100 })
+    );
+  };
+
+  const animateHeaderAndClear = () => {
+    // Animate header fade out
+    headerOpacity.value = withTiming(0.3, { duration: 300 });
+    
+    // Animate clear button
+    clearButtonOpacity.value = withSequence(
+      withTiming(0.5, { duration: 200 }),
+      withTiming(1, { duration: 200 })
+    );
+  };
+
+  const resetAnimations = () => {
+    headerOpacity.value = withTiming(1, { duration: 300 });
+    clearButtonOpacity.value = 1;
+    clearButtonScale.value = 1;
+  };
+
   const handleClearAll = async () => {
+    animateClearButton();
+    
     Alert.alert(
-      'Clear All Notifications',
-      'Are you sure you want to mark all notifications as read?',
+      'Delete All Notifications',
+      'Are you sure you want to permanently delete all notifications? This action cannot be undone.',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Cancel', 
+          style: 'cancel',
+          onPress: () => resetAnimations()
+        },
         {
-          text: 'Clear All',
+          text: 'Delete All',
           style: 'destructive',
           onPress: async () => {
+            setIsClearing(true);
+            animateHeaderAndClear();
+            
             try {
-              await markAllNotificationsAsRead();
-              setNotifications(prev =>
-                prev.map(n => ({ ...n, read_status: true }))
-              );
+              // Add a small delay to show the animation
+              await new Promise(resolve => setTimeout(resolve, 500));
+              await deleteAllNotifications();
+              
+              // Animate notifications disappearing
+              setNotifications([]);
+              
+              // Reset animations after clearing
+              setTimeout(() => {
+                resetAnimations();
+                setIsClearing(false);
+              }, 300);
+              
             } catch (error) {
-              console.error('Error clearing all notifications:', error);
-              Alert.alert('Error', 'Failed to clear notifications');
+              console.error('Error deleting all notifications:', error);
+              Alert.alert('Error', 'Failed to delete notifications');
+              resetAnimations();
+              setIsClearing(false);
             }
           },
         },
@@ -129,12 +189,23 @@ export default function NotificationsScreen() {
     fetchNotifications();
   };
 
+  // Animated styles
+  const clearButtonAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: clearButtonScale.value }],
+    opacity: clearButtonOpacity.value,
+  }));
+
+  const headerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: headerOpacity.value,
+  }));
+
   const renderNotificationItem = ({ item, index }: { item: Notification; index: number }) => {
     const { icon, color } = getNotificationIcon(item.type);
     
     return (
       <Animated.View
         entering={FadeInDown.delay(index * 50).duration(300)}
+        exiting={FadeOutRight.duration(200)}
         style={[
           styles.notificationItem,
           isDark && styles.notificationItemDark,
@@ -189,7 +260,10 @@ export default function NotificationsScreen() {
   };
 
   const renderEmptyState = () => (
-    <View style={styles.emptyState}>
+    <Animated.View 
+      entering={FadeInDown.duration(400)}
+      style={styles.emptyState}
+    >
       <Bell size={64} color={isDark ? '#4B5563' : '#9CA3AF'} />
       <Text style={[styles.emptyStateTitle, isDark && styles.emptyStateTitleDark]}>
         No Notifications
@@ -197,7 +271,7 @@ export default function NotificationsScreen() {
       <Text style={[styles.emptyStateText, isDark && styles.emptyStateTextDark]}>
         You're all caught up! New notifications will appear here.
       </Text>
-    </View>
+    </Animated.View>
   );
 
   if (loading) {
@@ -213,7 +287,7 @@ export default function NotificationsScreen() {
 
   return (
     <View style={[styles.container, isDark && styles.containerDark]}>
-      <View style={styles.header}>
+      <Animated.View style={[styles.header, headerAnimatedStyle]}>
         <View style={styles.headerLeft}>
           <TouchableOpacity
             style={styles.backButton}
@@ -226,22 +300,36 @@ export default function NotificationsScreen() {
           <Text style={[styles.title, isDark && styles.titleDark]}>Notifications</Text>
         </View>
         
-        <TouchableOpacity
-          style={styles.clearButton}
-          onPress={handleClearAll}
-          activeOpacity={0.7}
-          disabled={notifications.every(n => n.read_status)}
+        <Animated.View style={clearButtonAnimatedStyle}>
+          <TouchableOpacity
+            style={styles.clearButton}
+            onPress={handleClearAll}
+            activeOpacity={0.7}
+            disabled={notifications.length === 0 || isClearing}
+          >
+            <Trash2 
+              size={20} 
+              color={
+                notifications.length === 0 || isClearing
+                  ? (isDark ? '#4B5563' : '#9CA3AF')
+                  : (isDark ? '#FFFFFF' : '#2C2C2C')
+              } 
+            />
+          </TouchableOpacity>
+        </Animated.View>
+      </Animated.View>
+
+      {isClearing && (
+        <Animated.View 
+          entering={FadeInDown.duration(300)}
+          style={styles.clearingOverlay}
         >
-          <Trash2 
-            size={20} 
-            color={
-              notifications.every(n => n.read_status) 
-                ? (isDark ? '#4B5563' : '#9CA3AF')
-                : (isDark ? '#FFFFFF' : '#2C2C2C')
-            } 
-          />
-        </TouchableOpacity>
-      </View>
+          <ActivityIndicator size="large" color="#FFD700" />
+          <Text style={[styles.clearingText, isDark && styles.clearingTextDark]}>
+            Deleting notifications...
+          </Text>
+        </Animated.View>
+      )}
 
       <FlatList
         data={notifications}
@@ -317,6 +405,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  clearingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  clearingText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
+    color: '#FFFFFF',
+    marginTop: 16,
+  },
+  clearingTextDark: {
+    color: '#FFFFFF',
+  },
   listContainer: {
     paddingHorizontal: 20,
     paddingBottom: 20,
@@ -327,15 +435,15 @@ const styles = StyleSheet.create({
   },
   notificationItem: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    marginBottom: 12,
+    borderRadius: 12,
+    marginBottom: 8,
     borderWidth: 1,
     borderColor: '#E5E7EB',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   notificationItemDark: {
     backgroundColor: '#1E1E1E',
@@ -351,26 +459,26 @@ const styles = StyleSheet.create({
     borderLeftColor: '#82B1FF',
   },
   notificationContent: {
-    padding: 16,
+    padding: 12,
   },
   notificationHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   notificationIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   notificationInfo: {
     flex: 1,
   },
   notificationTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-SemiBold',
     color: '#2C2C2C',
     marginBottom: 2,
@@ -382,7 +490,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Bold',
   },
   notificationTime: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'Inter-Regular',
     color: '#6B7280',
   },
@@ -390,18 +498,18 @@ const styles = StyleSheet.create({
     color: '#A6A6A6',
   },
   unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: '#4D9FFF',
     marginLeft: 8,
   },
   notificationMessage: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Inter-Regular',
     color: '#4B5563',
-    lineHeight: 20,
-    marginLeft: 52,
+    lineHeight: 18,
+    marginLeft: 42,
   },
   notificationMessageDark: {
     color: '#D1D5DB',

@@ -49,3 +49,32 @@ export interface Budget {
   other: number // numeric
   created_at: string
 }
+
+export interface Notification {
+  id: string
+  user_id: string
+  title: string
+  message: string
+  type: 'transaction' | 'budget_alert' | 'friend_request' | 'money_request' | 'system'
+  read_status: boolean
+  related_entity_id?: string
+  created_at: string
+}
+
+export interface Friend {
+  id: string
+  user_id: string
+  friend_id: string
+  status: 'pending' | 'accepted' | 'rejected' | 'blocked'
+  created_at: string
+}
+
+export interface MoneyRequest {
+  id: string
+  sender_id: string
+  receiver_id: string
+  amount: number
+  status: 'pending' | 'accepted' | 'rejected'
+  message?: string
+  created_at: string
+}

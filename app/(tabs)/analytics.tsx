@@ -842,6 +842,7 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontFamily: 'Inter-Bold',
     color: '#2C2C2C',
+    
   },
   actions: {
     flexDirection: 'row',

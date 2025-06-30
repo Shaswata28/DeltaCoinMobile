@@ -1,6 +1,9 @@
 import { supabase } from './client'
 import type { User } from './client'
-
+import { decode as atob } from 'base-64';
+import { encode as btoa } from 'base-64';
+import { v4 as uuidv4 } from 'uuid';
+import 'react-native-url-polyfill/auto';
 export interface SignUpData {
   email: string
   password: string
@@ -27,6 +30,119 @@ function isValidPin(pin: string): boolean {
 
 function isValidContactNumber(contactNumber: string): boolean {
   return /^\d+$/.test(contactNumber)
+}
+
+// Generate and store avatar using DiceBear API
+export async function generateAndStoreAvatar(seed: string): Promise<string | null> {
+  try {
+    const avatarUrl = `https://api.dicebear.com/7.x/initials/png?seed=${encodeURIComponent(
+      seed
+    )}&backgroundColor=FFD700&textColor=2C2C2C&size=128`;
+
+    // Fetch PNG binary
+    const response = await fetch(avatarUrl, {
+      headers: {
+        'Accept': 'image/png',
+        'User-Agent': 'DeltaCoin-App',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch avatar image');
+    }
+
+    const blob = await response.blob();
+
+    // Generate a unique file name
+    const fileName = `avatars/${uuidv4()}.png`;
+
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('avatars')
+      .upload(fileName, blob, {
+        contentType: 'image/png',
+        upsert: false,
+      });
+
+    if (error) {
+      console.error('Upload error:', error.message);
+      return null;
+    }
+
+    // Get public URL
+    const { data: publicUrlData } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(fileName);
+
+    return publicUrlData.publicUrl || null;
+  } catch (error: any) {
+    console.error('Error generating and storing avatar:', error.message);
+    return null;
+  }
+}
+
+// Generate avatars for all existing users who don't have profile pictures
+export async function generateAvatarsForExistingUsers(): Promise<{ success: number; failed: number; total: number }> {
+  try {
+    console.log('Starting avatar generation for existing users...');
+    
+    // Get all users without profile pictures
+    const { data: usersWithoutAvatars, error: fetchError } = await supabase
+      .from('users')
+      .select('id, student_id, full_name')
+      .or('profile_picture_url.is.null,profile_picture_url.eq.""');
+    
+    if (fetchError) {
+      console.error('Error fetching users without avatars:', fetchError);
+      throw fetchError;
+    }
+    
+    if (!usersWithoutAvatars || usersWithoutAvatars.length === 0) {
+      console.log('No users found without avatars');
+      return { success: 0, failed: 0, total: 0 };
+    }
+    
+    console.log(`Found ${usersWithoutAvatars.length} users without avatars`);
+    
+    let successCount = 0;
+    let failedCount = 0;
+    
+    // Process each user
+    for (const user of usersWithoutAvatars) {
+      try {
+        console.log(`Generating avatar for user ${user.id} (${user.full_name})`);
+        
+        const avatarUrl = await generateAndStoreAvatar(user.id, user.student_id);
+        
+        if (avatarUrl) {
+          successCount++;
+          console.log(`✓ Avatar generated for ${user.full_name}: ${avatarUrl}`);
+        } else {
+          failedCount++;
+          console.log(`✗ Failed to generate avatar for ${user.full_name}`);
+        }
+        
+        // Add a small delay to avoid overwhelming the API
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+      } catch (error) {
+        failedCount++;
+        console.error(`Error generating avatar for user ${user.id}:`, error);
+      }
+    }
+    
+    console.log(`Avatar generation complete: ${successCount} successful, ${failedCount} failed, ${usersWithoutAvatars.length} total`);
+    
+    return {
+      success: successCount,
+      failed: failedCount,
+      total: usersWithoutAvatars.length
+    };
+    
+  } catch (error) {
+    console.error('Error in generateAvatarsForExistingUsers:', error);
+    throw error;
+  }
 }
 
 export async function signUp(userData: SignUpData) {

@@ -41,6 +41,8 @@ function RootLayoutNav() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="account-settings" />
       <Stack.Screen name="settings" />
+      <Stack.Screen name="money-transfer" />
+      <Stack.Screen name="about" />
       <Stack.Screen name="+not-found" />
       <Stack.Screen name="help" />
     </Stack>

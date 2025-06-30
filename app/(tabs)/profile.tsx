@@ -161,7 +161,9 @@ export default function ProfileScreen() {
               <View style={styles.avatarSection}>
                 <View style={[styles.avatarContainer, isDark && styles.avatarContainerDark]}>
                   <Image
-                    source={{ uri: PROFILE_IMAGES.defaultAvatar }}
+                    source={{ 
+                      uri: profileData.profile?.profile_picture_url || PROFILE_IMAGES.defaultAvatar 
+                    }}
                     style={styles.avatar}
                   />
                   <TouchableOpacity 

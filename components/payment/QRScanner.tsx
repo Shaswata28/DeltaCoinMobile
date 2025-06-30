@@ -716,7 +716,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    margin: 24,
+    margin: 16,
     borderRadius: 24,
     padding: 40,
     shadowColor: '#000',
@@ -724,6 +724,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 10,
+    
   },
   permissionContainerDark: {
     backgroundColor: '#1E1E1E',
@@ -787,10 +788,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
     color: '#6B7280',
+    textAlign: 'center',
   },
   grantButtonText: {
     fontSize: 16,
-    fontFamily: 'Inter-Bold',
+    fontFamily: 'Inter-SemiBold',
     color: '#2C2C2C',
   },
 });

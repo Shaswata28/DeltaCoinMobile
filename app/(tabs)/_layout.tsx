@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Home, ChartLine as LineChart, ArrowLeftRight, User, History } from 'lucide-react-native';
+import { Home, ChartLine as LineChart, ArrowLeftRight, User, History, Users } from 'lucide-react-native';
 import { useColorScheme, View } from 'react-native';
 
 export default function TabLayout() {
@@ -58,6 +58,14 @@ export default function TabLayout() {
           options={{
             tabBarIcon: ({ color }) => (
               <ArrowLeftRight size={24} color={color} strokeWidth={2} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="friends"
+          options={{
+            tabBarIcon: ({ color }) => (
+              <Users size={24} color={color} strokeWidth={2} />
             ),
           }}
         />

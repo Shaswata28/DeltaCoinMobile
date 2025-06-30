@@ -19,6 +19,8 @@ type FormInputProps = {
   maxLength?: number;
   leftIcon?: React.ReactNode;
   rightElement?: React.ReactNode;
+  multiline?: boolean; // Added multiline prop
+  numberOfLines?: number; // Added numberOfLines prop for multiline support
 }
 
 export function FormInput({
@@ -37,6 +39,8 @@ export function FormInput({
   maxLength,
   leftIcon,
   rightElement,
+  multiline = false, // Default to false
+  numberOfLines = 1, // Default to 1 line
 }: FormInputProps) {
   const [isFocused, setIsFocused] = useState(false);
   const colorScheme = useColorScheme();
@@ -62,14 +66,16 @@ export function FormInput({
       <Animated.View style={[
         styles.inputContainer,
         isDark && styles.inputContainerDark,
+        multiline && styles.inputContainerMultiline,
         animatedBorderStyle
       ]}>
         <TextInput
           style={[
             styles.input,
             isDark && styles.inputDark,
+            multiline && styles.inputMultiline,
             inputStyle,
-            rightElement && styles.inputWithIcon
+            rightElement ? styles.inputWithIcon : null
           ]}
           value={value}
           onChangeText={onChangeText}
@@ -83,6 +89,9 @@ export function FormInput({
           onBlur={() => setIsFocused(false)}
           autoComplete={autoComplete}
           maxLength={maxLength}
+          multiline={multiline} // Pass multiline to TextInput
+          numberOfLines={multiline ? numberOfLines : 1} // Set numberOfLines for multiline
+          textAlignVertical={multiline ? 'top' : 'center'} // Align text to top for multiline
         />
         
         {rightElement}
@@ -118,15 +127,19 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#F9FAFB',
     paddingHorizontal: 12,
-    height: 48,
+    minHeight: 48,
   },
   inputContainerDark: {
     backgroundColor: '#1E1E1E',
     borderColor: '#2E2E2E',
   },
+  inputContainerMultiline: {
+    alignItems: 'flex-start',
+    paddingVertical: 12,
+    minHeight: 80, // Increased min height for multiline
+  },
   input: {
     flex: 1,
-    height: '100%',
     color: '#2C2C2C',
     fontFamily: 'Inter-Regular',
     fontSize: 15,
@@ -134,6 +147,12 @@ const styles = StyleSheet.create({
       paddingTop: 14,
       paddingBottom: 14,
     } : {})
+  } as TextStyle,
+  inputMultiline: {
+    minHeight: 60, // Minimum height for multiline input
+    maxHeight: 120, // Maximum height to prevent excessive growth
+    paddingTop: Platform.OS === 'ios' ? 8 : 4,
+    paddingBottom: Platform.OS === 'ios' ? 8 : 4,
   } as TextStyle,
   inputWithIcon: {
     paddingRight: 40,

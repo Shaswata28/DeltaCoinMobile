@@ -1,15 +1,20 @@
 import { supabase } from './client'
 import type { Transaction, TransactionType, Budget, Wallet, Notification } from './client'
 
-export async function getUserWallet(): Promise<Wallet | null> {
+export async function getUserWallet(userId?: string): Promise<Wallet | null> {
   try {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('No authenticated user')
+    let targetUserId = userId;
+    
+    if (!targetUserId) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('No authenticated user')
+      targetUserId = user.id;
+    }
 
     const { data, error } = await supabase
       .from('wallets')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', targetUserId)
       .single()
 
     if (error) throw error
@@ -23,16 +28,21 @@ function isValidAmount(amount: number): boolean {
   return amount >= 0 && Number.isFinite(amount)
 }
 
-export async function updateWalletBalance(amount: number, operation: 'add' | 'subtract' = 'add') {
+export async function updateWalletBalance(amount: number, operation: 'add' | 'subtract' = 'add', userId?: string) {
   try {
     if (!isValidAmount(amount)) {
       throw new Error('Invalid amount: must be a positive number')
     }
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('No authenticated user')
+    let targetUserId = userId;
+    
+    if (!targetUserId) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('No authenticated user')
+      targetUserId = user.id;
+    }
 
-    const wallet = await getUserWallet()
+    const wallet = await getUserWallet(targetUserId)
     if (!wallet) throw new Error('Wallet not found')
 
     const newBalance = operation === 'add' 
@@ -48,7 +58,7 @@ export async function updateWalletBalance(amount: number, operation: 'add' | 'su
     const { data, error } = await supabase
       .from('wallets')
       .update({ balance: roundedBalance })
-      .eq('user_id', user.id)
+      .eq('user_id', targetUserId)
       .select()
       .single()
 
@@ -67,20 +77,31 @@ export interface CreateTransactionData {
   date?: string
 }
 
-export async function createTransaction(transactionData: CreateTransactionData & { stripe_payment_intent_id?: string }) {
+export async function createTransaction(transactionData: CreateTransactionData & { stripe_payment_intent_id?: string }, userId?: string) {
   try {
     if (!isValidAmount(transactionData.amount)) {
       throw new Error('Invalid amount: must be a positive number')
     }
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('No authenticated user')
+    let targetUserId = userId;
+    
+    if (!targetUserId) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('No authenticated user')
+      targetUserId = user.id;
+    }
 
     const roundedAmount = Math.round(transactionData.amount * 100) / 100
 
-    // Create the base transaction object
+    // CRITICAL FIX: Update wallet balance FIRST before creating transaction record
+    // This ensures that if the balance update fails (e.g., insufficient funds),
+    // no transaction record will be created
+    const operation = transactionData.type === 'income' ? 'add' : 'subtract'
+    await updateWalletBalance(roundedAmount, operation, targetUserId)
+
+    // Only create transaction record AFTER successful balance update
     const transactionInsert: any = {
-      user_id: user.id,
+      user_id: targetUserId,
       amount: roundedAmount,
       type: transactionData.type,
       category: transactionData.category,
@@ -100,10 +121,18 @@ export async function createTransaction(transactionData: CreateTransactionData &
       .select()
       .single()
 
-    if (transactionError) throw transactionError
-
-    const operation = transactionData.type === 'income' ? 'add' : 'subtract'
-    await updateWalletBalance(roundedAmount, operation)
+    if (transactionError) {
+      // If transaction record creation fails after successful balance update,
+      // we need to revert the balance change
+      const revertOperation = operation === 'add' ? 'subtract' : 'add'
+      try {
+        await updateWalletBalance(roundedAmount, revertOperation, targetUserId)
+      } catch (revertError) {
+        console.error('Failed to revert balance after transaction creation failure:', revertError)
+        // Log this critical error but don't throw to avoid masking the original error
+      }
+      throw transactionError
+    }
 
     // Create notification for the transaction
     const notificationTitle = transactionData.type === 'income' ? 'Top-up Successful' : 'Payment Successful'
@@ -112,7 +141,7 @@ export async function createTransaction(transactionData: CreateTransactionData &
       : `Payment of ৳${roundedAmount.toFixed(2)} to ${transactionData.category} was successful`
 
     await createNotification(
-      user.id,
+      targetUserId,
       notificationTitle,
       notificationMessage,
       'transaction',
@@ -467,6 +496,22 @@ export async function markAllNotificationsAsRead(): Promise<void> {
       .update({ read_status: true })
       .eq('user_id', user.id)
       .eq('read_status', false)
+
+    if (error) throw error
+  } catch (error) {
+    throw error
+  }
+}
+
+export async function deleteAllNotifications(): Promise<void> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('No authenticated user')
+
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('user_id', user.id)
 
     if (error) throw error
   } catch (error) {

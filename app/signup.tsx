@@ -3,7 +3,7 @@ import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, useColorS
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { signUp } from '@/supabase/auth';
+import { signUp, generateAndStoreAvatar } from '@/supabase/auth';
 
 import StudentInfoStep, { StudentInfo } from '@/components/signup/StudentInfoStep';
 import SecurityStep, { SecurityInfo } from '@/components/signup/SecurityStep';
@@ -70,6 +70,20 @@ export default function SignupScreen() {
 
       if (!user || !profile) {
         throw new Error('Failed to create account');
+      }
+
+      // Generate and store avatar after successful signup
+      try {
+        console.log('Generating avatar for new user...');
+        const avatarUrl = await generateAndStoreAvatar(securityInfo.username);
+        if (avatarUrl) {
+          console.log('Avatar generated successfully:', avatarUrl);
+        } else {
+          console.log('Avatar generation failed, but signup was successful');
+        }
+      } catch (avatarError) {
+        console.error('Avatar generation error:', avatarError);
+        // Don't show this error to user as it's not critical
       }
 
       Alert.alert(
