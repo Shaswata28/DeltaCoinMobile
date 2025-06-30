@@ -35,9 +35,7 @@ function isValidContactNumber(contactNumber: string): boolean {
 // Generate and store avatar using DiceBear API
 export async function generateAndStoreAvatar(seed: string): Promise<string | null> {
   try {
-    const avatarUrl = `https://api.dicebear.com/7.x/initials/png?seed=${encodeURIComponent(
-      seed
-    )}&backgroundColor=FFD700&textColor=2C2C2C&size=128`;
+    const avatarUrl = `https://api.dicebear.com/7.x/initials/png?seed=${encodeURIComponent(seed)}&backgroundColor=FFD700&textColor=2C2C2C&size=128`;
 
     // Fetch PNG binary
     const response = await fetch(avatarUrl, {
