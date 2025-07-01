@@ -10,7 +10,7 @@ export default {
     scheme: "myapp",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
-    owner:'shaswata28',
+    owner:'Arnob28',
     ios: {
       supportsTablet: true,
       infoPlist: {
@@ -26,12 +26,8 @@ export default {
       "expo-router",
       "expo-font",
       "expo-secure-store",
-      [
-        "expo-barcode-scanner",
-        {
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access camera to scan QR codes and barcodes."
-        }
-      ]
+      "expo-camera",
+      
     ],
     experiments: {
       typedRoutes: true
@@ -42,7 +38,7 @@ export default {
     },
     extra: {
       "eas": {
-        "projectId": "bd13c48b-637f-47c5-9b26-9ab3ce0d1ecf"     
+        "projectId": ""     
       },
       supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
       supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,

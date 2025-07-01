@@ -5,6 +5,7 @@ import { ArrowLeft, Info, Mail, Globe, Copyright, Shield, Zap, Users, CreditCard
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { AppLogo } from '../components/auth/AppLogo';
 
+
 const { width: screenWidth } = Dimensions.get('window');
 
 export default function AboutScreen() {
@@ -87,9 +88,11 @@ export default function AboutScreen() {
         </Text>
       </Animated.View>
 
+      
+
       {/* Description */}
       <Animated.View 
-        entering={FadeInDown.delay(400).duration(600)}
+        entering={FadeInDown.delay(600).duration(600)}
         style={[styles.section, isDark && styles.sectionDark]}
       >
         <View style={styles.sectionHeader}>
@@ -112,7 +115,7 @@ export default function AboutScreen() {
 
       {/* Key Features */}
       <Animated.View 
-        entering={FadeInDown.delay(600).duration(600)}
+        entering={FadeInDown.delay(800).duration(600)}
         style={[styles.section, isDark && styles.sectionDark]}
       >
         <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>
@@ -122,7 +125,7 @@ export default function AboutScreen() {
           {features.map((feature, index) => (
             <Animated.View
               key={index}
-              entering={FadeInDown.delay(800 + index * 100).duration(400)}
+              entering={FadeInDown.delay(1000 + index * 100).duration(400)}
               style={[styles.featureCard, isDark && styles.featureCardDark]}
             >
               <View style={styles.featureIcon}>
@@ -141,7 +144,7 @@ export default function AboutScreen() {
 
       {/* University Information */}
       <Animated.View 
-        entering={FadeInDown.delay(1200).duration(600)}
+        entering={FadeInDown.delay(1400).duration(600)}
         style={[styles.section, isDark && styles.sectionDark]}
       >
         <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>
@@ -165,7 +168,7 @@ export default function AboutScreen() {
 
       {/* Contact & Support */}
       <Animated.View 
-        entering={FadeInDown.delay(1400).duration(600)}
+        entering={FadeInDown.delay(1600).duration(600)}
         style={[styles.section, isDark && styles.sectionDark]}
       >
         <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>
@@ -208,7 +211,7 @@ export default function AboutScreen() {
 
       {/* Legal & Privacy */}
       <Animated.View 
-        entering={FadeInDown.delay(1600).duration(600)}
+        entering={FadeInDown.delay(1800).duration(600)}
         style={[styles.section, isDark && styles.sectionDark]}
       >
         <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>
@@ -226,7 +229,7 @@ export default function AboutScreen() {
 
       {/* Footer */}
       <Animated.View 
-        entering={FadeInDown.delay(1800).duration(600)}
+        entering={FadeInDown.delay(2000).duration(600)}
         style={styles.footer}
       >
         <View style={styles.footerContent}>

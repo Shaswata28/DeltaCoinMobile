@@ -8,6 +8,7 @@ import { AppLogo } from '@/components/auth/AppLogo';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { SignUpLink } from '@/components/auth/SignUpLink';
 
+
 export default function LoginScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -37,6 +38,7 @@ export default function LoginScreen() {
               >
                 <AppLogo />
               </Animated.View>
+              
               <Animated.View 
                 entering={FadeInDown.delay(300).duration(800).springify()}
                 style={[styles.formContainer, isDark && styles.formContainerDark]}
@@ -44,6 +46,8 @@ export default function LoginScreen() {
                 <LoginForm />
                 <SignUpLink />
               </Animated.View>
+
+             
             </SafeAreaView>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -106,5 +110,6 @@ const styles = StyleSheet.create({
   formContainerDark: {
     backgroundColor: '#1E1E1E',
     shadowOpacity: 0.2,
-  }
+  },
+
 });
