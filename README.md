@@ -6,7 +6,13 @@
 
 <p align="center">A student project that demonstrates a digital campus wallet.</p>
 
-<p align="center">React Native &middot; Expo SDK 58 &middot; Supabase &middot; <a href="LICENSE">MIT</a></p>
+<p align="center">
+  <img alt="Version 1.0.0" src="https://img.shields.io/badge/version-1.0.0-0078B5?style=for-the-badge">
+  <a href="#run-locally"><img alt="Platform Android" src="https://img.shields.io/badge/platform-Android-287D46?style=for-the-badge&amp;logo=android&amp;logoColor=white"></a>
+  <img alt="Built with Expo SDK 58" src="https://img.shields.io/badge/Expo-SDK%2058-343B5E?style=for-the-badge&amp;logo=expo&amp;logoColor=white">
+  <img alt="Backend Supabase" src="https://img.shields.io/badge/backend-Supabase-187758?style=for-the-badge&amp;logo=supabase&amp;logoColor=white">
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-D4A600?style=for-the-badge"></a>
+</p>
 
 ## Screenshots
 
@@ -22,11 +28,20 @@ Android screenshots captured with a fictional student profile and demo transacti
 
 ## Features
 
-- **Campus wallet** shows your balance and recent activity. Make a campus payment by scanning a DeltaCoin QR code or choosing a category such as Canteen or Library.
-- **Top-ups** offer simulated bank and mobile banking flows, plus a Stripe card flow for testing when configured.
-- **Transaction history** shows incoming and outgoing activity, with category and month filters and live updates through Supabase Realtime.
-- **Spending insights** break down monthly expenses by category, track budget progress, and export a PDF report.
-- **Friends and notifications** let students connect, send or request demo funds, and follow account activity in the in-app inbox.
+- **Student accounts** use Supabase Auth for email sign-in. The profile shows student details, recent account statistics, and a shortcut to edit personal information.
+- **Campus wallet** shows the available balance, monthly spending, and recent activity on Home. To pay, scan a DeltaCoin QR code or choose a campus category, review the amount, and confirm with your PIN.
+- **Top-ups** support simulated bank and mobile banking flows. A configured Stripe integration lets you exercise the card flow in test mode.
+- **Transaction history** shows incoming and outgoing activity with amounts and statuses. Combine month and category filters, and see updates while History is open when Realtime is enabled on the backend.
+- **Spending insights** show monthly totals and a category breakdown. Set category budgets, compare actual spending with your limits, and share a PDF report.
+- **Friends and notifications** let students find classmates, respond to friend requests, and send or request demo funds. The inbox groups recent activity by date and lets you filter and mark unread alerts.
+
+## Architecture
+
+| Area | Implementation |
+| --- | --- |
+| App and navigation | [`app/`](app/) contains TypeScript screens and Expo Router layouts. The root stack handles authentication and standalone screens, while the floating tab bar connects Home, Wallet, History, and Insights. |
+| UI and device features | [`components/`](components/) contains reusable forms, payment inputs, and animated controls. Expo Camera scans payment QR codes, and Expo Print and Sharing generate and share PDF reports. |
+| Data and payments | [`supabase/`](supabase/) contains the client and helpers for Supabase Auth, Postgres, and Storage. The app reads and writes demo wallet data through these helpers. History subscribes to transaction changes through Supabase Realtime, and the Stripe helper connects the card flow to a configured payment-intent endpoint. |
 
 ## Run locally
 
