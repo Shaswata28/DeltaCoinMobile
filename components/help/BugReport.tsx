@@ -21,7 +21,7 @@ export function BugReport({ onClose }: BugReportProps) {
 
   return (
     <Animated.View 
-      entering={FadeInDown.duration(300)}
+      entering={FadeInDown.duration(200)}
       style={[styles.container, isDark && styles.containerDark]}
     >
       <View style={styles.header}>

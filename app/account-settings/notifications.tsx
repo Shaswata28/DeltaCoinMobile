@@ -1,7 +1,8 @@
+import { ScreenHeader } from '@/components/common/ScreenHeader';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, useColorScheme } from 'react-native';
-import { useRouter } from 'expo-router';
-import { ArrowLeft, Bell, Mail, Smartphone, CreditCard } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView, Switch, useColorScheme } from 'react-native';
+import { Bell, Mail, Smartphone, CreditCard } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 interface NotificationSetting {
@@ -13,7 +14,7 @@ interface NotificationSetting {
 }
 
 export default function NotificationSettingsScreen() {
-  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -22,28 +23,28 @@ export default function NotificationSettingsScreen() {
       id: '1',
       title: 'Push Notifications',
       description: 'Receive alerts on your device',
-      icon: <Bell size={20} color="#FFD700" />,
+      icon: <Bell size={18} color="#FFD700" />,
       enabled: true,
     },
     {
       id: '2',
       title: 'Email Notifications',
       description: 'Get updates in your inbox',
-      icon: <Mail size={20} color="#4D9FFF" />,
+      icon: <Mail size={18} color="#4D9FFF" />,
       enabled: true,
     },
     {
       id: '3',
       title: 'Transaction Alerts',
       description: 'Real-time payment notifications',
-      icon: <CreditCard size={20} color="#10B981" />,
+      icon: <CreditCard size={18} color="#10B981" />,
       enabled: true,
     },
     {
       id: '4',
       title: 'SMS Alerts',
       description: 'Get text message updates',
-      icon: <Smartphone size={20} color="#A78BFA" />,
+      icon: <Smartphone size={18} color="#A78BFA" />,
       enabled: false,
     },
   ]);
@@ -61,27 +62,19 @@ export default function NotificationSettingsScreen() {
   return (
     <ScrollView 
       style={[styles.container, isDark && styles.containerDark]}
+      contentContainerStyle={{ paddingTop: insets.top, paddingBottom: insets.bottom + 20 }}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.header}>
-        <TouchableOpacity 
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
-        </TouchableOpacity>
-        <Text style={[styles.title, isDark && styles.titleDark]}>Notifications</Text>
-      </View>
+      <ScreenHeader title="Notification settings" />
 
       <View style={styles.content}>
         <Animated.View 
-          entering={FadeInDown.delay(100).duration(400)}
+          entering={FadeInDown.duration(200)}
           style={[styles.list, isDark && styles.listDark]}
         >
           {settings.map((setting, index) => (
-            <Animated.View
+            <View
               key={setting.id}
-              entering={FadeInDown.delay(index * 100).duration(400)}
               style={[
                 styles.listItem,
                 isDark && styles.listItemDark,
@@ -99,25 +92,26 @@ export default function NotificationSettingsScreen() {
                   </Text>
                 </View>
                 <Switch
+                  accessibilityLabel={setting.title}
                   value={setting.enabled}
                   onValueChange={() => toggleSetting(setting.id)}
                   trackColor={{ false: '#767577', true: setting.id === '1' ? '#FFD700' : setting.id === '2' ? '#4D9FFF' : setting.id === '3' ? '#10B981' : '#A78BFA' }}
-                  thumbColor={isDark ? '#FFFFFF' : '#FFFFFF'}
+                  thumbColor="#FFFFFF"
                 />
               </View>
-            </Animated.View>
+            </View>
           ))}
         </Animated.View>
 
         <Animated.View 
-          entering={FadeInDown.delay(200).duration(400)}
+          entering={FadeInDown.duration(200)}
           style={[styles.infoCard, isDark && styles.infoCardDark]}
         >
           <Text style={[styles.infoTitle, isDark && styles.infoTitleDark]}>
-            About Notifications
+            Demo preferences
           </Text>
           <Text style={[styles.infoText, isDark && styles.infoTextDark]}>
-            Stay informed about your account activity, transactions, and important updates. You can customize your notification preferences anytime.
+            These switches preview your choices on this screen. Open the notification inbox to view incoming alerts.
           </Text>
         </Animated.View>
       </View>
@@ -133,30 +127,9 @@ const styles = StyleSheet.create({
   containerDark: {
     backgroundColor: '#121212',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    paddingTop: 40,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
-  },
-  title: {
-    fontSize: 24,
-    fontFamily: 'Inter-Bold',
-    color: '#2C2C2C',
-  },
-  titleDark: {
-    color: '#FFFFFF',
-  },
   content: {
-    padding: 20,
-    gap: 24,
+    paddingHorizontal: 20,
+    gap: 14,
   },
   list: {
     backgroundColor: '#FFFFFF',
@@ -174,7 +147,7 @@ const styles = StyleSheet.create({
   listItem: {
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
-    padding: 16,
+    padding: 13,
   },
   listItemDark: {
     borderBottomColor: '#2E2E2E',
@@ -191,7 +164,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   itemTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-Medium',
     color: '#2C2C2C',
     marginBottom: 2,
@@ -200,7 +173,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   itemDescription: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Inter-Regular',
     color: '#6B6B6B',
   },
@@ -210,25 +183,25 @@ const styles = StyleSheet.create({
   infoCard: {
     backgroundColor: '#F0F9FF',
     borderRadius: 16,
-    padding: 20,
+    padding: 14,
   },
   infoCardDark: {
     backgroundColor: '#1A2234',
   },
   infoTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-SemiBold',
     color: '#2C2C2C',
-    marginBottom: 12,
+    marginBottom: 6,
   },
   infoTitleDark: {
     color: '#FFFFFF',
   },
   infoText: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Inter-Regular',
     color: '#6B6B6B',
-    lineHeight: 24,
+    lineHeight: 20,
   },
   infoTextDark: {
     color: '#A6A6A6',

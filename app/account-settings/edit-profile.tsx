@@ -1,312 +1,133 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, Alert } from 'react-native';
+﻿import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, useColorScheme, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { FormInput } from '@/components/common/FormInput';
 import { Button } from '@/components/common/Button';
+import { FormInput } from '@/components/common/FormInput';
+import { ScreenHeader } from '@/components/common/ScreenHeader';
 import { getCurrentUserProfile, updateUserProfile } from '@/supabase/auth';
-import { User } from '@/supabase/client';
+import type { User } from '@/supabase/client';
 import { validateName, validatePhone } from '@/utils/validation';
+
+const emptyForm = { full_name: '', contact_number: '' };
 
 export default function EditProfileScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-
+  const insets = useSafeAreaInsets();
+  const dark = useColorScheme() === 'dark';
+  const [profile, setProfile] = useState<User | null>(null);
+  const [form, setForm] = useState(emptyForm);
+  const [errors, setErrors] = useState(emptyForm);
   const [error, setError] = useState<string | null>(null);
-  const [profileData, setProfileData] = useState<User | null>(null);
-  const [formData, setFormData] = useState({
-    full_name: '',
-    contact_number: '',
-  });
-  const [errors, setErrors] = useState({
-    full_name: '',
-    contact_number: '',
-  });
+  const [saving, setSaving] = useState(false);
+  const submitting = useRef(false);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const profile = await getCurrentUserProfile();
-        if (profile) {
-          setProfileData(profile);
-          setFormData({
-            full_name: profile.full_name,
-            contact_number: profile.contact_number,
-          });
-        }
-      } catch (err: any) {
-        console.error('Error fetching profile:', err);
-        setError('Failed to load profile data.');
-      }
-    };
-
-    fetchProfile();
+  const loadProfile = useCallback(async () => {
+    setError(null);
+    try {
+      const currentProfile = await getCurrentUserProfile();
+      if (!currentProfile) throw new Error('Profile unavailable.');
+      setProfile(currentProfile);
+      setForm({ full_name: currentProfile.full_name, contact_number: currentProfile.contact_number });
+    } catch {
+      setError('We couldn’t load your profile. Please try again.');
+    }
   }, []);
 
-  const validateForm = (): boolean => {
-    const newErrors = {
-      full_name: '',
-      contact_number: '',
+  useEffect(() => { void loadProfile(); }, [loadProfile]);
+
+  const fullName = form.full_name.trim();
+  const phone = form.contact_number.trim();
+  const changed = !!profile && (fullName !== profile.full_name || phone !== profile.contact_number);
+
+  const changeField = (field: keyof typeof emptyForm, value: string) => {
+    setForm(previous => ({ ...previous, [field]: value }));
+    setErrors(previous => ({ ...previous, [field]: '' }));
+    setError(null);
+  };
+
+  const saveProfile = async () => {
+    if (!changed || submitting.current) return;
+    const nextErrors = {
+      full_name: validateName(fullName) ? '' : 'Enter a valid full name.',
+      contact_number: validatePhone(phone) ? '' : 'Enter a valid Bangladesh phone number.',
     };
+    setErrors(nextErrors);
+    if (nextErrors.full_name || nextErrors.contact_number) return;
 
-    if (!validateName(formData.full_name)) {
-      newErrors.full_name = 'Please enter a valid full name (letters and spaces only)';
-    }
-
-    if (!validatePhone(formData.contact_number)) {
-      newErrors.contact_number = 'Please enter a valid Bangladesh phone number';
-    }
-
-    setErrors(newErrors);
-    return !newErrors.full_name && !newErrors.contact_number;
-  };
-
-  const handleSave = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    // Check if any changes were made
-    if (
-      formData.full_name === profileData?.full_name &&
-      formData.contact_number === profileData?.contact_number
-    ) {
-      Alert.alert('No Changes', 'No changes were made to save.');
-      return;
-    }
-
+    submitting.current = true;
+    setSaving(true);
+    setError(null);
     try {
-      await updateUserProfile({
-        full_name: formData.full_name,
-        contact_number: formData.contact_number,
-      });
-      Alert.alert('Success', 'Profile updated successfully!', [
-        { text: 'OK', onPress: () => router.back() }
-      ]);
-    } catch (err: any) {
-      console.error('Error updating profile:', err);
-      Alert.alert('Error', err.message || 'Failed to update profile.');
+      await updateUserProfile({ full_name: fullName, contact_number: phone });
+      Alert.alert('Profile updated', 'Your changes have been saved.', [
+        { text: 'OK', onPress: () => router.canGoBack() ? router.back() : router.replace('/profile') },
+      ], { cancelable: false });
+    } catch {
+      setError('We couldn’t save your changes. Please try again.');
+    } finally {
+      submitting.current = false;
+      setSaving(false);
     }
   };
-
-  const handleInputChange = (field: keyof typeof formData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
-  };
-
-  if (error) {
-    return (
-      <View style={[styles.container, styles.errorContainer, isDark && styles.containerDark]}>
-        <Text style={[styles.errorText, isDark && styles.errorTextDark]}>{error}</Text>
-        <Button title="Go Back" onPress={() => router.back()} />
-      </View>
-    );
-  }
 
   return (
-    <ScrollView
-      style={[styles.container, isDark && styles.containerDark]}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
-        </TouchableOpacity>
-        <Text style={[styles.title, isDark && styles.titleDark]}>Edit Profile</Text>
-      </View>
-
-      <Animated.View
-        entering={FadeInDown.delay(100).duration(400)}
-        style={styles.content}
+    <KeyboardAvoidingView style={[styles.screen, dark && styles.screenDark]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ paddingTop: insets.top, paddingBottom: insets.bottom + 20 }}
       >
-        <View style={[styles.profileCard, isDark && styles.profileCardDark]}>
-          {/* Editable Fields */}
-          <View style={[styles.editableSection, isDark && styles.editableSectionDark]}>
-            <FormInput
-              label="Full Name"
-              value={formData.full_name}
-              onChangeText={(text) => handleInputChange('full_name', text)}
-              placeholder="Enter your full name"
-              error={errors.full_name}
-              style={styles.formInput}
-            />
-            
-            <FormInput
-              label="Contact Number"
-              value={formData.contact_number}
-              onChangeText={(text) => handleInputChange('contact_number', text)}
-              placeholder="Enter your contact number"
-              keyboardType="phone-pad"
-              error={errors.contact_number}
-              style={styles.formInput}
-            />
-          </View>
+        <ScreenHeader title="Edit profile" />
+        <View style={styles.content}>
+          {error && <Text accessibilityRole="alert" style={[styles.error, dark && styles.errorDark]}>{error}</Text>}
+          {!profile ? (
+            error ? <Button title="Try again" onPress={loadProfile} /> : <ActivityIndicator accessibilityLabel="Loading profile" color="#B68A00" />
+          ) : (
+            <>
+              <View style={[styles.card, dark && styles.cardDark]}>
+                <Text style={[styles.heading, dark && styles.textDark]}>Personal details</Text>
+                <FormInput label="Full name" value={form.full_name} onChangeText={text => changeField('full_name', text)}
+                  placeholder="Enter your full name" autoCapitalize="words" error={errors.full_name} disabled={saving} />
+                <FormInput label="Contact number" value={form.contact_number} onChangeText={text => changeField('contact_number', text)}
+                  placeholder="Enter your contact number" keyboardType="phone-pad" error={errors.contact_number} disabled={saving} />
+              </View>
 
-          {/* Divider */}
-          <View style={[styles.divider, isDark && styles.dividerDark]} />
+              <View style={[styles.card, dark && styles.cardDark]}>
+                <Text style={[styles.heading, dark && styles.textDark]}>University account</Text>
+                {[
+                  ['Student ID', profile.student_id],
+                  ['University email', profile.student_id + '@eastdelta.edu.bd'],
+                  ['Username', profile.username],
+                ].map(([label, value]) => (
+                  <View style={styles.detail} key={label}>
+                    <Text style={[styles.label, dark && styles.labelDark]}>{label}</Text>
+                    <Text selectable style={[styles.value, dark && styles.textDark]}>{value}</Text>
+                  </View>
+                ))}
+              </View>
 
-          {/* Read-Only Fields */}
-          <View style={styles.readOnlySection}>
-            <View style={[styles.readOnlyField, isDark && styles.readOnlyFieldDark]}>
-              <Text style={[styles.fieldLabel, isDark && styles.fieldLabelDark]}>Student ID</Text>
-              <Text style={[styles.fieldValue, isDark && styles.fieldValueDark]}>
-                {profileData?.student_id}
-              </Text>
-            </View>
-            
-            <View style={[styles.readOnlyField, isDark && styles.readOnlyFieldDark]}>
-              <Text style={[styles.fieldLabel, isDark && styles.fieldLabelDark]}>University Email</Text>
-              <Text style={[styles.fieldValue, isDark && styles.fieldValueDark]}>
-                {profileData?.student_id}@eastdelta.edu.bd
-              </Text>
-            </View>
-            
-            <View style={[styles.readOnlyField, isDark && styles.readOnlyFieldDark]}>
-              <Text style={[styles.fieldLabel, isDark && styles.fieldLabelDark]}>Username</Text>
-              <Text style={[styles.fieldValue, isDark && styles.fieldValueDark]}>
-                {profileData?.username}
-              </Text>
-            </View>
-          </View>
+              <Button title="Save changes" onPress={saveProfile} disabled={!changed} loading={saving} variant="secondary" />
+            </>
+          )}
         </View>
-
-        <Button
-          title='Save Changes'
-          onPress={handleSave}
-          style={styles.saveButton}
-          variant="secondary"
-        />
-      </Animated.View>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
-  containerDark: {
-    backgroundColor: '#121212',
-  },
-  errorContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  errorText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#FF4D4F',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  errorTextDark: {
-    color: '#FF7875',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    paddingTop: 40,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
-  },
-  title: {
-    fontSize: 24,
-    fontFamily: 'Inter-Bold',
-    color: '#2C2C2C',
-  },
-  titleDark: {
-    color: '#FFFFFF',
-  },
-  content: {
-    padding: 20,
-    gap: 24,
-  },
-  profileCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  profileCardDark: {
-    backgroundColor: '#1E1E1E',
-  },
-  editableSection: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  editableSectionDark: {
-    backgroundColor: '#2A2A2A',
-    borderColor: '#374151',
-  },
-  formInput: {
-    marginBottom: 16,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#E5E7EB',
-    marginVertical: 20,
-  },
-  dividerDark: {
-    backgroundColor: '#374151',
-  },
-  readOnlySection: {
-    gap: 16,
-  },
-  readOnlyField: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  readOnlyFieldDark: {
-    backgroundColor: '#2A2A2A',
-    borderColor: '#374151',
-  },
-  fieldLabel: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#6B7280',
-    marginBottom: 4,
-  },
-  fieldLabelDark: {
-    color: '#9CA3AF',
-  },
-  fieldValue: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: '#2C2C2C',
-  },
-  fieldValueDark: {
-    color: '#FFFFFF',
-  },
-  saveButton: {
-    marginTop: 16,
-    marginBottom: 20,
-  },
+  screen: { flex: 1, backgroundColor: '#F9FAFB' },
+  screenDark: { backgroundColor: '#121212' },
+  content: { paddingHorizontal: 20, gap: 14 },
+  card: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 14, gap: 8 },
+  cardDark: { backgroundColor: '#1E1E1E' },
+  heading: { fontSize: 15, fontFamily: 'Inter-SemiBold', color: '#252525', marginBottom: 4 },
+  textDark: { color: '#F7F7F7' },
+  detail: { paddingVertical: 5, gap: 3 },
+  label: { fontSize: 12, color: '#5A626E', fontFamily: 'Inter-Medium' },
+  labelDark: { color: '#ABABAB' },
+  value: { fontSize: 14, fontFamily: 'Inter-Regular', color: '#252525' },
+  error: { fontSize: 13, color: '#A52C2C', fontFamily: 'Inter-Medium' },
+  errorDark: { color: '#FF9B9B' },
 });

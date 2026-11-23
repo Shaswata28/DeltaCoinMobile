@@ -1,11 +1,12 @@
+import { ScreenHeader } from '@/components/common/ScreenHeader';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, useColorScheme } from 'react-native';
-import { useRouter } from 'expo-router';
-import { ArrowLeft, Fingerprint, Shield, Smartphone, Key } from 'lucide-react-native';
+import { ChevronRight, Fingerprint, Shield, Smartphone, Key } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 export default function SecuritySettingsScreen() {
-  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -15,26 +16,19 @@ export default function SecuritySettingsScreen() {
   return (
     <ScrollView 
       style={[styles.container, isDark && styles.containerDark]}
+      contentContainerStyle={{ paddingTop: insets.top, paddingBottom: insets.bottom + 20 }}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.header}>
-        <TouchableOpacity 
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
-        </TouchableOpacity>
-        <Text style={[styles.title, isDark && styles.titleDark]}>Security Settings</Text>
-      </View>
+      <ScreenHeader title="Security settings" />
 
       <View style={styles.content}>
         <Animated.View 
-          entering={FadeInDown.delay(100).duration(400)}
+          entering={FadeInDown.duration(200)}
           style={[styles.list, isDark && styles.listDark]}
         >
           <TouchableOpacity style={[styles.listItem, isDark && styles.listItemDark]}>
             <View style={styles.itemContent}>
-              <Key size={20} color="#FFD700" />
+              <Key size={18} color="#FFD700" />
               <View style={styles.itemText}>
                 <Text style={[styles.itemTitle, isDark && styles.itemTitleDark]}>
                   Change Password
@@ -43,13 +37,13 @@ export default function SecuritySettingsScreen() {
                   Update your account password
                 </Text>
               </View>
-              <ArrowLeft size={20} color={isDark ? '#A6A6A6' : '#6B6B6B'} style={{ transform: [{ rotate: '180deg' }] }} />
+              <ChevronRight size={17} color={isDark ? '#A6A6A6' : '#6B6B6B'} />
             </View>
           </TouchableOpacity>
 
           <View style={[styles.listItem, isDark && styles.listItemDark]}>
             <View style={styles.itemContent}>
-              <Fingerprint size={20} color="#4D9FFF" />
+              <Fingerprint size={18} color="#4D9FFF" />
               <View style={styles.itemText}>
                 <Text style={[styles.itemTitle, isDark && styles.itemTitleDark]}>
                   Biometric Login
@@ -69,7 +63,7 @@ export default function SecuritySettingsScreen() {
 
           <View style={[styles.listItem, isDark && styles.listItemDark]}>
             <View style={styles.itemContent}>
-              <Smartphone size={20} color="#10B981" />
+              <Smartphone size={18} color="#10B981" />
               <View style={styles.itemText}>
                 <Text style={[styles.itemTitle, isDark && styles.itemTitleDark]}>
                   Two-Factor Authentication
@@ -89,7 +83,7 @@ export default function SecuritySettingsScreen() {
         </Animated.View>
 
         <Animated.View 
-          entering={FadeInDown.delay(200).duration(400)}
+          entering={FadeInDown.duration(200)}
           style={[styles.infoCard, isDark && styles.infoCardDark]}
         >
           <Text style={[styles.infoTitle, isDark && styles.infoTitleDark]}>
@@ -115,30 +109,9 @@ const styles = StyleSheet.create({
   containerDark: {
     backgroundColor: '#121212',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    paddingTop: 40,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
-  },
-  title: {
-    fontSize: 24,
-    fontFamily: 'Inter-Bold',
-    color: '#2C2C2C',
-  },
-  titleDark: {
-    color: '#FFFFFF',
-  },
   content: {
-    padding: 20,
-    gap: 24,
+    paddingHorizontal: 20,
+    gap: 16,
   },
   list: {
     backgroundColor: '#FFFFFF',
@@ -156,7 +129,7 @@ const styles = StyleSheet.create({
   listItem: {
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
-    padding: 16,
+    padding: 13,
   },
   listItemDark: {
     borderBottomColor: '#2E2E2E',
@@ -170,7 +143,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   itemTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-Medium',
     color: '#2C2C2C',
     marginBottom: 2,
@@ -179,7 +152,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   itemDescription: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Inter-Regular',
     color: '#6B6B6B',
   },
@@ -189,13 +162,13 @@ const styles = StyleSheet.create({
   infoCard: {
     backgroundColor: '#F0F9FF',
     borderRadius: 16,
-    padding: 20,
+    padding: 14,
   },
   infoCardDark: {
     backgroundColor: '#1A2234',
   },
   infoTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-SemiBold',
     color: '#2C2C2C',
     marginBottom: 12,
@@ -204,10 +177,10 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   infoText: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Inter-Regular',
     color: '#6B6B6B',
-    lineHeight: 24,
+    lineHeight: 21,
   },
   infoTextDark: {
     color: '#A6A6A6',

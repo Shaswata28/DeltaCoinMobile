@@ -1,5 +1,3 @@
-import 'dotenv/config';
-
 export default {
   expo: {
     name: "Delta Coin",
@@ -9,7 +7,6 @@ export default {
     icon: "./assets/images/icon.png",
     scheme: "myapp",
     userInterfaceStyle: "automatic",
-    newArchEnabled: true,
     owner:'Arnob28',
     ios: {
       supportsTablet: true,
@@ -44,4 +41,4 @@ export default {
       supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     }
   }
-}; 
+};

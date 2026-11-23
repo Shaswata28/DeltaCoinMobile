@@ -150,7 +150,7 @@ export default function SignupScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Animated.View 
-            entering={FadeInDown.duration(300)}
+            entering={FadeInDown.duration(200)}
             style={styles.stepContainer}
           >
             {renderStep()}

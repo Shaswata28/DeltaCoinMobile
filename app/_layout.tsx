@@ -41,6 +41,8 @@ function RootLayoutNav() {
       <Stack.Screen name="signup" />
       <Stack.Screen name="forgot-password" />
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="profile" />
+      <Stack.Screen name="notifications" />
       <Stack.Screen name="account-settings" />
       <Stack.Screen name="settings" />
       <Stack.Screen name="money-transfer" />

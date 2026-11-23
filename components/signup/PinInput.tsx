@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { View, TextInput, StyleSheet, useColorScheme } from 'react-native';
+import type { TextInputInstance } from 'react-native';
 
 interface PinInputProps {
   value: string;
@@ -16,7 +17,7 @@ export const PinInput: React.FC<PinInputProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
 
   useEffect(() => {
     if (!disabled) {
@@ -80,4 +81,4 @@ const styles = StyleSheet.create({
     position: 'absolute',
     opacity: 0,
   },
-}); 
+});

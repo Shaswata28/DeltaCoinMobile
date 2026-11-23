@@ -1,15 +1,14 @@
+import { ScreenHeader } from '@/components/common/ScreenHeader';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, Linking, Dimensions } from 'react-native';
-import { useRouter } from 'expo-router';
-import { ArrowLeft, Info, Mail, Globe, Copyright, Shield, Zap, Users, CreditCard, Award, Heart } from 'lucide-react-native';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, Linking } from 'react-native';
+import { ArrowUpRight, Github, Info, Mail, Globe, Shield, Zap, Users, CreditCard, Award, Heart } from 'lucide-react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { AppLogo } from '../components/auth/AppLogo';
 
 
-const { width: screenWidth } = Dimensions.get('window');
-
 export default function AboutScreen() {
-  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -23,32 +22,32 @@ export default function AboutScreen() {
 
   const features = [
     {
-      icon: <Shield size={24} color="#4D9FFF" />,
+      icon: <Shield size={19} color="#4D9FFF" />,
       title: 'Secure Transactions',
       description: 'Bank-level security with encrypted payments and PIN protection'
     },
     {
-      icon: <Zap size={24} color="#10B981" />,
+      icon: <Zap size={19} color="#10B981" />,
       title: 'Instant Payments',
       description: 'Lightning-fast transactions across campus facilities'
     },
     {
-      icon: <Users size={24} color="#A78BFA" />,
+      icon: <Users size={19} color="#A78BFA" />,
       title: 'Social Features',
       description: 'Send money to friends and manage group expenses easily'
     },
     {
-      icon: <CreditCard size={24} color="#F59E0B" />,
+      icon: <CreditCard size={19} color="#F59E0B" />,
       title: 'Multiple Top-up Options',
       description: 'Add funds via bank transfer, cards, or mobile banking'
     },
     {
-      icon: <Award size={24} color="#EF4444" />,
+      icon: <Award size={19} color="#EF4444" />,
       title: 'Smart Analytics',
       description: 'Track spending patterns and manage budgets effectively'
     },
     {
-      icon: <Heart size={24} color="#EC4899" />,
+      icon: <Heart size={19} color="#EC4899" />,
       title: 'Student-Centric',
       description: 'Designed specifically for university life and needs'
     }
@@ -57,26 +56,14 @@ export default function AboutScreen() {
   return (
     <ScrollView 
       style={[styles.container, isDark && styles.containerDark]}
+      contentContainerStyle={{ paddingTop: insets.top, paddingBottom: insets.bottom + 20 }}
       showsVerticalScrollIndicator={false}
     >
-      {/* Header */}
-      <Animated.View 
-        entering={FadeInUp.duration(600)}
-        style={styles.header}
-      >
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, isDark && styles.headerTitleDark]}>About</Text>
-        <View style={styles.headerSpacer} />
-      </Animated.View>
+      <ScreenHeader title="About" />
 
       {/* App Logo and Version */}
       <Animated.View 
-        entering={FadeInDown.delay(200).duration(600)}
+        entering={FadeInDown.duration(200)}
         style={styles.logoSection}
       >
         <AppLogo />
@@ -92,17 +79,17 @@ export default function AboutScreen() {
 
       {/* Description */}
       <Animated.View 
-        entering={FadeInDown.delay(600).duration(600)}
+        entering={FadeInDown.duration(200)}
         style={[styles.section, isDark && styles.sectionDark]}
       >
         <View style={styles.sectionHeader}>
-          <Info size={20} color="#FFD700" />
+          <Info size={18} color="#FFD700" />
           <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>
             About Delta Coin
           </Text>
         </View>
         <Text style={[styles.description, isDark && styles.descriptionDark]}>
-          Delta Coin is the official digital payment solution for East Delta University students. 
+          Delta Coin is a student project that demonstrates a digital campus wallet for East Delta University.
           Designed to simplify campus life, our app enables seamless transactions across all 
           university facilities including canteens, libraries, labs, and student clubs.
         </Text>
@@ -115,28 +102,25 @@ export default function AboutScreen() {
 
       {/* Key Features */}
       <Animated.View 
-        entering={FadeInDown.delay(800).duration(600)}
+        entering={FadeInDown.duration(200)}
         style={[styles.section, isDark && styles.sectionDark]}
       >
         <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>
           Key Features
         </Text>
         <View style={styles.featuresGrid}>
-          {features.map((feature, index) => (
+          {features.map((feature) => (
             <Animated.View
-              key={index}
-              entering={FadeInDown.delay(1000 + index * 100).duration(400)}
+              key={feature.title}
               style={[styles.featureCard, isDark && styles.featureCardDark]}
             >
               <View style={styles.featureIcon}>
                 {feature.icon}
               </View>
-              <Text style={[styles.featureTitle, isDark && styles.featureTitleDark]}>
-                {feature.title}
-              </Text>
-              <Text style={[styles.featureDescription, isDark && styles.featureDescriptionDark]}>
-                {feature.description}
-              </Text>
+              <View style={styles.featureContent}>
+                <Text style={[styles.featureTitle, isDark && styles.featureTitleDark]}>{feature.title}</Text>
+                <Text style={[styles.featureDescription, isDark && styles.featureDescriptionDark]}>{feature.description}</Text>
+              </View>
             </Animated.View>
           ))}
         </View>
@@ -144,7 +128,7 @@ export default function AboutScreen() {
 
       {/* University Information */}
       <Animated.View 
-        entering={FadeInDown.delay(1400).duration(600)}
+        entering={FadeInDown.duration(200)}
         style={[styles.section, isDark && styles.sectionDark]}
       >
         <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>
@@ -159,7 +143,7 @@ export default function AboutScreen() {
           style={[styles.linkButton, isDark && styles.linkButtonDark]}
           onPress={handleWebsiteVisit}
         >
-          <Globe size={20} color="#4D9FFF" />
+          <Globe size={18} color="#4D9FFF" />
           <Text style={[styles.linkText, isDark && styles.linkTextDark]}>
             Visit University Website
           </Text>
@@ -168,7 +152,7 @@ export default function AboutScreen() {
 
       {/* Contact & Support */}
       <Animated.View 
-        entering={FadeInDown.delay(1600).duration(600)}
+        entering={FadeInDown.duration(200)}
         style={[styles.section, isDark && styles.sectionDark]}
       >
         <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>
@@ -184,7 +168,7 @@ export default function AboutScreen() {
             style={[styles.contactButton, isDark && styles.contactButtonDark]}
             onPress={handleEmailContact}
           >
-            <Mail size={20} color="#10B981" />
+            <Mail size={18} color="#10B981" />
             <View style={styles.contactInfo}>
               <Text style={[styles.contactTitle, isDark && styles.contactTitleDark]}>
                 Email Support
@@ -196,7 +180,7 @@ export default function AboutScreen() {
           </TouchableOpacity>
 
           <View style={[styles.contactButton, isDark && styles.contactButtonDark]}>
-            <Info size={20} color="#F59E0B" />
+            <Info size={18} color="#F59E0B" />
             <View style={styles.contactInfo}>
               <Text style={[styles.contactTitle, isDark && styles.contactTitleDark]}>
                 Office Hours
@@ -211,7 +195,7 @@ export default function AboutScreen() {
 
       {/* Legal & Privacy */}
       <Animated.View 
-        entering={FadeInDown.delay(1800).duration(600)}
+        entering={FadeInDown.duration(200)}
         style={[styles.section, isDark && styles.sectionDark]}
       >
         <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>
@@ -227,21 +211,22 @@ export default function AboutScreen() {
         </Text>
       </Animated.View>
 
-      {/* Footer */}
-      <Animated.View 
-        entering={FadeInDown.delay(2000).duration(600)}
-        style={styles.footer}
-      >
-        <View style={styles.footerContent}>
-          <Copyright size={16} color={isDark ? '#A6A6A6' : '#6B7280'} />
-          <Text style={[styles.footerText, isDark && styles.footerTextDark]}>
-            2025 East Delta University. All rights reserved.
-          </Text>
-        </View>
-        <Text style={[styles.footerSubtext, isDark && styles.footerSubtextDark]}>
-          Made with ❤️ for EDU students
-        </Text>
-      </Animated.View>
+      <View style={[styles.section, isDark && styles.sectionDark]}>
+        <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>Contribution</Text>
+        <TouchableOpacity
+          accessibilityRole="link"
+          accessibilityLabel="Open Shaswata28 on GitHub"
+          style={[styles.contactButton, isDark && styles.contactButtonDark]}
+          onPress={() => Linking.openURL('https://github.com/Shaswata28')}
+        >
+          <Github size={19} color={isDark ? '#FFD700' : '#725400'} />
+          <View style={styles.contactInfo}>
+            <Text style={[styles.contactTitle, isDark && styles.contactTitleDark]}>@Shaswata28</Text>
+            <Text style={[styles.contactDetail, isDark && styles.contactDetailDark]}>GitHub</Text>
+          </View>
+          <ArrowUpRight size={16} color={isDark ? '#A6A6A6' : '#6B7280'} />
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
@@ -254,51 +239,26 @@ const styles = StyleSheet.create({
   containerDark: {
     backgroundColor: '#121212',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 40,
-    paddingBottom: 20,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontFamily: 'Inter-Bold',
-    color: '#2C2C2C',
-  },
-  headerTitleDark: {
-    color: '#FFFFFF',
-  },
-  headerSpacer: {
-    width: 40,
-  },
   logoSection: {
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingTop: 6,
+    paddingBottom: 18,
     paddingHorizontal: 20,
   },
   appVersion: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-Medium',
     color: '#6B7280',
-    marginTop: 16,
+    marginTop: 6,
   },
   appVersionDark: {
     color: '#A6A6A6',
   },
   appTagline: {
-    fontSize: 18,
+    fontSize: 15,
     fontFamily: 'Inter-SemiBold',
     color: '#4D9FFF',
-    marginTop: 8,
+    marginTop: 4,
     textAlign: 'center',
   },
   appTaglineDark: {
@@ -307,9 +267,9 @@ const styles = StyleSheet.create({
   section: {
     backgroundColor: '#FFFFFF',
     marginHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 12,
     borderRadius: 16,
-    padding: 20,
+    padding: 15,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -322,35 +282,37 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
     gap: 8,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 17,
     fontFamily: 'Inter-Bold',
     color: '#2C2C2C',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   sectionTitleDark: {
     color: '#FFFFFF',
   },
   description: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-Regular',
     color: '#4B5563',
-    lineHeight: 24,
-    marginBottom: 16,
+    lineHeight: 21,
+    marginBottom: 10,
   },
   descriptionDark: {
     color: '#D1D5DB',
   },
   featuresGrid: {
-    gap: 16,
+    gap: 8,
   },
   featureCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
     backgroundColor: '#F9FAFB',
     borderRadius: 12,
-    padding: 16,
+    padding: 10,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
@@ -358,14 +320,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#2E2E2E',
     borderColor: '#374151',
   },
-  featureIcon: {
-    marginBottom: 12,
-  },
+  featureIcon: { paddingTop: 2 },
+  featureContent: { flex: 1 },
   featureTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-SemiBold',
     color: '#2C2C2C',
-    marginBottom: 8,
+    marginBottom: 3,
   },
   featureTitleDark: {
     color: '#FFFFFF',
@@ -395,7 +356,7 @@ const styles = StyleSheet.create({
     borderColor: '#1E40AF',
   },
   linkText: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-Medium',
     color: '#4D9FFF',
   },
@@ -403,13 +364,13 @@ const styles = StyleSheet.create({
     color: '#82B1FF',
   },
   contactOptions: {
-    gap: 16,
+    gap: 8,
   },
   contactButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingVertical: 16,
+    paddingVertical: 11,
     paddingHorizontal: 16,
     backgroundColor: '#F9FAFB',
     borderRadius: 12,
@@ -424,7 +385,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contactTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-SemiBold',
     color: '#2C2C2C',
     marginBottom: 4,
@@ -439,34 +400,5 @@ const styles = StyleSheet.create({
   },
   contactDetailDark: {
     color: '#A6A6A6',
-  },
-  footer: {
-    alignItems: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  footerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  footerText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-  },
-  footerTextDark: {
-    color: '#A6A6A6',
-  },
-  footerSubtext: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: '#9CA3AF',
-    textAlign: 'center',
-  },
-  footerSubtextDark: {
-    color: '#6B7280',
   },
 });

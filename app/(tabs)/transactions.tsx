@@ -1,8 +1,10 @@
-import { useState, useRef } from 'react';
+import { SegmentedTabs } from '@/components/common/SegmentedTabs';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useColorScheme, useWindowDimensions, Modal, TextInput, Alert } from 'react-native';
 import { Building2, CreditCard, Smartphone, Book, Coffee, Beaker, Handshake, ArrowLeft, MoveHorizontal as MoreHorizontal, X, Check, Scan } from 'lucide-react-native';
 import Animated, { 
-  FadeInDown,
+  FadeInDown, ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -84,9 +86,10 @@ export default function TransactionsScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { width: windowWidth } = useWindowDimensions();
-  const scrollRef = useRef<ScrollView>(null);
   
-  const [activeTab, setActiveTab] = useState<'topup' | 'payment'>('topup');
+  const router = useRouter();
+  const { mode } = useLocalSearchParams<{ mode?: 'topup' | 'payment' }>();
+  const [activeTab, setActiveTab] = useState<'topup' | 'payment'>(mode === 'payment' ? 'payment' : 'topup');
   const [step, setStep] = useState<'selection' | 'amount' | 'summary' | 'club' | 'pin' | 'stripe' | 'success' | 'error'>('selection');
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails>({
     amount: '',
@@ -94,7 +97,17 @@ export default function TransactionsScreen() {
   const [pinModalVisible, setPinModalVisible] = useState(false);
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState(false);
+  const pending = useRef(false);
+  const [processing, setProcessing] = useState(false);
   const [showQrScanner, setShowQrScanner] = useState(false);
+
+  useFocusEffect(useCallback(() => {
+    if (mode === 'topup' || mode === 'payment') {
+      setActiveTab(mode);
+      setStep('selection');
+      setPaymentDetails({ amount: '' });
+    }
+  }, [mode]));
 
   const handleMethodSelect = (method: PaymentMethod) => {
     setPaymentDetails(prev => ({ ...prev, method }));
@@ -122,6 +135,7 @@ export default function TransactionsScreen() {
   };
 
   const handleBack = () => {
+    if (pending.current) return;
     switch (step) {
       case 'stripe':
         setStep('summary');
@@ -189,6 +203,29 @@ export default function TransactionsScreen() {
     setShowQrScanner(false);
   };
 
+  const submitPayment = async (action: () => Promise<void>, pinToCheck?: string) => {
+    if (pending.current) return;
+    pending.current = true;
+    setProcessing(true);
+    try {
+      if (pinToCheck !== undefined) {
+        if (!(await verifyPin(pinToCheck))) {
+          setPinError(true);
+          setPin('');
+          return;
+        }
+        setPinModalVisible(false);
+      }
+      await action();
+      setStep('success');
+    } catch {
+      setStep('error');
+    } finally {
+      pending.current = false;
+      setProcessing(false);
+    }
+  };
+
   const handleConfirmPayment = async () => {
     if (activeTab === 'payment') {
       // Show PIN modal for payment
@@ -200,26 +237,16 @@ export default function TransactionsScreen() {
       if (paymentDetails.method === 'card') {
         setStep('stripe');
       } else {
-        try {
-          await processTopup(paymentDetails);
-          setStep('success');
-        } catch (error) {
-          setStep('error');
-        }
+        await submitPayment(() => processTopup(paymentDetails));
       }
     }
   };
 
-  const handleStripeSuccess = async (paymentIntentId: string) => {
-    try {
-      await processTopup(paymentDetails, paymentIntentId);
-      setStep('success');
-    } catch (error) {
-      setStep('error');
-    }
-  };
+  const handleStripeSuccess = (paymentIntentId: string) =>
+    submitPayment(() => processTopup(paymentDetails, paymentIntentId));
 
   const handleStripeCancel = () => {
+    if (pending.current) return;
     setStep('summary');
   };
 
@@ -229,29 +256,11 @@ export default function TransactionsScreen() {
    
   };
   
-  const handlePinSubmit = async (pinToCheck?: string) => {
-    const pinValue = pinToCheck !== undefined ? pinToCheck : pin;
-    try {
-      const isValidPin = await verifyPin(pinValue);
-      if (isValidPin) {
-        setPinModalVisible(false);
-        try {
-          await processPayment(paymentDetails);
-          setStep('success');
-        } catch (error) {
-          setStep('error');
-        }
-      } else {
-        setPinError(true);
-        setPin('');
-      }
-    } catch (error) {
-      setPinError(true);
-      setPin('');
-    }
-  };
+  const handlePinSubmit = (pinToCheck: string) =>
+    submitPayment(() => processPayment(paymentDetails), pinToCheck);
 
   const handleClosePinModal = () => {
+    if (pending.current) return;
     setPinModalVisible(false);
     setPin('');
     setPinError(false);
@@ -265,113 +274,78 @@ export default function TransactionsScreen() {
 
   const renderTopUpMethods = () => (
     <Animated.View 
-      entering={FadeInDown.duration(300)} 
       style={styles.methodsContainer}
     >
-      <Animated.View entering={FadeInDown.delay(0).duration(400)}>
+      <Animated.View>
         <TouchableOpacity
           style={[styles.methodCard, isDark && styles.methodCardDark]}
           onPress={() => handleMethodSelect('bank')}
         >
-          <Building2 size={32} color={isDark ? '#FFD700' : '#FFB800'} />
-          <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Bank Transfer</Text>
+          <Building2 size={21} color={isDark ? '#FFD700' : '#FFB800'} />
+          <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Bank transfer</Text><Text style={[styles.methodSubtext, isDark && styles.methodSubtextDark]}>Demo</Text>
         </TouchableOpacity>
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(100).duration(400)}>
+      <Animated.View>
         <TouchableOpacity
           style={[styles.methodCard, isDark && styles.methodCardDark]}
           onPress={() => handleMethodSelect('card')}
         >
           <CreditCard size={32} color={isDark ? '#4D9FFF' : '#0066CC'} />
-          <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Credit/Debit Card</Text>
-          <Text style={[styles.methodSubtext, isDark && styles.methodSubtextDark]}>via Stripe</Text>
+          <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Credit or debit card</Text>
+          <Text style={[styles.methodSubtext, isDark && styles.methodSubtextDark]}>Stripe</Text>
         </TouchableOpacity>
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(200).duration(400)}>
+      <Animated.View>
         <TouchableOpacity
           style={[styles.methodCard, isDark && styles.methodCardDark]}
           onPress={() => handleMethodSelect('mobile')}
         >
           <Smartphone size={32} color={isDark ? '#10B981' : '#059669'} />
-          <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Mobile Banking</Text>
+          <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Mobile banking</Text><Text style={[styles.methodSubtext, isDark && styles.methodSubtextDark]}>Demo</Text>
         </TouchableOpacity>
       </Animated.View>
     </Animated.View>
   );
 
   const renderPaymentDestinations = () => (
-    <Animated.View 
-      entering={FadeInDown.duration(300)} 
-      style={styles.methodsContainer}
-    >
-      {/* QR Scan Option - At the top for Payment */}
-      
-        <TouchableOpacity
-          style={[styles.methodCard, isDark && styles.methodCardDark]}
-          onPress={() => setShowQrScanner(true)}
-        >
-          <Scan size={32} color={isDark ? '#FFD700' : '#F59E0B'} />
-          <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Scan QR Code</Text>
-        </TouchableOpacity>
-      
-
-      
-        <TouchableOpacity
-          style={[styles.methodCard, isDark && styles.methodCardDark]}
-          onPress={() => handleDestinationSelect('Canteen')}
-        >
-          <Coffee size={32} color={isDark ? '#4D9FFF' : '#0066CC'} />
-          <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Canteen</Text>
-        </TouchableOpacity>
-      
-
-      
-        <TouchableOpacity
-          style={[styles.methodCard, isDark && styles.methodCardDark]}
-          onPress={() => handleDestinationSelect('Library')}
-        >
-          <Book size={32} color={isDark ? '#FF6B6B' : '#DC2626'} />
-          <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Library</Text>
-        </TouchableOpacity>
-      
-
-      
-        <TouchableOpacity
-          style={[styles.methodCard, isDark && styles.methodCardDark]}
-          onPress={() => handleDestinationSelect('Lab')}
-        >
-          <Beaker size={32} color={isDark ? '#10B981' : '#059669'} />
-          <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Lab</Text>
-        </TouchableOpacity>
-      
-
-      
-        <TouchableOpacity
-          style={[styles.methodCard, isDark && styles.methodCardDark]}
-          onPress={() => handleDestinationSelect('Club')}
-        >
-          <Handshake size={32} color={isDark ? '#A78BFA' : '#7C3AED'} />
-          <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Club</Text>
-        </TouchableOpacity>
-      
-
-      
-        <TouchableOpacity
-          style={[styles.methodCard, isDark && styles.methodCardDark]}
-          onPress={() => handleDestinationSelect('Other')}
-        >
-          <MoreHorizontal size={32} color={isDark ? '#6B7280' : '#4B5563'} />
-          <Text style={[styles.methodText, isDark && styles.methodTextDark]}>Other</Text>
-        </TouchableOpacity>
-      
-    </Animated.View>
+    <View style={styles.methodsContainer}>
+      <TouchableOpacity
+        accessibilityRole="button"
+        onPress={() => setShowQrScanner(true)}
+        style={styles.scanCard}
+        activeOpacity={0.8}
+      >
+        <View style={styles.scanIcon}><Scan size={22} color="#6B5000" /></View>
+        <View style={styles.methodBody}>
+          <Text style={styles.scanTitle}>Scan QR code</Text>
+          <Text style={styles.scanCaption}>Use a DeltaCoin payment code</Text>
+        </View>
+      </TouchableOpacity>
+      <Text style={[styles.groupLabel, isDark && styles.methodSubtextDark]}>Pay by category</Text>
+      <View style={styles.destinationGrid}>
+        {([
+          ['Canteen', Coffee], ['Library', Book], ['Lab', Beaker],
+          ['Club', Handshake], ['Other', MoreHorizontal],
+        ] as const).map(([destination, Icon]) => (
+          <TouchableOpacity
+            key={destination}
+            accessibilityRole="button"
+            onPress={() => handleDestinationSelect(destination)}
+            style={[styles.destinationTile, isDark && styles.methodCardDark]}
+            activeOpacity={0.75}
+          >
+            <Icon size={20} color={isDark ? '#FFD700' : '#725400'} />
+            <Text style={[styles.methodText, isDark && styles.methodTextDark]}>{destination}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
   );
 
   const renderClubSelection = () => (
     <Animated.View 
-      entering={FadeInDown.duration(300)} 
       style={styles.clubContainer}
     >
       <View style={styles.headerRow}>
@@ -387,7 +361,7 @@ export default function TransactionsScreen() {
 
       <View style={styles.clubOptions}>
         {['Photography', 'Social', 'Computer', 'Sports', 'Women Empowerment','Film & Comedy'].map((club, index) => (
-          <Animated.View key={club} entering={FadeInDown.delay(index * 100).duration(400)}>
+          <Animated.View key={club}>
             <TouchableOpacity
               style={[styles.clubOption, isDark && styles.clubOptionDark]}
               onPress={() => handleClubSelect(club.toLowerCase() as Club)}
@@ -418,8 +392,7 @@ export default function TransactionsScreen() {
       onRequestClose={handleClosePinModal}
     >
       <View style={styles.modalOverlay}>
-        <Animated.View 
-          entering={FadeInDown.duration(200)}
+        <Animated.View
           style={[styles.modalContent, isDark && styles.modalContentDark]}
         >
           <View style={styles.modalHeader}>
@@ -461,6 +434,7 @@ export default function TransactionsScreen() {
             <Button
               title="Confirm"
               onPress={() => handlePinSubmit(pin)}
+              loading={processing}
               disabled={pin.length !== 5}
               style={styles.pinConfirmButton}
               variant="secondary"
@@ -472,60 +446,53 @@ export default function TransactionsScreen() {
   );
 
   const renderStripePayment = () => (
-    <Animated.View 
-      entering={FadeInDown.duration(300)} 
-      style={styles.stripeContainer}
-    >
-      <View style={styles.headerRow}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={handleBack}
-        >
-          <ArrowLeft size={24} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
-        </TouchableOpacity>
-        <Text style={[styles.sectionTitle, isDark && styles.sectionTitleDark]}>Payment Details</Text>
-        <View style={styles.backButton} />
-      </View>
-      <StripePayment
-        amount={paymentDetails.amount}
-        method={'card'}
-        onSuccess={handleStripeSuccess}
-        onCancel={handleStripeCancel}
-      />
-    </Animated.View>
+    <StripePayment amount={paymentDetails.amount} onSuccess={handleStripeSuccess} onCancel={handleStripeCancel} />
   );
 
-  const renderSuccess = () => (
-    <Animated.View 
-      entering={FadeInDown.duration(300)} 
-      style={styles.successContainer}
-    >
-      <View style={styles.successIcon}>
-        <Check size={48} color="#10B981" />
+  const renderSuccess = () => {
+    const isTopUp = activeTab === 'topup';
+    const reset = () => {
+      setStep('selection');
+      setPaymentDetails({ amount: '' });
+    };
+
+    return (
+      <View style={styles.successContainer}>
+        <View style={[styles.receiptCard, isDark && styles.receiptCardDark]}>
+          <View style={[styles.successIcon, isDark && styles.successIconDark]}>
+            <Check size={24} color={isDark ? '#65D7A4' : '#16764B'} />
+          </View>
+          <Text style={[styles.successTitle, isDark && styles.titleDark]}>
+            {isTopUp ? 'Top-up successful' : 'Payment successful'}
+          </Text>
+          <Text style={[styles.receiptAmount, isDark && styles.titleDark]}>
+            {isTopUp ? '+' : '−'}৳{Number(paymentDetails.amount).toLocaleString('en-BD', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </Text>
+          <Text style={[styles.successMessage, isDark && styles.successMessageDark]}>
+            {isTopUp ? 'Added to your wallet' : paymentDetails.destination || 'Wallet payment'}
+          </Text>
+        </View>
+
+        <Button title="Done" onPress={reset} variant="secondary" />
+        <TouchableOpacity
+          accessibilityRole="button"
+          style={styles.historyLink}
+          onPress={() => {
+            reset();
+            router.navigate('/history');
+          }}
+        >
+          <Text style={[styles.historyLinkText, isDark && styles.historyLinkTextDark]}>View in History</Text>
+        </TouchableOpacity>
       </View>
-      <Text style={[styles.successTitle, isDark && styles.successTitleDark]}>
-        {activeTab === 'topup' ? 'Top-Up Successful' : 'Payment Successful'}
-      </Text>
-      <Text style={[styles.successMessage, isDark && styles.successMessageDark]}>
-        {activeTab === 'topup' 
-          ? 'Your account has been topped up successfully.'
-          : 'Your payment has been processed successfully.'}
-      </Text>
-      <Button
-        title="Done"
-        onPress={() => {
-          setStep('selection');
-          setPaymentDetails({ amount: '' });
-        }}
-        style={styles.doneButton}
-        variant="secondary"
-      />
-    </Animated.View>
-  );
+    );
+  };
 
   const renderError = () => (
     <Animated.View 
-      entering={FadeInDown.duration(300)} 
       style={styles.errorContainer}
     >
       <View style={styles.errorIcon}>
@@ -563,7 +530,6 @@ export default function TransactionsScreen() {
       case 'amount':
         return (
           <Animated.View 
-            entering={FadeInDown.duration(300)} 
             style={styles.amountContainer}
           >
             <View style={styles.headerRow}>
@@ -593,7 +559,6 @@ export default function TransactionsScreen() {
       case 'summary':
         return (
           <Animated.View 
-            entering={FadeInDown.duration(300)} 
             style={styles.summaryContainer}
           >
             <View style={styles.headerRow}>
@@ -616,7 +581,8 @@ export default function TransactionsScreen() {
               details={paymentDetails.details}
             />
             <Button
-              title={activeTab === 'topup' ? "Confirm Top-up" : "Confirm Payment"}
+              title={`${activeTab === 'topup' ? 'Add' : 'Pay'} ৳${Number(paymentDetails.amount).toFixed(2)}`}
+              loading={processing}
               onPress={handleConfirmPayment}
               variant="secondary"
             />
@@ -636,60 +602,26 @@ export default function TransactionsScreen() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ScrollView 
-        ref={scrollRef}
         style={[styles.container, isDark && styles.containerDark]}
         contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={[styles.title, isDark && styles.titleDark]}>Transactions</Text>
+          <Text style={[styles.title, isDark && styles.titleDark]}>Wallet</Text>
           
-          <View style={[styles.tabs, isDark && styles.tabsDark]}>
-            <TouchableOpacity
-              style={[
-                styles.tab,
-                activeTab === 'topup' && styles.activeTab,
-                isDark && styles.tabDark,
-                activeTab === 'topup' && isDark && styles.activeTabDark
-              ]}
-              onPress={() => handleTabSwitch('topup')}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === 'topup' && styles.activeTabText,
-                  isDark && styles.tabTextDark,
-                  activeTab === 'topup' && isDark && styles.activeTabTextDark
-                ]}
-              >
-                Top-Up
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[
-                styles.tab,
-                activeTab === 'payment' && styles.activeTab,
-                isDark && styles.tabDark,
-                activeTab === 'payment' && isDark && styles.activeTabDark
-              ]}
-              onPress={() => handleTabSwitch('payment')}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === 'payment' && styles.activeTabText,
-                  isDark && styles.tabTextDark,
-                  activeTab === 'payment' && isDark && styles.activeTabTextDark
-                ]}
-              >
-                Payment
-              </Text>
-            </TouchableOpacity>
-          </View>
+          {step === 'selection' && (
+            <SegmentedTabs
+              value={activeTab}
+              onChange={handleTabSwitch}
+              options={[{ value: 'topup', label: 'Top up' }, { value: 'payment', label: 'Pay' }]}
+            />
+          )}
         </View>
 
-        {renderContent()}
+        <Animated.View key={step + activeTab} entering={FadeInDown.duration(200).reduceMotion(ReduceMotion.System)}>
+          {renderContent()}
+        </Animated.View>
       </ScrollView>
 
       {renderPinModal()}
@@ -716,23 +648,23 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingTop: 40,
-    paddingBottom: 85,
+    paddingTop: 14,
+    paddingBottom: 20,
   },
   header: {
-    marginBottom: 32,
+    marginBottom: 18,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 14,
   },
   title: {
-    fontSize: 32,
+    fontSize: 26,
     fontFamily: 'Inter-Bold',
     color: '#2C2C2C',
-    marginBottom: 24,
+    marginBottom: 14,
     textAlign: 'left',
   },
   titleDark: {
@@ -741,61 +673,24 @@ const styles = StyleSheet.create({
   contentContainer: {
     width: '100%',
   },
-  tabs: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 6,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  tabsDark: {
-    backgroundColor: '#1E1E1E',
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderRadius: 12,
-  },
-  tabDark: {
-    backgroundColor: '#1E1E1E',
-  },
-  activeTab: {
-    backgroundColor: '#FFD700',
-  },
-  activeTabDark: {
-    backgroundColor: '#FFD700',
-  },
-  tabText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#6B7280',
-  },
-  tabTextDark: {
-    color: '#A6A6A6',
-  },
-  activeTabText: {
-    color: '#000000',
-    fontFamily: 'Inter-SemiBold',
-  },
-  activeTabTextDark: {
-    color: '#000000',
-    fontFamily: 'Inter-SemiBold',
-  },
+  scanCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: '#FFF0B8' },
+  scanIcon: { width: 42, height: 42, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFDF70' },
+  scanTitle: { color: '#271E00', fontFamily: 'Inter-SemiBold', fontSize: 16 },
+  scanCaption: { color: '#5E4C16', fontSize: 12, marginTop: 3 },
+  methodBody: { flex: 1 },
+  groupLabel: { color: '#515965', fontFamily: 'Inter-SemiBold', fontSize: 13, marginTop: 5 },
+  destinationGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  destinationTile: { width: '48%', minHeight: 54, borderRadius: 14, padding: 12, gap: 10, alignItems: 'center', flexDirection: 'row', backgroundColor: '#FFFFFF' },
+  receiptAmount: { fontSize: 30, fontFamily: 'Inter-Bold', color: '#222222', textAlign: 'center' },
   methodsContainer: {
-    gap: 16,
+    gap: 10,
   },
   methodCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: 16,
+    padding: 13,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -807,7 +702,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E1E1E',
   },
   methodText: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-Medium',
     color: '#2C2C2C',
     flex: 1,
@@ -872,9 +767,6 @@ const styles = StyleSheet.create({
   summaryContainer: {
     gap: 24,
   },
-  stripeContainer: {
-    gap: 24,
-  },
   backButton: {
     width: 40,
     height: 40,
@@ -918,38 +810,35 @@ const styles = StyleSheet.create({
   modalTitleDark: {
     color: '#FFFFFF',
   },
-  successContainer: {
+  successContainer: { gap: 12 },
+  receiptCard: {
     alignItems: 'center',
-    padding: 20,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E7E8EA',
+    borderWidth: 1,
+    borderRadius: 22,
+    paddingHorizontal: 18,
+    paddingVertical: 24,
+    gap: 8,
+    marginBottom: 4,
   },
+  receiptCardDark: { backgroundColor: '#1E1E1E', borderColor: '#353535' },
   successIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: '#E4F5EC',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 4,
   },
-  successTitle: {
-    fontSize: 24,
-    fontFamily: 'Inter-SemiBold',
-    color: '#2C2C2C',
-    marginBottom: 8,
-  },
-  successTitleDark: {
-    color: '#FFFFFF',
-  },
-  successMessage: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  successMessageDark: {
-    color: '#A6A6A6',
-  },
+  successIconDark: { backgroundColor: '#20392D' },
+  successTitle: { fontSize: 17, fontFamily: 'Inter-SemiBold', color: '#252525', textAlign: 'center' },
+  successMessage: { fontSize: 14, color: '#58616D', textAlign: 'center' },
+  successMessageDark: { color: '#B8B8B8' },
+  historyLink: { minHeight: 44, justifyContent: 'center', alignItems: 'center' },
+  historyLinkText: { fontSize: 14, fontFamily: 'Inter-SemiBold', color: '#5A4600', textAlign: 'center' },
+  historyLinkTextDark: { color: '#F3D783' },
   errorContainer: {
     alignItems: 'center',
     padding: 20,
@@ -977,13 +866,10 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     color: '#6B7280',
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 14,
   },
   errorMessageDark: {
     color: '#A6A6A6',
-  },
-  doneButton: {
-    width: '100%',
   },
   retryButton: {
     width: '100%',
@@ -1006,7 +892,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     color: '#4B5563',
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 14,
   },
   pinInstructionsDark: {
     color: '#9CA3AF',

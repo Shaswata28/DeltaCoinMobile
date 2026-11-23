@@ -72,7 +72,7 @@ export function QRScanner({
   const [scanned, setScanned] = useState(false);
   const [flashEnabled, setFlashEnabled] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Animation values
   const scanLinePosition = useSharedValue(0);
@@ -487,7 +487,7 @@ export function QRScanner({
 
   return (
     <Modal visible={visible} transparent animationType="fade">
-      <StatusBar barStyle="light-content" backgroundColor="rgba(0,0,0,0.9)" />
+      <StatusBar barStyle="light-content" />
       <View style={[styles.modalContainer, isDark && styles.modalContainerDark]}>
         {!permission ? (
           // Loading state

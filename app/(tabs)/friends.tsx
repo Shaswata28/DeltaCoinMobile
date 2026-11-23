@@ -1,3 +1,4 @@
+import { SegmentedTabs } from '@/components/common/SegmentedTabs';
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -202,45 +203,10 @@ export default function FriendsScreen() {
     });
   };
 
-  const renderTabButton = (
-    tab: 'friends' | 'requests' | 'search',
-    icon: React.ReactNode,
-    label: string,
-    count?: number
-  ) => (
-    <TouchableOpacity
-      style={[
-        styles.tab,
-        activeTab === tab && styles.activeTab,
-        isDark && styles.tabDark,
-        activeTab === tab && isDark && styles.activeTabDark,
-      ]}
-      onPress={() => setActiveTab(tab)}
-    >
-      <View style={styles.tabContent}>
-        <Text
-          style={[
-            styles.tabText,
-            activeTab === tab && styles.activeTabText,
-            isDark && styles.tabTextDark,
-            activeTab === tab && isDark && styles.activeTabTextDark,
-          ]}
-        >
-          {label}
-        </Text>
-        {count !== undefined && count > 0 && (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{count}</Text>
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
-
   const renderFriendCard = (friend: FriendWithProfile, index: number) => (
     <Animated.View
       key={friend.id}
-      entering={FadeInDown.delay(index * 100).duration(400)}
+      entering={FadeInDown.duration(200)}
       style={[styles.friendCard, isDark && styles.friendCardDark]}
     >
       <View style={styles.friendContent}>
@@ -279,7 +245,7 @@ export default function FriendsScreen() {
   const renderFriendRequestCard = (request: FriendWithProfile, index: number) => (
     <Animated.View
       key={request.id}
-      entering={FadeInDown.delay(index * 100).duration(400)}
+      entering={FadeInDown.duration(200)}
       style={[styles.requestCard, isDark && styles.requestCardDark]}
     >
       <View style={styles.requestInfo}>
@@ -326,7 +292,7 @@ export default function FriendsScreen() {
     return (
       <Animated.View
         key={request.id}
-        entering={FadeInDown.delay(index * 100).duration(400)}
+        entering={FadeInDown.duration(200)}
         style={[styles.friendCard, isDark && styles.friendCardDark]}
       >
         <View style={styles.friendContent}>
@@ -376,7 +342,7 @@ export default function FriendsScreen() {
     return (
       <Animated.View
         key={user.id}
-        entering={FadeInRight.delay(index * 100).duration(400)}
+        entering={FadeInRight.duration(200)}
         style={[styles.searchResultCard, isDark && styles.searchResultCardDark]}
       >
         <View style={styles.searchResultInfo}>
@@ -557,25 +523,15 @@ export default function FriendsScreen() {
     <View style={[styles.container, isDark && styles.containerDark]}>
       <View style={styles.header}>
         <Text style={[styles.title, isDark && styles.titleDark]}>Friends</Text>
-        <View style={[styles.tabs, isDark && styles.tabsDark]}>
-          {renderTabButton(
-            'friends',
-            <Users size={20} color={activeTab === 'friends' ? '#000000' : (isDark ? '#A6A6A6' : '#6B7280')} />,
-            'Friends',
-            friends.length
-          )}
-          {renderTabButton(
-            'requests',
-            <Clock size={20} color={activeTab === 'requests' ? '#000000' : (isDark ? '#A6A6A6' : '#6B7280')} />,
-            'Requests',
-            friendRequests.length + moneyRequests.length
-          )}
-          {renderTabButton(
-            'search',
-            <Search size={20} color={activeTab === 'search' ? '#000000' : (isDark ? '#A6A6A6' : '#6B7280')} />,
-            'Search'
-          )}
-        </View>
+        <SegmentedTabs
+          value={activeTab}
+          onChange={setActiveTab}
+          options={[
+            { value: 'friends', label: 'Friends', count: friends.length },
+            { value: 'requests', label: 'Requests', count: friendRequests.length + moneyRequests.length },
+            { value: 'search', label: 'Search' },
+          ]}
+        />
       </View>
 
       {renderContent()}
@@ -593,84 +549,16 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    paddingTop: 40,
+    paddingTop: 14,
   },
   title: {
-    fontSize: 32,
+    fontSize: 26,
     fontFamily: 'Inter-Bold',
     color: '#2C2C2C',
     marginBottom: 24,
   },
   titleDark: {
     color: '#FFFFFF',
-  },
-  tabs: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  tabsDark: {
-    backgroundColor: '#1E1E1E',
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderRadius: 12,
-  },
-  tabDark: {
-    backgroundColor: 'transparent',
-  },
-  activeTab: {
-    backgroundColor: '#FFD700',
-  },
-  activeTabDark: {
-    backgroundColor: '#FFD700',
-  },
-  tabContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    position: 'relative',
-  },
-  tabText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#6B7280',
-  },
-  tabTextDark: {
-    color: '#A6A6A6',
-  },
-  activeTabText: {
-    color: '#000000',
-    fontFamily: 'Inter-SemiBold',
-  },
-  activeTabTextDark: {
-    color: '#000000',
-    fontFamily: 'Inter-SemiBold',
-  },
-  badge: {
-    position: 'absolute',
-    top: -8,
-    right: -8,
-    backgroundColor: '#FF4D4F',
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 6,
-  },
-  badgeText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontFamily: 'Inter-Bold',
   },
   content: {
     flex: 1,

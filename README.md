@@ -1,295 +1,45 @@
-# 🪙 DeltaCoin Mobile App
+﻿<p align="center">
+  <img src="assets/images/icon.png" alt="DeltaCoin app icon" width="96">
+</p>
 
-A comprehensive digital wallet and payment management app built with React Native and Expo, designed specifically for students to manage their finances efficiently.
+<h1 align="center">DeltaCoin Mobile</h1>
 
-## 📱 Overview
+<p align="center">A student project that demonstrates a digital campus wallet.</p>
 
-DeltaCoin is a modern mobile application that provides students with a secure and intuitive platform to manage their digital finances, track expenses, make payments, and analyze spending patterns. The app integrates with Supabase for backend services and includes features like QR code payments, budget management, and real-time transaction tracking.
+<p align="center">React Native &middot; Expo SDK 58 &middot; Supabase &middot; <a href="LICENSE">MIT</a></p>
 
-## ✨ Features
+## Screenshots
 
-### 🔐 Authentication & Security
-- Secure user registration and login
-- PIN-based security for transactions
-- Password recovery functionality
-- Profile picture upload and management
+Android screenshots captured with a fictional student profile and demo transactions.
 
-### 💰 Wallet Management
-- Real-time balance tracking
-- Digital wallet with secure transactions
-- Monthly spending limits and monitoring
-- Transaction history with detailed categorization
+| Home | Wallet | History |
+| --- | --- | --- |
+| <img src="docs/screenshots/home.png" alt="Home with demo balance and recent transactions" width="230"> | <img src="docs/screenshots/wallet.png" alt="Wallet with QR scanning and campus payment categories" width="230"> | <img src="docs/screenshots/history.png" alt="History showing incoming and outgoing transactions" width="230"> |
 
-### 💳 Payment System
-- QR code generation and scanning for payments
-- Stripe integration for card payments
-- Money transfer between users
-- Transaction status tracking (completed, pending, failed)
+| Insights | Notifications | Profile |
+| --- | --- | --- |
+| <img src="docs/screenshots/insights.png" alt="Monthly spending and category breakdown" width="230"> | <img src="docs/screenshots/notifications.png" alt="Inbox with payment and friend activity" width="230"> | <img src="docs/screenshots/profile.png" alt="Student profile and account settings" width="230"> |
 
-### 📊 Analytics & Budgeting
-- Spending analytics and insights
-- Monthly budget planning by categories (Canteen, Library, Lab, Club, Other)
-- Visual charts and spending patterns
-- Budget vs actual spending comparison
+## Features
 
-### 🔔 Notifications
-- Real-time transaction notifications
-- Budget alerts and reminders
-- Friend request notifications
+- **Campus wallet** shows your balance and recent activity. Make a campus payment by scanning a DeltaCoin QR code or choosing a category such as Canteen or Library.
+- **Top-ups** offer simulated bank and mobile banking flows, plus a Stripe card flow for testing when configured.
+- **Transaction history** shows incoming and outgoing activity, with category and month filters and live updates through Supabase Realtime.
+- **Spending insights** break down monthly expenses by category, track budget progress, and export a PDF report.
+- **Friends and notifications** let students connect, send or request demo funds, and follow account activity in the in-app inbox.
 
-### 👥 Social Features
-- Friends system for easy transfers
-- User discovery and connection
-- Social payment features
+## Run locally
 
-### 🎨 User Experience
-- Dark/Light theme support
-- Smooth animations with Reanimated
-- Responsive design for all screen sizes
-- Intuitive navigation with tab-based layout
+1. Install Node.js 22.13+, 24.3+, or 26+, then run `npm ci`.
+2. Add the credentials for your configured Supabase project to a local `.env` file.
 
-## 🏗️ Project Structure
+   ```dotenv
+   EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=your_publishable_key
+   ```
 
-```
-DeltaCoinMobile-main/
-├── 📁 app/                          # Main application screens and navigation
-│   ├── 📁 (tabs)/                  # Tab-based navigation screens
-│   │   ├── index.tsx               # 🏠 Home screen with wallet overview
-│   │   ├── profile.tsx             # 👤 User profile management
-│   │   ├── analytics.tsx           # 📊 Analytics and spending insights
-│   │   ├── history.tsx             # 📋 Transaction history
-│   │   ├── transactions.tsx        # 💸 Transaction management
-│   │   ├── friends.tsx             # 👥 Friends and social features
-│   │   └── notifications.tsx       # 🔔 Notifications center
-│   ├── 📁 account-settings/        # Account settings related screens
-│   │   ├── edit-profile.tsx        # ✏️ Profile editing
-│   │   ├── notifications.tsx       # 🔔 Notification settings
-│   │   ├── payment-methods.tsx     # 💳 Payment method management
-│   │   └── security.tsx            # 🔒 Security settings
-│   ├── _layout.tsx                 # 🎯 Root layout configuration
-│   ├── index.tsx                   # 🚀 App entry point
-│   ├── login.tsx                   # 🔑 Login screen
-│   ├── signup.tsx                  # 📝 Registration screen
-│   ├── forgot-password.tsx         # 🔄 Password recovery
-│   ├── money-transfer.tsx          # 💸 Money transfer interface
-│   ├── settings.tsx                # ⚙️ App settings
-│   ├── help.tsx                    # ❓ Help and support
-│   ├── about.tsx                   # ℹ️ About the app
-│   └── +not-found.tsx              # 404 error page
-│
-├── 📁 components/                   # Reusable UI components
-│   ├── 📁 auth/                    # Authentication components
-│   │   ├── AppLogo.tsx             # 🏷️ App logo component
-│   │   ├── LoginForm.tsx           # 📝 Login form
-│   │   └── SignUpLink.tsx          # 🔗 Sign up navigation
-│   ├── 📁 common/                  # Common UI components
-│   │   ├── Button.tsx              # 🔘 Custom button component
-│   │   ├── CheckBox.tsx            # ☑️ Custom checkbox
-│   │   ├── ErrorMessage.tsx        # ❌ Error display component
-│   │   ├── FilterModal.tsx         # 🔍 Filter modal component
-│   │   ├── FormInput.tsx           # 📝 Form input component
-│   │   ├── LoadingContext.tsx      # ⏳ Loading state management
-│   │   ├── MonthYearPicker.tsx     # 📅 Date picker component
-│   │   ├── PinInput.tsx            # 🔢 PIN input component
-│   │   ├── SimpleLoadingIndicator.tsx # ⏳ Loading indicator
-│   │   └── TextNavigation.tsx      # 🧭 Text navigation component
-│   ├── 📁 payment/                 # Payment related components
-│   │   ├── AmountInput.tsx         # 💰 Amount input component
-│   │   ├── PaymentSummary.tsx      # 📋 Payment summary display
-│   │   ├── QRGenerator.tsx         # 📱 QR code generator
-│   │   ├── QRScanner.tsx           # 📷 QR code scanner
-│   │   └── StripePayment.tsx       # 💳 Stripe payment integration
-│   ├── 📁 help/                    # Help section components
-│   │   ├── BugReport.tsx           # 🐛 Bug reporting component
-│   │   └── chatbot.tsx             # 🤖 Chatbot interface
-│   ├── 📁 signup/                  # Registration components
-│   │   ├── PinInput.tsx            # 🔢 PIN setup component
-│   │   ├── PinStep.tsx             # 🔢 PIN setup step
-│   │   ├── SecurityStep.tsx        # 🔒 Security setup step
-│   │   └── StudentInfoStep.tsx     # 🎓 Student information step
-│   ├── 📁 constants/               # App constants
-│   │   └── images.ts               # 🖼️ Image constants
-│   └── Stepper.tsx                 # 📊 Stepper component
-│
-├── 📁 supabase/                     # Supabase backend integration
-│   ├── auth.ts                     # 🔐 Authentication functions
-│   ├── client.ts                   # 🌐 Supabase client configuration
-│   ├── db.ts                       # 🗄️ Database operations
-│   ├── friends.ts                  # 👥 Friends management
-│   └── stripe.ts                   # 💳 Stripe integration
-│
-├── 📁 utils/                        # Utility functions and helpers
-│   ├── validation.ts               # ✅ Form validation utilities
-│   ├── format.ts                   # 📝 Data formatting utilities
-│   └── pdfGenerator.ts             # 📄 PDF generation utilities
-│
-├── 📁 hooks/                        # Custom React hooks
-│   └── useFrameworkReady.ts        # ⚡ Framework readiness hook
-│
-├── 📁 config/                       # App configuration files
-│   └── env.ts                      # 🌍 Environment configuration
-│
-├── 📁 assets/                       # Static assets
-│   └── 📁 images/                  # Image assets
-│       ├── background.png          # 🖼️ Background images
-│       ├── background1.png
-│       ├── coins.png               # 🪙 Coin graphics
-│       ├── d2icon.png              # 🏷️ App icons
-│       ├── dark1.png
-│       ├── favicon.png
-│       └── icon.png
-│
-├── 📁 android/                      # Android specific configuration
-│   ├── build.gradle                # 🔧 Android build configuration
-│   ├── gradle.properties           # ⚙️ Gradle properties
-│   ├── settings.gradle             # 🔧 Gradle settings
-│   └── 📁 app/                     # Android app configuration
-│       ├── build.gradle            # 🔧 App build configuration
-│       ├── debug.keystore          # 🔑 Debug keystore
-│       ├── proguard-rules.pro      # 🛡️ ProGuard configuration
-│       └── 📁 src/                 # Android source files
-│           ├── 📁 debug/           # Debug configuration
-│           └── 📁 main/            # Main Android configuration
-│               ├── AndroidManifest.xml # 📋 App manifest
-│               └── 📁 res/         # Android resources
-│
-├── app.config.js                   # 📱 Expo app configuration
-├── package.json                    # 📦 Project dependencies
-├── tsconfig.json                   # 🔧 TypeScript configuration
-├── tailwind.config.js              # 🎨 Tailwind CSS configuration
-├── Database schema.txt             # 🗄️ Database schema documentation
-└── README.md                       # 📖 Project documentation
-```
+3. Run `npm run dev` and scan the terminal QR code with [Expo Go for Android](https://expo.dev/go?device=true&platform=android&sdkVersion=58).
 
-## 🚀 Getting Started
+## License
 
-### Prerequisites
-
-- Node.js (v16 or higher)
-- npm or yarn
-- Expo CLI
-- Android Studio (for Android development)
-- Xcode (for iOS development, macOS only)
-
-### Installation
-
-1. **Clone the repository:**
-```bash
-git clone <repository-url>
-cd DeltaCoinMobile-main
-```
-
-2. **Install dependencies:**
-```bash
-npm install
-```
-
-3. **Set up environment variables:**
-Create a `.env` file in the root directory and add your Supabase credentials:
-```env
-EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-4. **Set up Supabase database:**
-- Create a new Supabase project
-- Run the SQL schema from `Database schema.txt` in your Supabase SQL editor
-- Enable Row Level Security (RLS) for all tables
-
-5. **Start the development server:**
-```bash
-npm run dev
-```
-
-### Available Scripts
-
-- `npm run dev` - Start the Expo development server
-- `npm run android` - Run on Android device/emulator
-- `npm run ios` - Run on iOS device/simulator
-- `npm run build:web` - Build for web platform
-- `npm run lint` - Run ESLint for code quality
-
-## 🛠️ Tech Stack
-
-### Frontend
-- **React Native** - Cross-platform mobile development
-- **Expo** - Development platform and tools
-- **TypeScript** - Type-safe JavaScript
-- **Expo Router** - File-based navigation
-- **React Native Reanimated** - Smooth animations
-- **NativeWind (Tailwind CSS)** - Styling framework
-- **Lucide React Native** - Icon library
-
-### Backend & Services
-- **Supabase** - Backend-as-a-Service
-  - Authentication
-  - PostgreSQL Database
-  - Real-time subscriptions
-  - Row Level Security
-- **Stripe** - Payment processing
-- **Expo Camera** - QR code scanning
-- **React Native SVG** - QR code generation
-
-### Development Tools
-- **Expo Dev Client** - Development builds
-- **TypeScript** - Static type checking
-- **ESLint** - Code linting
-- **Prettier** - Code formatting
-
-## 🗄️ Database Schema
-
-The app uses Supabase with PostgreSQL and includes the following main tables:
-
-### Users Table
-- User profiles with student ID validation
-- PIN-based security
-- Profile picture support
-
-### Wallets Table
-- Individual user wallets
-- Real-time balance tracking
-- Transaction history
-
-### Transactions Table
-- Income and expense tracking
-- Category-based organization
-- Date and description metadata
-
-### Budgets Table
-- Monthly budget planning
-- Category-wise budget allocation
-- Spending tracking and alerts
-
-## 🔐 Security Features
-
-- **Row Level Security (RLS)** - Database-level security
-- **PIN Authentication** - Additional security layer
-- **Secure Storage** - Sensitive data encryption
-- **Input Validation** - Comprehensive form validation
-- **Environment Variables** - Secure configuration management
-
-## 📱 Platform Support
-
-- **iOS** - Full support with camera permissions
-- **Android** - Full support with camera permissions
-- **Web** - Basic support for development
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is private and proprietary. All rights reserved.
-
-## 📞 Support
-
-For support and questions, please contact the development team or refer to the in-app help section.
-
----
-
-**Built with ❤️ for student financial management**
+DeltaCoin Mobile is available under the [MIT License](LICENSE).

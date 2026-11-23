@@ -1,15 +1,14 @@
-import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, useColorScheme, ImageBackground, Dimensions, Alert } from 'react-native';
-import { User, Shield, Bell, ChevronRight, LogOut, CircleHelp as HelpCircle, Info, Pencil, TrendingUp, Award, RefreshCw } from 'lucide-react-native';
+import { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ImageBackground, useColorScheme, Alert } from 'react-native';
+import { ArrowLeft, User, Shield, Bell, ChevronRight, LogOut, CircleHelp as HelpCircle, Info, Pencil, TrendingUp, Award, RefreshCw } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { signOut, getCurrentUser, getCurrentUserProfile, generateAvatarsForExistingUsers } from '@/supabase/auth';
 import { getUserTransactionCount, getCategorySpending } from '@/supabase/db';
 import type { User as UserType } from '@/supabase/client';
-import { PROFILE_IMAGES } from '../../components/constants/images';
-
-const { width: screenWidth } = Dimensions.get('window');
+import { PROFILE_IMAGES } from '@/components/constants/images';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface MenuItem {
   id: string;
@@ -29,6 +28,7 @@ interface ProfileData {
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +75,7 @@ export default function ProfileScreen() {
     },
   ];
 
-  const fetchProfileData = async () => {
+  const fetchProfileData = useCallback(async () => {
     try {
       setError(null);
 
@@ -94,7 +94,7 @@ export default function ProfileScreen() {
       const currentDate = new Date();
       const currentMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
       const categorySpending = await getCategorySpending(currentMonth);
-      
+
       const monthlySpent = Object.values(categorySpending).reduce((sum, amount) => sum + amount, 0);
 
       setProfileData({
@@ -106,21 +106,21 @@ export default function ProfileScreen() {
     } catch (err: any) {
       setError(err.message || 'Failed to load profile data');
     }
-  };
+  }, []);
 
   const handleGenerateAvatar = async () => {
     try {
       setIsGeneratingAvatar(true);
-      
+
       const result = await generateAvatarsForExistingUsers();
-      
+
       if (result.success > 0) {
         Alert.alert(
           'Avatar Generated!',
           `Successfully generated ${result.success} avatar(s). Your profile picture has been updated.`,
           [{ text: 'OK' }]
         );
-        
+
         // Refresh profile data to show the new avatar
         await fetchProfileData();
       } else if (result.total === 0) {
@@ -148,9 +148,9 @@ export default function ProfileScreen() {
     }
   };
 
-  useEffect(() => {
-    fetchProfileData();
-  }, []);
+  useFocusEffect(useCallback(() => {
+    void fetchProfileData();
+  }, [fetchProfileData]));
 
   const handleLogout = async () => {
     try {
@@ -179,15 +179,13 @@ export default function ProfileScreen() {
   return (
     <ScrollView 
       style={[styles.container, isDark && styles.containerDark]}
-      contentContainerStyle={{ paddingBottom: 85 }}
+      contentInsetAdjustmentBehavior="never"
+      contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
       showsVerticalScrollIndicator={false}
     >
-      {/* Header with Background */}
       <View style={styles.headerContainer}>
         <ImageBackground
-          source={require('../../assets/images/dark1.png') // dark mode image
-               
-          }
+          source={require('../assets/images/dark1.png')}
           style={styles.headerBackground}
           imageStyle={styles.headerBackgroundImage}
         >
@@ -196,20 +194,22 @@ export default function ProfileScreen() {
             style={styles.headerGradient}
           >
             <Animated.View 
-              entering={FadeInUp.duration(800).springify()}
+              entering={FadeInUp.duration(200)}
               style={styles.profileSection}
             >
               <View style={styles.avatarSection}>
                 <View style={[styles.avatarContainer, isDark && styles.avatarContainerDark]}>
                   <Image
-                    source={{ 
-                      uri: profileData.profile?.profile_picture_url || PROFILE_IMAGES.defaultAvatar 
+                    source={{
+                      uri: profileData.profile?.profile_picture_url || PROFILE_IMAGES.defaultAvatar
                     }}
                     style={styles.avatar}
                   />
                   <TouchableOpacity 
                     style={[styles.editButton, isDark && styles.editButtonDark]}
-                    onPress={() => router.push('/account-settings/edit-profile' as any)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Edit profile"
+                    onPress={() => router.push('/account-settings/edit-profile')}
                   >
                     <Pencil size={16} color="#2C2C2C" />
                   </TouchableOpacity>
@@ -229,12 +229,20 @@ export default function ProfileScreen() {
               </View>
             </Animated.View>
           </LinearGradient>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            style={[styles.profileBack, { top: insets.top + 8 }]}
+            onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}
+          >
+            <ArrowLeft size={20} color="#FFFFFF" />
+          </TouchableOpacity>
         </ImageBackground>
       </View>
 
       {/* Stats Cards */}
       <Animated.View 
-        entering={FadeInDown.delay(200).duration(600).springify()}
+        entering={FadeInDown.duration(200)}
         style={styles.statsSection}
       >
         <View style={styles.statsGrid}>
@@ -269,12 +277,12 @@ export default function ProfileScreen() {
         <Text style={[styles.sectionTitle, isDark && styles.textDark]}>
           Account Settings
         </Text>
-        
+
         <View style={styles.menuGrid}>
           {menuItems.map((item, index) => (
             <Animated.View
               key={item.id}
-              entering={FadeInDown.delay(300 + index * 100).duration(400)}
+              entering={FadeInDown.duration(200)}
               style={styles.menuItemWrapper}
             >
               <TouchableOpacity
@@ -302,7 +310,7 @@ export default function ProfileScreen() {
 
       {/* Logout Section */}
       <Animated.View 
-        entering={FadeInDown.delay(700).duration(400)}
+        entering={FadeInDown.duration(200)}
         style={styles.logoutSection}
       >
         {/* Generate Avatar Button */}
@@ -377,8 +385,18 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-SemiBold',
     color: '#2C2C2C',
   },
-  
+
   // Header Section - Significantly reduced height and improved spacing
+  profileBack: {
+    position: 'absolute',
+    left: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    backgroundColor: 'rgba(18,18,18,0.68)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   headerContainer: {
     height: 270, // Reduced from 220
     marginBottom: -10, // Reduced overlap

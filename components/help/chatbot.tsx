@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, useColorScheme, Dimensions } from 'react-native';
+import type { ScrollViewInstance } from 'react-native';
 import { Send } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -18,7 +19,7 @@ export function ChatBot({ onClose }: ChatBotProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [chatInput, setChatInput] = useState('');
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<ScrollViewInstance>(null);
   const windowHeight = Dimensions.get('window').height;
   
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
@@ -82,7 +83,7 @@ export function ChatBot({ onClose }: ChatBotProps) {
 
   return (
     <Animated.View 
-      entering={FadeInDown.duration(300)}
+      entering={FadeInDown.duration(200)}
       style={[
         styles.container, 
         isDark && styles.containerDark,

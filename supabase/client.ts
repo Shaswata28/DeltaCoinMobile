@@ -32,6 +32,7 @@ export interface Transaction {
   user_id: string
   amount: number // numeric(10,2)
   type: TransactionType
+  status?: 'pending' | 'completed' | 'failed'
   category: string
   description: string
   date: string

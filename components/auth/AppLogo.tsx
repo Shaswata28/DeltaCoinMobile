@@ -1,43 +1,15 @@
 import { View, Text, StyleSheet, useColorScheme } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence, Easing } from 'react-native-reanimated';
-import { useEffect } from 'react';
+import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { Coins } from 'lucide-react-native';
 
 export function AppLogo() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const rotation = useSharedValue(0);
-  const scale = useSharedValue(1);
-
-  useEffect(() => {
-    rotation.value = withSequence(
-      withTiming(-10, { duration: 300, easing: Easing.elastic(1.5) }),
-      withTiming(10, { duration: 600, easing: Easing.elastic(1.5) }),
-      withTiming(0, { duration: 300, easing: Easing.elastic(1.5) })
-    );
-    
-    scale.value = withRepeat(
-      withSequence(
-        withTiming(1.05, { duration: 1000, easing: Easing.bezier(0.25, 0.1, 0.25, 1) }),
-        withTiming(1, { duration: 1000, easing: Easing.bezier(0.25, 0.1, 0.25, 1) })
-      ),
-      -1,
-      true
-    );
-  }, []);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { rotate: `${rotation.value}deg` },
-      { scale: scale.value }
-    ],
-  }));
-
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.logoWrapper, animatedStyle, isDark && styles.logoWrapperDark]}>
+      <Animated.View entering={FadeIn.duration(200).reduceMotion(ReduceMotion.System)} style={[styles.logoWrapper, isDark && styles.logoWrapperDark]}>
         <View style={[styles.logoBackground, isDark && styles.logoBackgroundDark]}>
-          <Coins color="#FFD700" size={48} strokeWidth={2} />
+          <Coins color="#FFD700" size={32} strokeWidth={2} />
         </View>
       </Animated.View>
       <Text style={[styles.appName, isDark && styles.appNameDark]}>Delta Coin</Text>
@@ -50,13 +22,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoWrapper: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -68,9 +40,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
   },
   logoBackground: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
@@ -80,7 +52,7 @@ const styles = StyleSheet.create({
   },
   appName: {
     color: '#FFD700',
-    fontSize: 32,
+    fontSize: 25,
     fontFamily: 'Inter-Bold',
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.3)',

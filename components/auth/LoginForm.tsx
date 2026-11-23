@@ -79,7 +79,7 @@ export function LoginForm() {
 
   return (
     <Animated.View 
-      entering={FadeInLeft.delay(200).springify()} 
+      entering={FadeInLeft.duration(200)}
       style={styles.container}
     >
       <FormInput

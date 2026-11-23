@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { View, TextInput, StyleSheet, useColorScheme } from 'react-native';
+import type { TextInputInstance } from 'react-native';
 
 interface PinInputProps {
   value: string;
@@ -16,7 +17,7 @@ export function PinInput({
 }: PinInputProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const inputRefs = useRef<TextInput[]>([]);
+  const inputRefs = useRef<(TextInputInstance | null)[]>([]);
 
   useEffect(() => {
     // Focus the first empty input
@@ -55,7 +56,7 @@ export function PinInput({
         <TextInput
           key={index}
           ref={(ref) => {
-            if (ref) inputRefs.current[index] = ref;
+            inputRefs.current[index] = ref;
           }}
           style={[
             styles.input,
@@ -108,4 +109,4 @@ const styles = StyleSheet.create({
     borderColor: '#4D9FFF',
     backgroundColor: '#1E3A8A',
   },
-}); 
+});

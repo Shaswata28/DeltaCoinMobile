@@ -1,5 +1,7 @@
+import { SegmentedTabs } from '@/components/common/SegmentedTabs';
 import React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
+import { useFocusEffect } from 'expo-router';
 import {
   View,
   Text,
@@ -8,17 +10,17 @@ import {
   useColorScheme,
   Modal,
   FlatList,
-  ScrollView,
   ActivityIndicator,
+  AppState,
 } from 'react-native';
 import { ArrowUpRight, ArrowDownRight, Filter, Calendar, X, Check, Coffee, Book, Beaker, Users, MoveHorizontal as MoreHorizontal } from 'lucide-react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
   getUserTransactions,
   getTransactionsByCategory,
   getTransactionsByDateRange,
+  onTransactionCreated,
 } from '../../supabase/db';
-import { Transaction as TransactionType } from '../../supabase/client';
+import { supabase, type Transaction as TransactionType } from '../../supabase/client';
 import MonthYearPicker from '../../components/common/MonthYearPicker';
 import { CategoryFilterModal } from '../../components/common/FilterModal';
 
@@ -26,6 +28,8 @@ interface Transaction extends TransactionType {
   status: 'completed' | 'pending' | 'failed';
   recipient: string;
 }
+
+let historySubscriptionId = 0;
 
 const formatMonthDisplay = (monthString: string | null): string | null => {
   if (!monthString) return null;
@@ -40,6 +44,24 @@ const formatMonthDisplay = (monthString: string | null): string | null => {
   }
 };
 
+const getRecipientFromCategory = (category: string, type: string): string => {
+  if (category === 'transfer') return type === 'income' ? 'Money received' : 'Money sent';
+  if (type === 'income') return 'Account top-up';
+
+  switch (category) {
+    case 'Canteen':
+      return 'Main Canteen';
+    case 'Library':
+      return 'Central Library';
+    case 'Lab':
+      return 'Computer Lab';
+    case 'Club':
+      return category + ' Activities';
+    default:
+      return category;
+  }
+};
+
 export default function HistoryScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -51,6 +73,7 @@ export default function HistoryScreen() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const latestRequest = useRef(0);
 
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [dateModalVisible, setDateModalVisible] = useState(false);
@@ -68,20 +91,20 @@ export default function HistoryScreen() {
 
   const receivedCategories = ['All Categories', 'topup'];
 
-  const loadTransactions = async (refresh = false) => {
+  const loadTransactions = useCallback(async (refresh = false, silent = false) => {
+    const request = ++latestRequest.current;
     try {
       if (refresh) {
         setRefreshing(true);
-      } else {
+      } else if (!silent) {
         setLoading(true);
       }
-      setError(null);
+      if (!silent) setError(null);
 
       let data: TransactionType[] = [];
 
-      if (selectedCategory && selectedCategory !== 'All Categories') {
-        data = await getTransactionsByCategory(selectedCategory);
-      } else if (selectedMonth && selectedMonth !== 'All Time') {
+      const category = selectedCategory && selectedCategory !== 'All Categories' ? selectedCategory : undefined;
+      if (selectedMonth && selectedMonth !== 'All Time') {
         const [monthName, year] = selectedMonth.split(' ');
         const monthIndex = [
           'January',
@@ -108,49 +131,80 @@ export default function HistoryScreen() {
           '0'
         )}-${lastDay}`;
 
-        data = await getTransactionsByDateRange(startDate, endDate);
+        data = await getTransactionsByDateRange(startDate, endDate, category);
+      } else if (category) {
+        data = await getTransactionsByCategory(category);
       } else {
         data = await getUserTransactions();
       }
 
       const mappedData: Transaction[] = data.map((transaction) => ({
         ...transaction,
-        status: 'completed',
+        status: transaction.status ?? 'completed',
         recipient: getRecipientFromCategory(
           transaction.category,
           transaction.type
         ),
       }));
 
-      setTransactions(mappedData);
+      if (request === latestRequest.current) {
+        setTransactions(mappedData);
+        setError(null);
+      }
     } catch (err) {
-      setError('Failed to load transactions');
+      if (request === latestRequest.current && !silent) setError('Failed to load transactions');
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (request === latestRequest.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
-  };
-
-  const getRecipientFromCategory = (category: string, type: string): string => {
-    if (type === 'income') return 'Account Top-up';
-
-    switch (category) {
-      case 'Canteen':
-        return 'Main Canteen';
-      case 'Library':
-        return 'Central Library';
-      case 'Lab':
-        return 'Computer Lab';
-      case 'Club':
-        return category + ' Activities';
-      default:
-        return category;
-    }
-  };
-
-  useEffect(() => {
-    loadTransactions(false);
   }, [selectedCategory, selectedMonth]);
+
+  useFocusEffect(useCallback(() => {
+    let active = true;
+    let channel: ReturnType<typeof supabase.channel> | undefined;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const queueRefresh = () => {
+      if (!active || AppState.currentState === 'background') return;
+      clearTimeout(timer);
+      timer = setTimeout(() => void loadTransactions(false, true), 120);
+    };
+
+    const unsubscribeLocal = onTransactionCreated(queueRefresh);
+    void loadTransactions(false);
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!active || !session) return;
+      channel = supabase.channel(`transaction-history-${++historySubscriptionId}`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'transactions',
+          filter: `user_id=eq.${session.user.id}`,
+        }, queueRefresh)
+        .subscribe(status => {
+          if (status === 'SUBSCRIBED') queueRefresh();
+        });
+    }).catch(() => {
+      // Keep the focused refresh interval available if Realtime cannot start.
+    });
+
+    const foreground = AppState.addEventListener('change', state => {
+      if (state === 'active') queueRefresh();
+    });
+    // Keep older Supabase projects current even before Realtime is enabled for the table.
+    const fallback = setInterval(queueRefresh, 15_000);
+
+    return () => {
+      active = false;
+      latestRequest.current++;
+      clearTimeout(timer);
+      clearInterval(fallback);
+      unsubscribeLocal();
+      foreground.remove();
+      if (channel) void supabase.removeChannel(channel);
+    };
+  }, [loadTransactions]));
 
   const handleRefresh = () => {
     loadTransactions(true);
@@ -201,115 +255,8 @@ export default function HistoryScreen() {
     }
   };
 
-  if (loading && !refreshing) {
-    return (
-      <View style={[styles.container, styles.loadingContainer, isDark && styles.containerDark]}>
-        <ActivityIndicator size="large" color="#FFD700" />
-        <Text style={[styles.loadingText, isDark && styles.loadingTextDark]}>
-          Loading transactions...
-        </Text>
-      </View>
-    );
-  }
-
   return (
-    <ScrollView
-      style={[styles.container, isDark && styles.containerDark]}
-      contentContainerStyle={{ paddingBottom: 85 }}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.header}>
-        <Text style={[styles.title, isDark && styles.titleDark]}>
-          Transaction History
-        </Text>
-
-        <View style={[styles.tabs, isDark && styles.tabsDark]}>
-          {(['all', 'sent', 'received'] as const).map((filter) => (
-            <TouchableOpacity
-              key={filter}
-              style={[
-                styles.tab,
-                selectedFilter === filter && styles.activeTab,
-                isDark && styles.tabDark,
-                selectedFilter === filter && isDark && styles.activeTabDark,
-              ]}
-              onPress={() => {
-                setSelectedFilter(filter);
-                setSelectedCategory(null);
-              }}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  selectedFilter === filter && styles.activeTabText,
-                  isDark && styles.tabTextDark,
-                  selectedFilter === filter &&
-                    isDark &&
-                    styles.activeTabTextDark,
-                ]}
-              >
-                {filter.charAt(0).toUpperCase() + filter.slice(1)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.filterContainer}>
-          <TouchableOpacity
-            style={[styles.filterButton, isDark && styles.filterButtonDark]}
-            onPress={() => setFilterModalVisible(true)}
-          >
-            <Filter size={20} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.filterButton, isDark && styles.filterButtonDark]}
-            onPress={() => setDateModalVisible(true)}
-          >
-            <Calendar size={20} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
-          </TouchableOpacity>
-        </View>
-
-        {(selectedCategory || selectedMonth) && (
-          <View style={styles.activeFilters}>
-            {selectedCategory && selectedCategory !== 'All Categories' && (
-              <View style={[styles.filterBadge, isDark && styles.filterBadgeDark]}>
-                <Text style={[styles.filterBadgeText, isDark && styles.filterBadgeTextDark]}>
-                  {selectedCategory}
-                </Text>
-                <TouchableOpacity onPress={() => setSelectedCategory(null)}>
-                  <X size={14} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
-                </TouchableOpacity>
-              </View>
-            )}
-            {selectedMonth && selectedMonth !== 'All Time' && (
-              <View style={[styles.filterBadge, isDark && styles.filterBadgeDark]}>
-                <Text style={[styles.filterBadgeText, isDark && styles.filterBadgeTextDark]}>
-                  {selectedMonth}
-                </Text>
-                <TouchableOpacity onPress={() => setSelectedMonth(null)}>
-                  <X size={14} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        )}
-      </View>
-
-      {error && (
-        <View style={styles.errorContainer}>
-          <Text style={[styles.errorText, isDark && styles.errorTextDark]}>
-            {error}
-          </Text>
-          <TouchableOpacity
-            style={styles.retryButton}
-            onPress={() => loadTransactions(false)}
-          >
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
+    <View style={[styles.container, isDark && styles.containerDark]}>
       <FlatList
         data={filteredTransactions}
         keyExtractor={(item) => item.id}
@@ -317,28 +264,110 @@ export default function HistoryScreen() {
         showsVerticalScrollIndicator={false}
         refreshing={refreshing}
         onRefresh={handleRefresh}
+        ListHeaderComponent={<>
+          <View style={styles.header}>
+            <Text style={[styles.title, isDark && styles.titleDark]}>
+              History
+            </Text>
+
+            <View style={styles.filterTabs}>
+              <SegmentedTabs
+                value={selectedFilter}
+                onChange={(filter) => {
+                  setSelectedFilter(filter);
+                  setSelectedCategory(null);
+                }}
+                options={[
+                  { value: 'all', label: 'All' },
+                  { value: 'sent', label: 'Sent' },
+                  { value: 'received', label: 'Received' },
+                ]}
+              />
+            </View>
+
+            <View style={styles.filterContainer}>
+              <TouchableOpacity
+                style={[styles.filterButton, isDark && styles.filterButtonDark]}
+                accessibilityRole="button"
+                onPress={() => setFilterModalVisible(true)}
+              >
+                <Filter size={16} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+                <Text style={[styles.filterBadgeText, isDark && styles.filterBadgeTextDark]}>Category</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.filterButton, isDark && styles.filterButtonDark]}
+                accessibilityRole="button"
+                onPress={() => setDateModalVisible(true)}
+              >
+                <Calendar size={16} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+                <Text style={[styles.filterBadgeText, isDark && styles.filterBadgeTextDark]}>Month</Text>
+              </TouchableOpacity>
+            </View>
+
+            {(selectedCategory || selectedMonth) && (
+              <View style={styles.activeFilters}>
+                {selectedCategory && selectedCategory !== 'All Categories' && (
+                  <View style={[styles.filterBadge, isDark && styles.filterBadgeDark]}>
+                    <Text style={[styles.filterBadgeText, isDark && styles.filterBadgeTextDark]}>
+                      {selectedCategory}
+                    </Text>
+                    <TouchableOpacity onPress={() => setSelectedCategory(null)}>
+                      <X size={14} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+                    </TouchableOpacity>
+                  </View>
+                )}
+                {selectedMonth && selectedMonth !== 'All Time' && (
+                  <View style={[styles.filterBadge, isDark && styles.filterBadgeDark]}>
+                    <Text style={[styles.filterBadgeText, isDark && styles.filterBadgeTextDark]}>
+                      {selectedMonth}
+                    </Text>
+                    <TouchableOpacity onPress={() => setSelectedMonth(null)}>
+                      <X size={14} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+
+          {error && (
+            <View style={styles.errorContainer}>
+              <Text style={[styles.errorText, isDark && styles.errorTextDark]}>
+                {error}
+              </Text>
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={() => loadTransactions(false)}
+              >
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+        </>}
         ListEmptyComponent={
           <View style={styles.emptyState}>
+            {loading && <ActivityIndicator color="#B88700" />}
             <Text
               style={[
                 styles.emptyStateText,
                 isDark && styles.emptyStateTextDark,
               ]}
             >
-              No transactions found
+              {loading ? 'Loading transactions' : 'No transactions found'}
             </Text>
           </View>
         }
-        renderItem={({ item, index }) => (
-          <Animated.View
-            entering={FadeInDown.delay(index * 100).duration(400)}
+        renderItem={({ item }) => (
+          <View
             style={[
               styles.transactionCard,
               isDark && styles.transactionCardDark,
             ]}
           >
             <View style={styles.transactionHeader}>
-              <View style={styles.transactionIcon}>
+              <View style={[styles.transactionIcon, isDark && { backgroundColor: '#303030' }]}>
                 {item.type === 'expense' ? (
                   <ArrowUpRight size={20} color="#FF4D4F" />
                 ) : (
@@ -401,7 +430,7 @@ export default function HistoryScreen() {
                 </Text>
               </View>
             </View>
-          </Animated.View>
+          </View>
         )}
       />
 
@@ -436,7 +465,7 @@ export default function HistoryScreen() {
           selectedMonth ? selectedMonth.split(' ').reverse().join('-') : null
         }
       />
-    </ScrollView>
+    </View>
   );
 }
 
@@ -448,25 +477,12 @@ const styles = StyleSheet.create({
   containerDark: {
     backgroundColor: '#121212',
   },
-  loadingContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#6B7280',
-    marginTop: 16,
-  },
-  loadingTextDark: {
-    color: '#A6A6A6',
-  },
   header: {
-    padding: 20,
-    paddingTop: 40,
+    paddingHorizontal: 0,
+    paddingTop: 14,
   },
   title: {
-    fontSize: 32,
+    fontSize: 26,
     fontFamily: 'Inter-Bold',
     color: '#2C2C2C',
     marginBottom: 24,
@@ -474,61 +490,18 @@ const styles = StyleSheet.create({
   titleDark: {
     color: '#FFFFFF',
   },
-  tabs: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 6,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  tabsDark: {
-    backgroundColor: '#1E1E1E',
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderRadius: 12,
-  },
-  tabDark: {
-    backgroundColor: 'transparent',
-  },
-  activeTab: {
-    backgroundColor: '#FFD700',
-  },
-  activeTabDark: {
-    backgroundColor: '#FFD700',
-  },
-  tabText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#6B7280',
-  },
-  tabTextDark: {
-    color: '#A6A6A6',
-  },
-  activeTabText: {
-    color: '#2C2C2C',
-    fontFamily: 'Inter-SemiBold',
-  },
-  activeTabTextDark: {
-    color: '#2C2C2C',
-    fontFamily: 'Inter-SemiBold',
-  },
+  filterTabs: { marginBottom: 12 },
   filterContainer: {
     flexDirection: 'row',
     gap: 12,
     marginBottom: 16,
   },
   filterButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    minHeight: 44,
+    paddingHorizontal: 13,
+    flexDirection: 'row',
+    gap: 7,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
@@ -576,18 +549,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   transactionList: {
-    padding: 20,
-    gap: 16,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    gap: 8,
   },
   transactionCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderRadius: 14,
+    padding: 12,
   },
   transactionCardDark: {
     backgroundColor: '#1E1E1E',
@@ -595,8 +564,8 @@ const styles = StyleSheet.create({
   transactionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
+    gap: 10,
+    marginBottom: 6,
   },
   transactionIcon: {
     width: 40,

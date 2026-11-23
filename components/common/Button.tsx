@@ -115,7 +115,7 @@ export function Button({
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 8,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -126,15 +126,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   smallButton: {
-    height: 36,
+    minHeight: 44,
     paddingHorizontal: 16,
   },
   mediumButton: {
-    height: 48,
+    minHeight: 46,
     paddingHorizontal: 24,
   },
   largeButton: {
-    height: 56,
+    minHeight: 52,
     paddingHorizontal: 32,
   },
   primaryButton: {

@@ -46,10 +46,10 @@ export function AmountInput({ value, onChange, error }: AmountInputProps) {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 24,
+    marginBottom: 16,
   },
   label: {
-    fontSize: 16,
+    fontSize: 13,
     fontFamily: 'Inter-Medium',
     color: '#2C2C2C',
     marginBottom: 8,
@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    padding: 16,
+    padding: 12,
   },
   inputContainerDark: {
     backgroundColor: '#1E1E1E',

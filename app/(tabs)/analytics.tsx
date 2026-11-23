@@ -1,5 +1,6 @@
+import { SegmentedTabs } from '@/components/common/SegmentedTabs';
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, useWindowDimensions, Modal, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, Modal, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { Wallet, TrendingUp, ArrowDownRight, ArrowUpRight, Filter, Calendar, Coffee, Book, Beaker,  X, MoveHorizontal as MoreHorizontal, Download, Bell, Plus, CreditCard as Edit, Handshake } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Print from 'expo-print';
@@ -48,7 +49,6 @@ const formatMonthDisplay = (monthString: string | null): string | null => {
 export default function AnalyticsScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const { width: windowWidth } = useWindowDimensions();
   const [activeTab, setActiveTab] = useState<'analytics' | 'budget'>('analytics');
   const [selectedPeriod, setSelectedPeriod] = useState('This Month');
   const [walletBalance, setWalletBalance] = useState(0);
@@ -60,7 +60,7 @@ export default function AnalyticsScreen() {
   const [budgets, setBudgets] = useState<BudgetCategory[]>([]);
   
   const [showMonthPicker, setShowMonthPicker] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState<string | null>(getCurrentMonth());
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth);
   const [showBudgetForm, setShowBudgetForm] = useState(false);
   const [newBudget, setNewBudget] = useState({
     canteen: '',
@@ -122,17 +122,17 @@ export default function AnalyticsScreen() {
       const categoryData: CategoryData[] = [];
       
       const categoryIcons: Record<string, { icon: React.ReactNode, color: string }> = {
-        Canteen: { icon: <Coffee size={24} color="#FFD700" />, color: '#FFD700' },
-        Library: { icon: <Book size={24} color="#4D9FFF" />, color: '#4D9FFF' },
-        Lab: { icon: <Beaker size={24} color="#FF6B6B" />, color: '#FF6B6B' },
-        Club: { icon: <Handshake size={24} color="#10B981" />, color: '#10B981' },
-        Other: { icon: <MoreHorizontal size={24} color="#A78BFA" />, color: '#A78BFA' }
+        Canteen: { icon: <Coffee size={18} color="#FFD700" />, color: '#FFD700' },
+        Library: { icon: <Book size={18} color="#4D9FFF" />, color: '#4D9FFF' },
+        Lab: { icon: <Beaker size={18} color="#FF6B6B" />, color: '#FF6B6B' },
+        Club: { icon: <Handshake size={18} color="#10B981" />, color: '#10B981' },
+        Other: { icon: <MoreHorizontal size={18} color="#A78BFA" />, color: '#A78BFA' }
       };
       
       Object.entries(categorySpending).forEach(([category, amount], index) => {
         const percentage = totalSpent > 0 ? Math.round((amount / totalSpent) * 100) : 0;
         const iconData = categoryIcons[category.charAt(0).toUpperCase() + category.slice(1)] || 
-                        { icon: <MoreHorizontal size={24} color="#A78BFA" />, color: '#A78BFA' };
+                        { icon: <MoreHorizontal size={18} color="#A78BFA" />, color: '#A78BFA' };
         
         categoryData.push({
           id: String(index + 1),
@@ -158,7 +158,7 @@ export default function AnalyticsScreen() {
       budgetProgress.forEach((item, index) => {
         const categoryName = item.category;
         const iconData = categoryIcons[categoryName] || 
-                        { icon: <MoreHorizontal size={24} color="#A78BFA" />, color: '#A78BFA' };
+                        { icon: <MoreHorizontal size={18} color="#A78BFA" />, color: '#A78BFA' };
         
         budgetData.push({
           id: String(index + 1),
@@ -519,64 +519,11 @@ export default function AnalyticsScreen() {
     }
   };
 
-  const renderDonutChart = () => {
-    let cumulativePercentage = 0;
-    const radius = Math.min(windowWidth * 0.3, 120);
-    const strokeWidth = radius * 0.2;
-    const normalizedRadius = radius - strokeWidth / 2;
-    const circumference = normalizedRadius * 2 * Math.PI;
-
-    return (
-      <View style={[styles.chartContainer, { width: radius * 2, height: radius * 2 }]}>
-        {categories.map((category) => {
-          const startAngle = (cumulativePercentage / 100) * 360;
-          const endAngle = ((cumulativePercentage + category.percentage) / 100) * 360;
-          cumulativePercentage += category.percentage;
-
-          return (
-            <View
-              key={category.id}
-              style={[
-                styles.chartSegment,
-                {
-                  width: radius * 2,
-                  height: radius * 2,
-                  transform: [{ rotate: `${startAngle}deg` }],
-                },
-              ]}
-            >
-              <View
-                style={[
-                  styles.chartSegmentInner,
-                  {
-                    width: radius * 2,
-                    height: radius * 2,
-                    borderWidth: strokeWidth,
-                    borderColor: category.color,
-                    transform: [{ rotate: `${endAngle - startAngle}deg` }],
-                  },
-                ]}
-              />
-            </View>
-          );
-        })}
-        <View style={styles.chartCenter}>
-          <Text style={[styles.chartCenterAmount, isDark && styles.textDark]}>
-            ৳{totalSpent.toFixed(2)}
-          </Text>
-          <Text style={[styles.chartCenterLabel, isDark && styles.textLightDark]}>
-            Total Spent
-          </Text>
-        </View>
-      </View>
-    );
-  };
-
   const renderSummaryPanel = () => (
     <View style={[styles.summaryPanel, isDark && styles.panelDark]}>
       <View style={styles.summaryRow}>
         <View style={styles.summaryItem}>
-          <Wallet size={24} color="#FFD700" />
+          <Wallet size={18} color="#FFD700" />
           <View>
             <Text style={[styles.summaryLabel, isDark && styles.textLightDark]}>Balance</Text>
             <Text style={[styles.summaryValue, isDark && styles.textDark]}>৳{walletBalance.toFixed(2)}</Text>
@@ -584,7 +531,7 @@ export default function AnalyticsScreen() {
         </View>
         
         <View style={styles.summaryItem}>
-          <TrendingUp size={24} color="#10B981" />
+          <TrendingUp size={18} color="#10B981" />
           <View>
             <Text style={[styles.summaryLabel, isDark && styles.textLightDark]}>Transactions</Text>
             <Text style={[styles.summaryValue, isDark && styles.textDark]}>{transactionCount}</Text>
@@ -594,7 +541,7 @@ export default function AnalyticsScreen() {
 
       <View style={styles.summaryRow}>
         <View style={styles.summaryItem}>
-          <ArrowUpRight size={24} color="#EF4444" />
+          <ArrowUpRight size={18} color="#EF4444" />
           <View>
             <Text style={[styles.summaryLabel, isDark && styles.textLightDark]}>Highest Spend</Text>
             <Text style={[styles.summaryValue, isDark && styles.textDark]}>{highestCategory.name}</Text>
@@ -602,7 +549,7 @@ export default function AnalyticsScreen() {
         </View>
         
         <View style={styles.summaryItem}>
-          <ArrowDownRight size={24} color="#10B981" />
+          <ArrowDownRight size={18} color="#10B981" />
           <View>
             <Text style={[styles.summaryLabel, isDark && styles.textLightDark]}>Last Updated</Text>
             <Text style={[styles.summaryValue, isDark && styles.textDark]}>{lastUpdated}</Text>
@@ -699,54 +646,42 @@ export default function AnalyticsScreen() {
 
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Text style={[styles.title, isDark && styles.textDark]}>Analytics</Text>
+          <Text style={[styles.title, isDark && styles.textDark]}>Insights</Text>
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={[styles.actionButton, isDark && styles.actionButtonDark]}
+              accessibilityLabel="Export PDF"
+              onPress={handleGeneratePDF}
+            >
+              <Download size={20} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionButton, isDark && styles.actionButtonDark]}
+              accessibilityLabel="Select month"
+              onPress={() => setShowMonthPicker(true)}
+            >
+              <Calendar size={20} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+            </TouchableOpacity>
+
+            {activeTab === 'budget' && (
+              <TouchableOpacity
+                style={[styles.actionButton, isDark && styles.actionButtonDark]}
+                accessibilityLabel="Manage budget"
+                onPress={() => setShowBudgetForm(true)}
+              >
+                <Plus size={20} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
-        <View style={[styles.tabs, isDark && styles.tabsDark]}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'analytics' && styles.activeTab, isDark && styles.tabDark, activeTab === 'analytics' && isDark && styles.activeTabDark]}
-            onPress={() => setActiveTab('analytics')}
-          >
-            <Text style={[styles.tabText, activeTab === 'analytics' && styles.activeTabText, isDark && styles.tabTextDark, activeTab === 'analytics' && isDark && styles.activeTabTextDark]}>
-              Analytics
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'budget' && styles.activeTab, isDark && styles.tabDark, activeTab === 'budget' && isDark && styles.activeTabDark]}
-            onPress={() => setActiveTab('budget')}
-          >
-            <Text style={[styles.tabText, activeTab === 'budget' && styles.activeTabText, isDark && styles.tabTextDark, activeTab === 'budget' && isDark && styles.activeTabTextDark]}>
-              Budget
-            </Text>
-          </TouchableOpacity>
-        </View>
-        
-        <View style={styles.actions}>
-          <TouchableOpacity 
-            style={[styles.actionButton, isDark && styles.actionButtonDark]}
-            onPress={handleGeneratePDF}
-          >
-            <Download size={20} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.actionButton, isDark && styles.actionButtonDark]}
-            onPress={() => setShowMonthPicker(true)}
-          >
-            <Calendar size={20} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
-          </TouchableOpacity>
-          
-          {activeTab === 'budget' && (
-            <TouchableOpacity 
-              style={[styles.actionButton, isDark && styles.actionButtonDark]}
-              onPress={() => setShowBudgetForm(true)}
-            >
-              <Plus size={20} color={isDark ? '#FFFFFF' : '#2C2C2C'} />
-            </TouchableOpacity>
-          )}
-        </View>
-        
+        <SegmentedTabs
+          value={activeTab}
+          onChange={setActiveTab}
+          options={[{ value: 'analytics', label: 'Spending' }, { value: 'budget', label: 'Budget' }]}
+        />
+
         {selectedMonth && selectedMonth !== getCurrentMonth() && (
           <View style={styles.activeFilters}>
             <View style={[styles.filterBadge, isDark && styles.filterBadgeDark]}>
@@ -771,32 +706,31 @@ export default function AnalyticsScreen() {
       >
         {activeTab === 'analytics' ? (
           <>
+            <Animated.View entering={FadeInDown.duration(200)} style={styles.spendingHero}>
+              <Text style={styles.spendingLabel}>Total spent</Text>
+              <Text style={styles.spendingTotal}>৳{totalSpent.toFixed(2)}</Text>
+              <Text style={styles.spendingLabel}>{formatMonthDisplay(selectedMonth)}</Text>
+            </Animated.View>
             {renderSummaryPanel()}
-            
-            <View style={styles.chartSection}>
-              {renderDonutChart()}
-              <View style={styles.legend}>
-                {categories.map((category) => (
-                  <View key={category.id} style={styles.legendItem}>
-                    {category.icon}
-                    <View style={styles.legendTextContainer}>
-                      <Text style={[styles.legendText, isDark && styles.textDark]}>
-                        {category.name}
-                      </Text>
-                      <Text style={[styles.legendPercentage, isDark && styles.textLightDark]}>
-                        {category.percentage}%
-                      </Text>
-                    </View>
-                    <Text style={[styles.legendAmount, isDark && styles.textDark]}>
-                      ৳{category.amount.toFixed(2)}
-                    </Text>
+            <View style={[styles.breakdown, isDark && styles.panelDark]}>
+              <Text style={[styles.breakdownTitle, isDark && styles.textDark]}>Spending by category</Text>
+              {categories.length === 0 && <Text style={[styles.legendPercentage, isDark && styles.textLightDark]}>No spending this month.</Text>}
+              {categories.map((category) => (
+                <View key={category.id} style={styles.categoryBarRow}>
+                  <View style={styles.categoryBarHeader}>
+                    <Text style={[styles.legendText, isDark && styles.textDark]}>{category.name}</Text>
+                    <Text style={[styles.legendAmount, isDark && styles.textDark]}>৳{category.amount.toFixed(2)}</Text>
                   </View>
-                ))}
-              </View>
+                  <View style={[styles.categoryTrack, isDark && styles.categoryTrackDark]}>
+                    <View style={[styles.categoryFill, { backgroundColor: category.color, width: (category.percentage + '%') as `${number}%` }]} />
+                  </View>
+                </View>
+              ))}
             </View>
           </>
         ) : (
           <View>
+            {budgets.length === 0 && <Text style={[styles.legendPercentage, isDark && styles.textLightDark]}>No budgets for {formatMonthDisplay(selectedMonth)}.</Text>}
             {budgets.map(renderBudgetCard)}
           </View>
         )}
@@ -830,16 +764,16 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    paddingTop: 40,
+    paddingTop: 14,
   },
   titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   title: {
-    fontSize: 32,
+    fontSize: 26,
     fontFamily: 'Inter-Bold',
     color: '#2C2C2C',
     
@@ -852,7 +786,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    marginBottom : 15,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
@@ -865,58 +798,12 @@ const styles = StyleSheet.create({
   actionButtonDark: {
     backgroundColor: '#1E1E1E',
   },
-  tabs: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 6,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  tabsDark: {
-    backgroundColor: '#1E1E1E',
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderRadius: 12,
-  },
-  tabDark: {
-    backgroundColor: '#1E1E1E',
-  },
-  activeTab: {
-    backgroundColor: '#FFD700',
-  },
-  activeTabDark: {
-    backgroundColor: '#FFD700',
-  },
-  tabText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#6B7280',
-  },
-  tabTextDark: {
-    color: '#A6A6A6',
-  },
-  activeTabText: {
-    color: '#000000',
-    fontFamily: 'Inter-SemiBold',
-  },
-  activeTabTextDark: {
-    color: '#000000',
-    fontFamily: 'Inter-SemiBold',
-  },
   content: {
     flex: 1,
   },
   contentContainer: {
-    padding: 20,
-    paddingBottom: 85,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   summaryPanel: {
     backgroundColor: '#FFFFFF',
@@ -953,61 +840,16 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-SemiBold',
     color: '#2C2C2C',
   },
-  chartSection: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  chartContainer: {
-    position: 'relative',
-    marginBottom: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  chartSegment: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-  },
-  chartSegmentInner: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    borderRadius: 999,
-  },
-  chartCenter: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [{ translateX: -50 }, { translateY: -50 }],
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  chartCenterAmount: {
-    fontSize: 24,
-    fontFamily: 'Inter-Bold',
-    color: '#2C2C2C',
-    textAlign: 'center',
-  },
-  chartCenterLabel: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-    textAlign: 'center',
-  },
-  legend: {
-    width: '100%',
-    gap: 16,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  legendTextContainer: {
-    flex: 1,
-  },
+  spendingHero: { backgroundColor: '#222018', padding: 18, borderRadius: 20, gap: 6, marginBottom: 14 },
+  spendingLabel: { color: '#F3D783', fontFamily: 'Inter-Medium', fontSize: 13 },
+  spendingTotal: { color: '#FFFFFF', fontFamily: 'Inter-Bold', fontSize: 32, fontVariant: ['tabular-nums'] },
+  breakdown: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 18, gap: 14 },
+  breakdownTitle: { color: '#242424', fontFamily: 'Inter-SemiBold', fontSize: 16 },
+  categoryBarRow: { gap: 6 },
+  categoryBarHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
+  categoryTrack: { height: 6, backgroundColor: '#EBEDF0', borderRadius: 6, overflow: 'hidden' },
+  categoryTrackDark: { backgroundColor: '#393939' },
+  categoryFill: { height: '100%', borderRadius: 6 },
   legendText: {
     fontSize: 16,
     fontFamily: 'Inter-Medium',

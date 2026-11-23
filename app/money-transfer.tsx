@@ -377,7 +377,7 @@ export default function MoneyTransferScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <Animated.View
-            entering={FadeInDown.duration(400)}
+            entering={FadeInDown.duration(200)}
           >
             {renderContent()}
           </Animated.View>

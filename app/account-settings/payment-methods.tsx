@@ -75,13 +75,13 @@ export default function PaymentMethodsScreen() {
 
       <View style={styles.content}>
         <Animated.View 
-          entering={FadeInDown.delay(100).duration(400)}
+          entering={FadeInDown.duration(200)}
           style={[styles.section, isDark && styles.sectionDark]}
         >
           {paymentMethods.map((method, index) => (
             <Animated.View
               key={method.id}
-              entering={FadeInDown.delay(index * 100).duration(400)}
+              entering={FadeInDown.duration(200)}
               style={[styles.paymentCard, isDark && styles.paymentCardDark]}
             >
               <View style={styles.paymentCardContent}>
@@ -129,7 +129,7 @@ export default function PaymentMethodsScreen() {
         </Animated.View>
 
         <Animated.View 
-          entering={FadeInDown.delay(150).duration(400)}
+          entering={FadeInDown.duration(200)}
           style={[styles.paymentCard, isDark && styles.paymentCardDark]}
         >
           <View style={styles.paymentCardContent}>
@@ -155,7 +155,7 @@ export default function PaymentMethodsScreen() {
         />
 
         <Animated.View 
-          entering={FadeInDown.delay(200).duration(400)}
+          entering={FadeInDown.duration(200)}
           style={[styles.infoCard, isDark && styles.infoCardDark]}
         >
           <Text style={[styles.infoTitle, isDark && styles.infoTitleDark]}>

@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, useColorScheme } from 'react-native';
-import { ArrowUpRight, ArrowDownRight, Send, Wallet, CirclePlus as PlusCircle, Clock, CircleHelp as HelpCircle, Bell } from 'lucide-react-native';
+import { useState, useEffect, useCallback } from 'react';
+import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, useColorScheme } from 'react-native';
+import { ArrowUpRight, ArrowDownRight, Send, Wallet, CirclePlus as PlusCircle, Users, CircleHelp as HelpCircle, Bell, UserRound } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { getHomeWalletData, getUnreadNotificationsCount } from '@/supabase/db';
+import { getCurrentUserProfile } from '@/supabase/auth';
 import { supabase } from '@/supabase/client';
 
 interface Transaction {
@@ -28,8 +29,14 @@ export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   
+  const [profile, setProfile] = useState<Awaited<ReturnType<typeof getCurrentUserProfile>>>(null);
+  useFocusEffect(useCallback(() => {
+    let active = true;
+    void getCurrentUserProfile().then((value) => { if (active) setProfile(value); }).catch(() => {});
+    return () => { active = false; };
+  }, []));
+
   const [greeting, setGreeting] = useState('');
-  const [currentTime, setCurrentTime] = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -50,7 +57,6 @@ export default function HomeScreen() {
 
     updateGreeting();
     const interval = setInterval(() => {
-      setCurrentTime(new Date());
       updateGreeting();
     }, 60000);
 
@@ -148,44 +154,42 @@ export default function HomeScreen() {
     });
   };
 
-  if (error) {
-    return (
-      <View style={[styles.container, styles.errorContainer]}>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchWalletData}>
-          <Text style={styles.retryButtonText}>Retry</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
   const spendingProgress = (walletData.monthlySpent / walletData.monthlyLimit) * 100;
 
   return (
     <ScrollView 
       style={[styles.container, isDark && styles.containerDark]}
-      contentContainerStyle={{ paddingBottom: 85 }}
+      contentContainerStyle={{ paddingBottom: 20 }}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
       <View style={styles.header}>
-        <Animated.View entering={FadeInDown.duration(600).springify()} style={styles.greetingContainer}>
-          <Text style={[styles.greeting, isDark && styles.textDark]}>
-            {greeting}
-          </Text>
-          <Text style={[styles.date, isDark && styles.textLightDark]}>
-            {currentTime.toLocaleDateString('en-US', { 
-              weekday: 'long',
-              month: 'long',
-              day: 'numeric'
-            })}
-          </Text>
-        </Animated.View>
+        <TouchableOpacity
+          style={styles.profileLink}
+          onPress={() => router.push('/profile')}
+          accessibilityRole="button"
+          accessibilityLabel="Open profile"
+          activeOpacity={0.75}
+        >
+          <View style={[styles.avatar, isDark && styles.avatarDark]}>
+            {profile?.profile_picture_url ? (
+              <Image source={{ uri: profile.profile_picture_url }} style={styles.avatarImage} />
+            ) : <UserRound size={20} color={isDark ? '#FFD700' : '#725400'} />}
+          </View>
+          <View style={styles.greetingContainer}>
+            <Text style={[styles.date, isDark && styles.textLightDark]}>{greeting}</Text>
+            <Text style={[styles.greeting, isDark && styles.textDark]} numberOfLines={1}>
+              {profile?.full_name?.trim().split(/\s+/)[0] || 'Welcome'}
+            </Text>
+          </View>
+        </TouchableOpacity>
 
         <TouchableOpacity 
           style={styles.notificationButton}
+          accessibilityRole="button"
+          accessibilityLabel="Notifications"
           onPress={() => router.push('/notifications')}
           activeOpacity={0.7}
         >
@@ -200,30 +204,39 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      <Animated.View 
-        entering={FadeInDown.delay(200).duration(600).springify()}
-        style={[styles.balanceCard, isDark && styles.balanceCardDark]}
-      >
-        <View style={[styles.cardLeftSection, isDark && styles.cardLeftSectionDark]}>
-          <Wallet size={48} color="#FFD700" />
+      {error && (
+        <View style={[styles.walletError, isDark && styles.cardDark]}>
+          <Text accessibilityRole="alert" style={[styles.errorText, isDark && styles.textDark]}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchWalletData}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
         </View>
-        <View style={[styles.cardRightSection, isDark && styles.cardRightSectionDark]}>
-          <Text style={[styles.balanceLabel, isDark && styles.textLightDark]}>
+      )}
+
+      <Animated.View 
+        entering={FadeInDown.duration(200)}
+        style={styles.balanceCard}
+      >
+        <View style={styles.cardLeftSection}>
+          <Wallet size={28} color="#FFD700" />
+        </View>
+        <View style={styles.cardRightSection}>
+          <Text style={styles.balanceLabel}>
             Available Balance
           </Text>
-          <Text style={[styles.balanceAmount, isDark && styles.textDark]}>
+          <Text style={styles.balanceAmount}>
             {formatCurrency(walletData.balance)}
           </Text>
         </View>
       </Animated.View>
 
       <Animated.View 
-        entering={FadeInDown.delay(400).duration(600).springify()}
+        entering={FadeInDown.duration(200)}
         style={styles.quickActions}
       >
         <TouchableOpacity 
           style={[styles.actionButton, isDark && styles.actionButtonDark]}
-          onPress={() => router.push('/transactions')}
+          onPress={() => router.push({ pathname: '/transactions', params: { mode: 'payment' } })}
         >
           <Send size={24} color="#FFD700" />
           <Text style={[styles.actionText, isDark && styles.textDark]}>Pay</Text>
@@ -231,7 +244,7 @@ export default function HomeScreen() {
         
         <TouchableOpacity 
           style={[styles.actionButton, isDark && styles.actionButtonDark]}
-          onPress={() => router.push('/transactions')}
+          onPress={() => router.push({ pathname: '/transactions', params: { mode: 'topup' } })}
         >
           <PlusCircle size={24} color="#4D9FFF" />
           <Text style={[styles.actionText, isDark && styles.textDark]}>Top-up</Text>
@@ -239,10 +252,10 @@ export default function HomeScreen() {
         
         <TouchableOpacity 
           style={[styles.actionButton, isDark && styles.actionButtonDark]}
-          onPress={() => router.push('/history')}
+          onPress={() => router.push('/friends')}
         >
-          <Clock size={24} color="#10B981" />
-          <Text style={[styles.actionText, isDark && styles.textDark]}>History</Text>
+          <Users size={24} color="#10B981" />
+          <Text style={[styles.actionText, isDark && styles.textDark]}>Friends</Text>
         </TouchableOpacity>
         
         <TouchableOpacity 
@@ -293,10 +306,10 @@ export default function HomeScreen() {
             <Text style={styles.seeAll}>See All</Text>
           </TouchableOpacity>
         </View>
-        {walletData.recentTransactions.map((transaction, index) => (
+        {walletData.recentTransactions.map((transaction) => (
           <Animated.View 
             key={transaction.id}
-            entering={FadeInRight.delay(index * 100).duration(400)}
+            entering={FadeInRight.duration(200)}
             style={[styles.transactionCard, isDark && styles.cardDark]}
           >
             <View style={styles.transactionInfo}>
@@ -335,11 +348,7 @@ const styles = StyleSheet.create({
   containerDark: {
     backgroundColor: '#121212',
   },
-  errorContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
+  walletError: { marginHorizontal: 20, marginBottom: 14, padding: 14, borderRadius: 14, backgroundColor: '#FFFFFF' },
   errorText: {
     fontSize: 16,
     fontFamily: 'Inter-Medium',
@@ -363,14 +372,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    paddingTop: 40,
+    paddingTop: 14,
   },
+  profileLink: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFF3CC', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  avatarDark: { backgroundColor: '#332D15' },
+  avatarImage: { width: '100%', height: '100%' },
   greetingContainer: {
     flex: 1,
     alignItems: 'flex-start',
   },
   notificationButton: {
-    position: 'relative',
+    position: 'relative', width: 44, height: 44, alignItems: 'center', justifyContent: 'center',
   },
   notificationBadge: {
     position: 'absolute',
@@ -390,7 +403,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Bold',
   },
   greeting: {
-    fontSize: 28,
+    fontSize: 20,
     fontFamily: 'Inter-Bold',
     color: '#1F2937',
     marginBottom: 4,
@@ -402,49 +415,26 @@ const styles = StyleSheet.create({
   },
   balanceCard: {
     flexDirection: 'row',
+    alignItems: 'center',
     borderRadius: 20,
     marginHorizontal: 20,
-    marginBottom: 20,
-    overflow: 'hidden',
-    height: 100,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  balanceCardDark: {
-    backgroundColor: '#1E1E1E',
+    marginBottom: 16,
+    minHeight: 102,
+    padding: 16,
+    gap: 14,
+    backgroundColor: '#252117',
   },
   cardLeftSection: {
-    width: 100,
-    backgroundColor: '#2C3E50',
+    width: 48,
+    height: 48,
+    borderRadius: 15,
+    backgroundColor: '#42391C',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  cardLeftSectionDark: {
-    backgroundColor: '#2C3E50',
-  },
-  cardRightSection: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    padding: 20,
-    justifyContent: 'center',
-  },
-  cardRightSectionDark: {
-    backgroundColor: '#1E1E1E',
-  },
-  balanceLabel: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#6B7280',
-    marginBottom: 4,
-  },
-  balanceAmount: {
-    fontSize: 32,
-    fontFamily: 'Inter-Bold',
-    color: '#1F2937',
-  },
+  cardRightSection: { flex: 1, gap: 4 },
+  balanceLabel: { fontSize: 13, fontFamily: 'Inter-Medium', color: '#F3D783' },
+  balanceAmount: { fontSize: 28, fontFamily: 'Inter-Bold', color: '#FFFFFF', fontVariant: ['tabular-nums'] },
   quickActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -453,7 +443,8 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     backgroundColor: '#FFFFFF',
-    padding: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
     borderRadius: 16,
     alignItems: 'center',
     width: '23%',

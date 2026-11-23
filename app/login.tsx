@@ -33,14 +33,14 @@ export default function LoginScreen() {
           >
             <SafeAreaView style={styles.safeArea}>
               <Animated.View 
-                entering={FadeInUp.duration(800).springify()} 
+                entering={FadeInUp.duration(200)}
                 style={styles.logoContainer}
               >
                 <AppLogo />
               </Animated.View>
               
               <Animated.View 
-                entering={FadeInDown.delay(300).duration(800).springify()}
+                entering={FadeInDown.duration(200)}
                 style={[styles.formContainer, isDark && styles.formContainerDark]}
               > 
                 <LoginForm />
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(250, 250, 245, 0.85)',
   },
   overlayDark: {
@@ -90,8 +90,8 @@ const styles = StyleSheet.create({
   logoContainer: {
     width: '100%',
     alignItems: 'center',
-    marginTop: 60,
-    marginBottom: 20,
+    marginTop: 28,
+    marginBottom: 14,
   },
   formContainer: {
     width: '100%',

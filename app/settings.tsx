@@ -74,7 +74,7 @@ export default function SettingsScreen() {
       showsVerticalScrollIndicator={false}
     >
       <Animated.View 
-        entering={FadeIn.duration(400)}
+        entering={FadeIn.duration(200)}
         style={styles.header}
       >
         <TouchableOpacity 
@@ -89,7 +89,7 @@ export default function SettingsScreen() {
         {settingItems.map((item, index) => (
           <Animated.View
             key={item.id}
-            entering={FadeInDown.delay(index * 50).duration(300).springify()}
+            entering={FadeInDown.duration(200)}
           >
             <TouchableOpacity
               style={[styles.settingItem, isDark && styles.settingItemDark]}

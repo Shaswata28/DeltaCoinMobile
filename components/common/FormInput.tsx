@@ -6,7 +6,7 @@ import { Eye, EyeOff } from 'lucide-react-native';
 type FormInputProps = {
   label: string;
   value: string;
-  onChangeText: (text: string) => void;
+  onChangeText?: (text: string) => void;
   placeholder?: string;
   secureTextEntry?: boolean;
   keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
@@ -124,10 +124,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#E0E0E0',
-    borderRadius: 8,
+    borderRadius: 12,
     backgroundColor: '#F9FAFB',
     paddingHorizontal: 12,
-    minHeight: 48,
+    minHeight: 46,
   },
   inputContainerDark: {
     backgroundColor: '#1E1E1E',

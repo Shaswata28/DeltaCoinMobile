@@ -1,6 +1,13 @@
 import { supabase } from './client'
 import type { Transaction, TransactionType, Budget, Wallet, Notification } from './client'
 
+const transactionListeners = new Set<() => void>()
+
+export function onTransactionCreated(listener: () => void) {
+  transactionListeners.add(listener)
+  return () => { transactionListeners.delete(listener) }
+}
+
 export async function getUserWallet(userId?: string): Promise<Wallet | null> {
   try {
     let targetUserId = userId;
@@ -134,6 +141,8 @@ export async function createTransaction(transactionData: CreateTransactionData &
       throw transactionError
     }
 
+    for (const listener of transactionListeners) listener()
+
     // Create notification for the transaction
     const notificationTitle = transactionData.type === 'income' ? 'Top-up Successful' : 'Payment Successful'
     const notificationMessage = transactionData.type === 'income' 
@@ -213,12 +222,12 @@ export async function getTransactionsByCategory(category: string): Promise<Trans
   }
 }
 
-export async function getTransactionsByDateRange(startDate: string, endDate: string): Promise<Transaction[]> {
+export async function getTransactionsByDateRange(startDate: string, endDate: string, category?: string): Promise<Transaction[]> {
   try {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('No authenticated user')
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('transactions')
       .select('*')
       .eq('user_id', user.id)
@@ -226,6 +235,8 @@ export async function getTransactionsByDateRange(startDate: string, endDate: str
       .lte('date', endDate)
       .order('date', { ascending: false })
 
+    if (category) query = query.eq('category', category)
+    const { data, error } = await query
     if (error) throw error
     return data || []
   } catch (error) {

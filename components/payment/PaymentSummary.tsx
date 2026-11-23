@@ -28,19 +28,15 @@ export function PaymentSummary({
 
   return (
     <View style={[styles.container, isDark && styles.containerDark]}>
-      <Text style={[styles.title, isDark && styles.titleDark]}>Payment Summary</Text>
-      
-      <View style={styles.row}>
-        <Text style={[styles.label, isDark && styles.labelDark]}>Amount</Text>
-        <Text style={[styles.value, styles.amount]}>
-          {formatAmount(amount)}
-        </Text>
+      <View style={[styles.totalCard, isDark && styles.totalCardDark]}>
+        <Text style={[styles.label, isDark && styles.labelDark]}>Total amount</Text>
+        <Text style={[styles.amount, isDark && { color: '#FFFFFF' }]}>{formatAmount(amount)}</Text>
       </View>
 
       {method && (
         <View style={styles.row}>
           <Text style={[styles.label, isDark && styles.labelDark]}>Payment Method</Text>
-          <Text style={[styles.value, isDark && styles.valueDark]}>{method}</Text>
+          <Text style={[styles.value, isDark && styles.valueDark]}>{method === 'bank' ? 'Bank transfer (demo)' : method === 'mobile' ? 'Mobile banking (demo)' : 'Card'}</Text>
         </View>
       )}
 
@@ -72,8 +68,8 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
+    padding: 12,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
@@ -81,15 +77,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E1E1E',
     borderColor: '#2E2E2E',
   },
-  title: {
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
-    color: '#2C2C2C',
-    marginBottom: 16,
-  },
-  titleDark: {
-    color: '#FFFFFF',
-  },
+  totalCard: { backgroundColor: '#FFF3CC', borderRadius: 14, padding: 14, gap: 4, marginBottom: 8 },
+  totalCardDark: { backgroundColor: '#332D15' },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -99,7 +88,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E5E7EB',
   },
   label: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-Regular',
     color: '#6B6B6B',
   },
@@ -107,7 +96,7 @@ const styles = StyleSheet.create({
     color: '#A6A6A6',
   },
   value: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-Medium',
     color: '#2C2C2C',
   },
@@ -115,7 +104,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   amount: {
-    fontSize: 18,
+    fontSize: 28,
     fontFamily: 'Inter-Bold',
     color: '#4D9FFF',
   },
